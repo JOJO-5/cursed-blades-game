@@ -186,3 +186,39 @@
 - [x] 受伤音效正常（Audio2.hurt 锯齿波 150Hz）
 - [x] 无敌帧 0.8s 正常（半透明闪烁而非完全消失）
 - [x] 已有功能不受影响（移动/攻击/敌人死亡/经验升级/暂停/失败/通关/存档）
+
+## [v0.5.0] - 2026-07-26
+
+### 移动端：一键切换横竖屏
+
+#### Bug修复
+- **修复 screenToCanvas 方法缺失**：`Input` 对象中调用了 `screenToCanvas()` 方法但从未定义，导致所有鼠标和触摸输入完全失效。新增完整实现，支持 CSS 缩放和 90° 旋转坐标变换
+  - 影响文件：`js/core.js`
+- **修复旋转模式下坐标变换缩放因子错误**：旋转 90° 时，canvas X 轴对应屏幕高度、canvas Y 轴对应屏幕宽度，但原代码使用了错误的缩放因子。修正为 `canvas.width / rect.height` 和 `canvas.height / rect.width`
+  - 影响文件：`js/core.js`
+
+#### 新功能：横竖屏切换按钮
+- **`Game.toggleForcedLandscape()`**：切换 `forcedLandscape` 标志，调用 `resizeCanvas()` 重新布局
+  - 影响文件：`js/game.js`
+- **`resizeCanvas()` 增强旋转逻辑**：当 `forcedLandscape=true` 且屏幕为竖屏时，将画布旋转 90°（`translate(-50%, -50%) rotate(90deg)`），交换屏幕宽高计算 CSS 尺寸
+  - 影响文件：`js/game.js`
+- **`renderRotateButton()` 新方法**：在所有游戏状态下绘制旋转按钮（左上角蓝色圆形，含手机图标 + 旋转箭头），通过 `render()` 末尾统一调用
+  - 影响文件：`js/game.js`
+- **`update()` 增加旋转按钮点击检测**：在所有状态下检测鼠标点击旋转按钮区域 `isMouseInRect(12, 52, 36, 36)`
+  - 影响文件：`js/game.js`
+- **触摸事件增加旋转按钮优先检测**：`touchstart` 中最先检查旋转按钮区域，支持所有状态下的触摸切换
+  - 影响文件：`js/core.js`
+- **`screenToCanvas()` 新方法**：将屏幕坐标转换为画布内部坐标，处理 CSS 缩放和可选的 90° 旋转变换
+  - 影响文件：`js/core.js`
+- **竖屏提示文字更新**：从"建议横屏游戏体验更佳"改为"点击左上角按钮可旋转为横屏"，仅在 `forcedLandscape=false` 时显示
+  - 影响文件：`js/game.js`
+
+#### 验证结果
+- [x] 旋转按钮在所有状态下可见（菜单/游戏/暂停/升级/死亡/通关）
+- [x] 鼠标点击旋转按钮正确切换 forcedLandscape 状态
+- [x] 触摸点击旋转按钮正确切换 forcedLandscape 状态
+- [x] 竖屏 + forcedLandscape 时画布正确旋转 90°（transform: rotate(90deg)）
+- [x] 坐标变换四角验证正确（屏幕四角精确映射到画布四角）
+- [x] 游戏中按钮点击在旋转模式下正常工作（坐标变换正确）
+- [x] `node -c` 语法检查通过（core.js, game.js）
+- [x] 已推送至 GitHub Pages
