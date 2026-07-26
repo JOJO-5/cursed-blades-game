@@ -39,6 +39,11 @@ const Game = {
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
 
+    // Responsive canvas scaling - fill screen while maintaining 16:9 aspect ratio
+    this.resizeCanvas();
+    window.addEventListener('resize', () => this.resizeCanvas());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resizeCanvas(), 100));
+
     Input.init(this.canvas);
 
     Assets.onProgress = (loaded, total) => {
@@ -62,6 +67,34 @@ const Game = {
         // try loading with known assets anyway
         this.fallbackLoad();
       });
+  },
+
+  resizeCanvas() {
+    // The internal resolution stays 960x540, but the CSS size fills the screen
+    const container = document.getElementById('game-container');
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const gameAspect = CONFIG.CANVAS_W / CONFIG.CANVAS_H; // 1.7778
+
+    const screenAspect = winW / winH;
+    let cssW, cssH;
+
+    if (screenAspect > gameAspect) {
+      // Screen is wider - fit by height, center horizontally
+      cssH = winH;
+      cssW = winH * gameAspect;
+    } else {
+      // Screen is taller - fit by width, center vertically
+      cssW = winW;
+      cssH = winW / gameAspect;
+    }
+
+    this.canvas.style.width = cssW + 'px';
+    this.canvas.style.height = cssH + 'px';
+    if (container) {
+      container.style.width = cssW + 'px';
+      container.style.height = cssH + 'px';
+    }
   },
 
   fallbackLoad() {
@@ -981,7 +1014,7 @@ const Game = {
     ctx.fillStyle = '#5a4a30';
     ctx.font = '11px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('WASD / 方向键移动  |  空格闪避  |  ESC暂停', CONFIG.CANVAS_W/2, CONFIG.CANVAS_H - 30);
+    ctx.fillText('WASD / 摇杆移动  |  空格 / 按钮闪避  |  ESC / 图标暂停', CONFIG.CANVAS_W/2, CONFIG.CANVAS_H - 30);
   },
 
   drawButton(x, y, w, h, text, color) {
@@ -1098,8 +1131,9 @@ const Game = {
       ctx.lineWidth = hover ? 4 : 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
-      // icon
-      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, 1.5, 0, 1);
+      // icon - larger scale for visibility
+      const iconScale = 3.0; // 16px * 3 = 48px, clearly visible
+      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, iconScale, 0, 1);
 
       // name
       ctx.fillStyle = '#ffd040';
@@ -1145,7 +1179,8 @@ const Game = {
       ctx.lineWidth = hover ? 4 : 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
-      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, 1.5, 0, 1);
+      const chestIconScale = choice.weaponId ? 2.5 : 3.0;
+      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, chestIconScale, 0, 1);
 
       ctx.fillStyle = '#ffd040';
       ctx.font = 'bold 15px Courier New';

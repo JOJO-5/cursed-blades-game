@@ -1,11 +1,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
+html, body {
   background: #0a0a0f;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
   font-family: 'Courier New', monospace;
   overflow: hidden;
   user-select: none;
@@ -13,14 +11,21 @@ body {
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
+  overscroll-behavior: none;
 }
 
 #game-container {
   position: relative;
-  width: 960px;
-  height: 540px;
-  box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  /* Fill the entire screen; JS will adjust to maintain aspect ratio */
+  width: 100vw;
+  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
+  margin: 0 auto;
   image-rendering: pixelated;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #game-canvas {
@@ -28,34 +33,8 @@ body {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  width: 100%;
-  height: 100%;
   touch-action: none;
-}
-
-/* Responsive scaling for mobile */
-@media (max-width: 960px) {
-  #game-container {
-    width: 100vw;
-    height: 56.25vw; /* 16:9 aspect ratio */
-    max-height: 100vh;
-    box-shadow: none;
-  }
-}
-
-@media (max-height: 540px) and (orientation: landscape) {
-  #game-container {
-    width: 177.78vh;
-    height: 100vh;
-  }
-}
-
-@media (orientation: portrait) {
-  #game-container {
-    width: 100vw;
-    height: 56.25vw;
-    max-height: 100vh;
-  }
+  /* JS will set width/height for proper scaling */
 }
 
 .overlay {
@@ -75,6 +54,7 @@ body {
 .loading-content h2 { font-size: 28px; margin-bottom: 20px; letter-spacing: 4px; }
 .loading-bar {
   width: 300px; height: 16px;
+  max-width: 80vw;
   background: #1a1a22;
   border: 2px solid #4a3a20;
   border-radius: 2px;
