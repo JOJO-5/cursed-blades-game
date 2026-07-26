@@ -20,7 +20,19 @@ const config = context.__CONFIG__;
 
 assert.equal(Object.keys(config.WEAPONS).length, 10, 'expected 10 weapons');
 assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
-assert.equal(Object.keys(config.ENEMIES).length, 11, 'expected 11 enemies');
+assert.equal(Object.keys(config.ENEMIES).length, 17, 'expected 17 enemies');
+assert.ok(config.LEVELS.village && config.LEVELS.mine, 'expected village and mine levels');
+
+// Verify phased spawning config for each level
+for (const [id, level] of Object.entries(config.LEVELS)) {
+  assert.ok(Array.isArray(level.phases) && level.phases.length >= 4, `level ${id} should define at least 4 phases`);
+  for (const phase of level.phases) {
+    assert.ok(typeof phase.time === 'number' && phase.time >= 0, `phase in ${id} needs a numeric time`);
+    assert.ok(Array.isArray(phase.enemyPool), `phase in ${id} needs an enemyPool array`);
+    assert.ok(typeof phase.maxEnemies === 'number', `phase in ${id} needs maxEnemies`);
+    assert.ok(typeof phase.spawnInterval === 'number', `phase in ${id} needs spawnInterval`);
+  }
+}
 
 for (const [id, weapon] of Object.entries(config.WEAPONS)) {
   assert.ok(weapon.name && weapon.type && weapon.icon, `weapon ${id} is missing a key field`);
@@ -87,4 +99,4 @@ pickup.vy = 0;
 pickup.update(0.1);
 assert.ok(pickup.x < 200, 'expanded pickup range should move a distant gem toward the player');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 11 enemies, portrait layout, pickup attraction.`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction.`);

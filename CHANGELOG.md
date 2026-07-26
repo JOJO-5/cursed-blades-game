@@ -1,5 +1,85 @@
 # 修改记录 (CHANGELOG)
 
+## [v0.7.0] - 2026-07-26
+
+### 关卡分阶段刷怪系统（阶段4.1）
+- **数据驱动的 phases 配置**：为 village 和 mine 两关各新增 5 个阶段配置，每个阶段定义 `time`（触发时间秒）、`name`（阶段名）、`enemyPool`（该阶段敌人池）、`rangedPool`（远程敌人池）、`maxEnemies`（敌人上限）、`spawnInterval`（刷怪间隔）、`events`（一次性触发事件）
+  - 影响文件：`js/config.js`
+- **village 阶段流程**：
+  - 0-2分钟「初始骚扰」：史莱姆 + 蝙蝠，上限12，3.0s间隔
+  - 2-4分钟「远程加入」：+蜘蛛 +弓手，首个普通宝箱，上限16，2.7s间隔
+  - 4-6分钟「精英登场」：+骷髅，第一只精英怪，可疑宝箱，上限20，2.4s间隔
+  - 6-8分钟「腐化加剧」：+野猪 +法师，第二只精英怪，稀有宝箱，上限25，2.0s间隔
+  - 8分钟「Boss降临」：清理普通敌人，Boss战
+- **mine 阶段流程**：
+  - 0-2分钟「矿洞探索」：疫病鼠 + 岩甲甲虫，上限14，2.5s间隔
+  - 2-4分钟「水晶法师」：+腐化矿工 +水晶法师，首个普通宝箱，上限18，2.2s间隔
+  - 4-6分钟「腐化蔓延」：+蜘蛛，第一只精英怪，可疑宝箱，上限22，2.0s间隔
+  - 6-7分钟「深渊回响」：+骷髅 +弓手，第二只精英怪，稀有宝箱，上限30，1.6s间隔
+  - 7分钟「Boss降临」：清理普通敌人，腐化巨蛛Boss战
+- **Game 新增阶段系统**：
+  - `currentPhase` / `triggeredPhases` 状态追踪当前阶段和已触发阶段
+  - `getActivePhase()` 根据 `levelTime` 返回当前活跃阶段对象
+  - `updatePhase(dt)` 替代原固定刷怪逻辑，调用 `spawnEnemyFromPhase()` 使用阶段专属敌人池
+  - `triggerPhaseEvents(phase)` 进入新阶段时触发一次性事件（宝箱/精英怪/Boss/消息）
+  - `spawnEnemyFromPhase(phase)` 使用阶段专属 enemyPool 和 rangedPool 刷怪
+  - `updateLegacySpawning(dt)` 保留原逻辑作为无 phases 配置时的回退
+  - 影响文件：`js/game.js`
+- **Boss 出现时清理普通敌人**：`spawnBoss()` 新增 `this.enemies.filter(e => e.isBoss)`，符合设计"清理普通敌人 + Boss战"
+  - 影响文件：`js/game.js`
+- **阶段事件类型**：
+  - `chest`：生成宝箱，支持 `rare`（稀有）和 `mimic`（按关卡 mimicChance 概率变为宝箱怪）
+  - `elite`：调用 `spawnElite()` 生成精英怪
+  - `boss`：调用 `spawnBoss()` 触发Boss战
+  - `message`：显示自定义颜色提示消息
+- **阶段名横幅**：进入新阶段时显示 `【阶段名】` 金色消息提示
+
+### 验证结果
+- [x] village 5个阶段配置正确（time/name/enemyPool/maxEnemies/spawnInterval）
+- [x] mine 5个阶段配置正确
+- [x] 阶段切换基于 levelTime 自动触发
+- [x] 阶段事件一次性触发（宝箱/精英/Boss/消息）
+- [x] 宝箱怪按 mimicChance 概率生成
+- [x] Boss出现时清理普通敌人
+- [x] 无 phases 配置时回退到 legacy 刷怪逻辑
+- [x] npm test 通过（17敌人，2关卡，phases 校验）
+
+## [v0.6.0] - 2026-07-26
+
+### 攻击命中特效修复
+- **hitFlash 改用碰撞半径**：白色闪烁覆盖区域从图片原始尺寸改为 `this.radius * scale`，贴合不同大小敌人
+  - 影响文件：`js/entities.js`
+- **新增命中粒子飞溅**：`Enemy.takeDamage()` 生成 4 个（普通）/ 8 个（暴击）粒子，颜色为金色（#ffcc60 / #ffd040），粒子大小根据敌人半径缩放（`radius * 0.25`，clamp 2-5），粒子从命中方向飞溅
+  - 影响文件：`js/entities.js`
+
+### 新增第二关：地下矿洞
+- **新增 6 种敌人**：腐化矿工、疫病鼠群、岩甲甲虫、水晶法师（远程）、岩石粉碎者（精英）、腐化巨蛛（Boss）
+  - 影响文件：`js/config.js`
+- **新增 mine 关卡配置**：36x36 地图，2.5s 刷怪间隔，30 上限，7 分钟 Boss，bossId=bossSpider，6 个宝箱
+  - 影响文件：`js/config.js`
+- **新增 mine 剧情**：intro（矿洞探索）、bossIntro（腐化巨蛛登场）、victory（最终通关结局）
+  - 影响文件：`js/config.js`
+- **关卡切换逻辑**：village Boss 击败后自动 `loadLevel('mine')`，mine Boss 击败后进入最终 victory 状态
+  - 影响文件：`js/game.js`
+- **loadLevel 重置关卡状态**：重置 levelTime/spawnTimer/eliteTimer/bossSpawned/bossDefeated/所有实体数组，玩家放置到地图中心，满血恢复
+  - 影响文件：`js/game.js`
+- **地图尺寸改为数据驱动**：generateMap/spawnBoss/getSpawnPosition/camera clamp/renderWorld 全部使用 `levelData.mapW/mapH` 替代全局 `CONFIG.MAP_W/MAP_H`
+  - 影响文件：`js/game.js`
+- **spawnBoss 动态 Boss**：使用 `levelData.bossId` 生成对应 Boss，消息显示 Boss 名称
+  - 影响文件：`js/game.js`
+- **renderVictory 更新**：最终通关文字改为"最终通关!"，描述腐化巨蛛被击败
+  - 影响文件：`js/game.js`
+
+### 验证结果
+- [x] 命中粒子正常生成（普通 4 个，暴击 8 个，颜色和尺寸正确）
+- [x] hitFlash 闪烁区域贴合敌人碰撞半径
+- [x] 第二关 mine 正确加载（地图/宝箱/剧情/Boss ID）
+- [x] village Boss 击败 → victory 剧情 → 自动进入 mine 关卡
+- [x] mine Boss 击败 → victory 剧情 → 最终 victory 状态
+- [x] 关卡切换时正确重置所有状态（时间/敌人/弹丸/粒子）
+- [x] 地图尺寸使用 levelData 配置而非全局常量
+- [x] npm test 通过（17 敌人，2 关卡）
+
 ## [v0.4.0-preview] - 2026-07-26
 
 ### 核心修复
