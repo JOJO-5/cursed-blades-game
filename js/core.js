@@ -54,6 +54,7 @@ const Input = {
   init(canvas) {
     this.canvas = canvas;
     window.addEventListener('keydown', (e) => {
+      Audio2.resume();
       if (!this.keys[e.code]) this._justPressed[e.code] = true;
       this.keys[e.code] = true;
       if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
@@ -66,6 +67,7 @@ const Input = {
       this.mouse.y = pos.y;
     });
     canvas.addEventListener('mousedown', (e) => {
+      Audio2.resume();
       this.mouse.down = true;
       this.mouse.clicked = true;
     });
@@ -74,15 +76,16 @@ const Input = {
     // ---- Touch events for mobile ----
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      Audio2.resume();
 
       for (const touch of e.changedTouches) {
         const pos = this.screenToCanvas(touch.clientX, touch.clientY);
         const tx = pos.x;
         const ty = pos.y;
 
-        // Check rotate button first (works in all states)
-        // Rotate button at center (30, 70), radius 18, touch area 40x40
-        if (tx >= 10 && tx <= 50 && ty >= 50 && ty <= 90) {
+        // Check rotate button first (works in all states and cropped views).
+        const rotate = Game.getRotateButtonRect();
+        if (tx >= rotate.x && tx <= rotate.x + rotate.w && ty >= rotate.y && ty <= rotate.y + rotate.h) {
           // Let Game.update() handle via mouse click for consistency
           this.mouse.x = tx;
           this.mouse.y = ty;
@@ -100,8 +103,9 @@ const Input = {
           continue;
         }
 
-        // Pause button at (CANVAS_W - 30, 60), size ~24
-        if (tx >= CONFIG.CANVAS_W - 50 && tx <= CONFIG.CANVAS_W - 10 && ty >= 40 && ty <= 80) {
+        // In playing state: check pause button first, then left side = joystick, right-bottom = dash
+        const pause = Game.getPauseButtonRect();
+        if (tx >= pause.x && tx <= pause.x + pause.w && ty >= pause.y && ty <= pause.y + pause.h) {
           this._justPressed['Escape'] = true;
           this.keys['Escape'] = true;
           continue;
@@ -285,14 +289,17 @@ const Assets = {
 const Audio2 = {
   ctx: null,
   enabled: true,
+  hasUserInteracted: false,
 
   init() {
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.hasUserInteracted) this.resume();
     } catch(e) { this.enabled = false; }
   },
 
   resume() {
+    this.hasUserInteracted = true;
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
   },
 

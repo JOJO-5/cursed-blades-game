@@ -34,6 +34,7 @@ const Game = {
   chestRewardChoices: [],
 
   saveKey: 'cursed_blades_save',
+  saveSchemaVersion: 2,
 
   // ---- Initialization ----
   init() {
@@ -82,6 +83,8 @@ const Game = {
     const screenPortrait = winH > winW;
     // When forcedLandscape is on and screen is portrait, we rotate the canvas 90deg
     const rotate90 = this.forcedLandscape && screenPortrait;
+    // Set before calculating visible bounds for touch anchors.
+    this._rotate90 = rotate90;
 
     let cssW, cssH;
 
@@ -131,25 +134,14 @@ const Game = {
       container.style.position = 'relative';
     }
 
-    // Update touch control anchor positions
-    // In forced landscape mode, the game internally sees landscape layout
-    const useLandscapeLayout = rotate90 || !screenPortrait;
-    if (useLandscapeLayout) {
-      // Landscape layout: joystick bottom-left, dash bottom-right
-      Input.joystick.anchorX = 110;
-      Input.joystick.anchorY = CONFIG.CANVAS_H - 70;
-      Input.dashButton.anchorX = CONFIG.CANVAS_W - 70;
-      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
-    } else {
-      // Portrait layout: joystick bottom-left, dash bottom-right
-      Input.joystick.anchorX = 100;
-      Input.joystick.anchorY = CONFIG.CANVAS_H - 80;
-      Input.dashButton.anchorX = CONFIG.CANVAS_W - 80;
-      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
-    }
+    // Anchor controls to the actually visible canvas in every aspect ratio.
+    // Forced landscape can still crop the top/bottom on tall phones.
+    const visible = this.getVisibleCanvasRect();
+    Input.joystick.anchorX = visible.x + 75;
+    Input.joystick.anchorY = visible.y + visible.h - 75;
+    Input.dashButton.anchorX = visible.x + visible.w - 70;
+    Input.dashButton.anchorY = visible.y + visible.h - 85;
 
-    // Store rotation state for touch coordinate transformation
-    this._rotate90 = rotate90;
   },
 
   toggleForcedLandscape() {
@@ -187,7 +179,8 @@ const Game = {
     this.time += dt;
 
     // Rotate button click (works in all states, both mouse and touch)
-    if (Input.mouse.clicked && Input.isMouseInRect(12, 52, 36, 36)) {
+    const rotateButton = this.getRotateButtonRect();
+    if (Input.mouse.clicked && Input.isMouseInRect(rotateButton.x, rotateButton.y, rotateButton.w, rotateButton.h)) {
       Input.mouse.clicked = false;
       this.toggleForcedLandscape();
     }
@@ -362,7 +355,7 @@ const Game = {
     Audio2.boss();
     this.shakeScreen(10, 0.5);
     // show boss intro dialogue
-    this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => {});
+    this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => { this.state = 'playing'; });
   },
 
   getSpawnPosition() {
@@ -400,8 +393,7 @@ const Game = {
       return currentLevel < u.maxLevel;
     });
 
-    // If all upgrades are maxed, just pick from everything
-    const pool = available.length >= 3 ? available : CONFIG.UPGRADES.slice();
+    const pool = available;
 
     // Luck increases the weight of rare/epic upgrades
     const luckMult = 1 + this.player.stats.luck * 0.15;
@@ -435,20 +427,24 @@ const Game = {
     if (availableUnlocks.length > 0 && Math.random() < 0.2) {
       const unlock = pick(availableUnlocks);
       // Replace the last choice with the weapon unlock
-      choices[choices.length - 1] = unlock;
+      if (choices.length) choices[choices.length - 1] = unlock;
+      else choices.push(unlock);
     }
+
+    if (!choices.length) choices.push(this.createRecoveryChoice());
 
     this.upgradeChoices = choices;
   },
 
   selectUpgrade(idx) {
     const choice = this.upgradeChoices[idx];
+    if (!choice) return;
     if (choice.weaponId) {
       this.player.addWeapon(choice.weaponId);
       this.addMessage('获得武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#40c0ff');
-    } else {
+    } else if (choice.apply) {
       choice.apply(this.player);
-      this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+      if (!choice.isFallback) this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
       this.addMessage(choice.name, '#c0c0ff');
     }
     Audio2.click();
@@ -483,8 +479,9 @@ const Game = {
       const currentLevel = this.player.upgradeLevels[u.id] || 0;
       return currentLevel < u.maxLevel;
     });
-    const upgradePool = availableUpgrades.length >= 2 ? availableUpgrades : CONFIG.UPGRADES.slice();
+    const upgradePool = availableUpgrades;
     rewards.push(...pickN(upgradePool, 2));
+    if (!rewards.length) rewards.push(this.createRecoveryChoice());
     this.chestRewardChoices = rewards.slice(0, 3);
   },
 
@@ -496,12 +493,13 @@ const Game = {
 
   selectChestReward(idx) {
     const choice = this.chestRewardChoices[idx];
+    if (!choice) return;
     if (choice.weaponId) {
       this.player.addWeapon(choice.weaponId);
       this.addMessage('获得新武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#ffd040');
-    } else {
+    } else if (choice.apply) {
       choice.apply(this.player);
-      this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+      if (!choice.isFallback) this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
     }
     Audio2.click();
     this.state = 'playing';
@@ -605,17 +603,11 @@ const Game = {
 
   // ---- Level up UI ----
   updateLevelUp() {
-    const portrait = this.isPortrait();
-    const cardW = portrait ? 260 : 200;
-    const cardH = portrait ? 180 : 260;
-    const gap = portrait ? 15 : 20;
-    const totalW = this.upgradeChoices.length * cardW + (this.upgradeChoices.length - 1) * gap;
-    const startX = (CONFIG.CANVAS_W - totalW) / 2;
-    const cardY = portrait ? 130 : 160;
+    const layout = this.getChoiceLayout(this.upgradeChoices.length);
 
     for (let i = 0; i < this.upgradeChoices.length; i++) {
-      const cardX = startX + i * (cardW + gap);
-      if (Input.consumeClick(cardX, cardY, cardW, cardH)) {
+      const card = layout.cards[i];
+      if (Input.consumeClick(card.x, card.y, card.w, card.h)) {
         this.selectUpgrade(i);
         return;
       }
@@ -628,17 +620,11 @@ const Game = {
   },
 
   updateChestReward() {
-    const portrait = this.isPortrait();
-    const cardW = portrait ? 260 : 200;
-    const cardH = portrait ? 180 : 260;
-    const gap = portrait ? 15 : 20;
-    const totalW = this.chestRewardChoices.length * cardW + (this.chestRewardChoices.length - 1) * gap;
-    const startX = (CONFIG.CANVAS_W - totalW) / 2;
-    const cardY = portrait ? 130 : 160;
+    const layout = this.getChoiceLayout(this.chestRewardChoices.length);
 
     for (let i = 0; i < this.chestRewardChoices.length; i++) {
-      const cardX = startX + i * (cardW + gap);
-      if (Input.consumeClick(cardX, cardY, cardW, cardH)) {
+      const card = layout.cards[i];
+      if (Input.consumeClick(card.x, card.y, card.w, card.h)) {
         this.selectChestReward(i);
         return;
       }
@@ -766,8 +752,10 @@ const Game = {
 
   // ---- Save/Load ----
   saveProgress() {
-    if (!this.player) return;
+    // A death screen must not replace a resumable run with a dead character.
+    if (!this.player || !this.player.alive) return;
     const data = {
+      schemaVersion: this.saveSchemaVersion,
       level: this.player.level,
       xp: this.player.xp,
       hp: this.player.hp,
@@ -777,6 +765,11 @@ const Game = {
       upgradeLevels: this.player.upgradeLevels,
       levelTime: this.levelTime,
       levelId: this.levelData ? this.levelData.theme : 'village',
+      playerPosition: { x: this.player.x, y: this.player.y },
+      spawnTimer: this.spawnTimer,
+      eliteTimer: this.eliteTimer,
+      bossSpawned: this.bossSpawned,
+      bossDefeated: this.bossDefeated,
     };
     try {
       localStorage.setItem(this.saveKey, JSON.stringify(data));
@@ -795,13 +788,27 @@ const Game = {
       if (!raw) { this.startNewGame(); return; }
       const data = JSON.parse(raw);
       this.startNewGame();
-      this.player.level = data.level || 1;
-      this.player.xp = data.xp || 0;
+      const levelId = CONFIG.LEVELS[data.levelId] ? data.levelId : 'village';
+      this.levelData = CONFIG.LEVELS[levelId];
+      this.player.level = data.level ?? 1;
+      this.player.xp = data.xp ?? 0;
       this.player.xpToNext = CONFIG.XP_CURVE[Math.min(this.player.level - 1, CONFIG.XP_CURVE.length - 1)] || 9999;
-      this.player.hp = data.hp || this.player.getMaxHp();
-      this.player.kills = data.kills || 0;
-      this.player.stats = data.stats || this.player.stats;
+      // Merge so old saves gain every later-added stat with a safe default.
+      this.player.stats = Object.assign({}, this.player.stats, data.stats || {});
+      this.player.hp = data.hp ?? this.player.getMaxHp();
+      this.player.kills = data.kills ?? 0;
       this.player.upgradeLevels = data.upgradeLevels || {};
+      if (data.playerPosition) {
+        this.player.x = clamp(data.playerPosition.x ?? this.player.x, 0, CONFIG.MAP_W * CONFIG.TILE_SIZE);
+        this.player.y = clamp(data.playerPosition.y ?? this.player.y, 0, CONFIG.MAP_H * CONFIG.TILE_SIZE);
+      }
+      this.levelTime = data.levelTime ?? 0;
+      this.spawnTimer = data.spawnTimer ?? 1;
+      this.eliteTimer = data.eliteTimer ?? 0;
+      this.bossDefeated = !!data.bossDefeated;
+      // A save may claim its boss spawned while the boss entity itself was not
+      // persisted. Re-spawn it when the timer has passed, unless it was defeated.
+      this.bossSpawned = !!data.bossDefeated;
       // load weapons
       this.player.weapons = [];
       if (data.weapons) {
@@ -833,6 +840,65 @@ const Game = {
 
   addMessage(text, color) {
     this.messages.push({ text, color: color || '#ffffff', life: 3, maxLife: 3 });
+  },
+
+  createRecoveryChoice() {
+    return {
+      id: 'recovery', name: '生命恢复', desc: '恢复 35% 最大生命',
+      icon: 'items/heart', rarity: 'common', isFallback: true,
+      apply: (player) => player.heal(player.getMaxHp() * 0.35),
+    };
+  },
+
+  getVisibleCanvasRect() {
+    const winW = window.innerWidth || CONFIG.CANVAS_W;
+    const winH = window.innerHeight || CONFIG.CANVAS_H;
+    if (this._rotate90 && this.canvas) {
+      const rect = this.canvas.getBoundingClientRect();
+      const visibleW = Math.min(CONFIG.CANVAS_W, winH / rect.height * CONFIG.CANVAS_W);
+      const visibleH = Math.min(CONFIG.CANVAS_H, winW / rect.width * CONFIG.CANVAS_H);
+      return {
+        x: (CONFIG.CANVAS_W - visibleW) / 2,
+        y: (CONFIG.CANVAS_H - visibleH) / 2,
+        w: visibleW, h: visibleH,
+      };
+    }
+    const scale = Math.max(winW / CONFIG.CANVAS_W, winH / CONFIG.CANVAS_H);
+    const visibleW = Math.min(CONFIG.CANVAS_W, winW / scale);
+    const visibleH = Math.min(CONFIG.CANVAS_H, winH / scale);
+    return {
+      x: (CONFIG.CANVAS_W - visibleW) / 2,
+      y: (CONFIG.CANVAS_H - visibleH) / 2,
+      w: visibleW, h: visibleH,
+    };
+  },
+
+  getPauseButtonRect() {
+    const visible = this.getVisibleCanvasRect();
+    return { x: visible.x + visible.w - 38, y: visible.y + 18, w: 28, h: 28 };
+  },
+
+  getRotateButtonRect() {
+    const visible = this.getVisibleCanvasRect();
+    return { x: visible.x + 12, y: visible.y + 52, w: 36, h: 36 };
+  },
+
+  getChoiceLayout(count) {
+    const portrait = this.isPortrait();
+    const visible = this.getVisibleCanvasRect();
+    const cards = [];
+    if (portrait) {
+      const cardW = Math.min(280, visible.w - 20);
+      const gap = 10;
+      const cardH = Math.min(115, (visible.h - 115 - gap * Math.max(0, count - 1)) / Math.max(count, 1));
+      const startY = 105;
+      for (let i = 0; i < count; i++) cards.push({ x: visible.x + (visible.w - cardW) / 2, y: startY + i * (cardH + gap), w: cardW, h: cardH });
+    } else {
+      const cardW = 200, cardH = 260, gap = 20;
+      const totalW = count * cardW + Math.max(0, count - 1) * gap;
+      for (let i = 0; i < count; i++) cards.push({ x: (CONFIG.CANVAS_W - totalW) / 2 + i * (cardW + gap), y: 160, w: cardW, h: cardH });
+    }
+    return { portrait, cards };
   },
 
   // ---- Rendering ----
@@ -942,10 +1008,13 @@ const Game = {
     const ctx = this.ctx;
     const p = this.player;
     if (!p) return;
+    const visible = this.getVisibleCanvasRect();
+    const portrait = this.isPortrait();
 
     // HP bar
-    const hpBarW = 200, hpBarH = 16;
-    const hpX = 20, hpY = 20;
+    const hpBarW = portrait ? Math.min(80, visible.w - 155) : 200;
+    const hpBarH = 16;
+    const hpX = visible.x + 12, hpY = visible.y + 20;
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(hpX-2, hpY-2, hpBarW+4, hpBarH+4);
     ctx.fillStyle = '#3a1a1a';
@@ -980,7 +1049,7 @@ const Game = {
     ctx.fillStyle = '#c4a87a';
     ctx.font = 'bold 18px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText(`${min}:${sec.toString().padStart(2,'0')}`, CONFIG.CANVAS_W/2, 30);
+    ctx.fillText(`${min}:${sec.toString().padStart(2,'0')}`, visible.x + visible.w/2, visible.y + 30);
 
     // boss timer warning
     if (!this.bossSpawned) {
@@ -988,7 +1057,7 @@ const Game = {
       if (bossTime < 10) {
         ctx.fillStyle = '#ff4040';
         ctx.font = 'bold 14px Courier New';
-        ctx.fillText(`Boss即将出现: ${bossTime.toFixed(1)}s`, CONFIG.CANVAS_W/2, 50);
+        ctx.fillText(`Boss即将出现: ${bossTime.toFixed(1)}s`, visible.x + visible.w/2, visible.y + 50);
       }
     }
 
@@ -996,15 +1065,20 @@ const Game = {
     ctx.fillStyle = '#8a7a5a';
     ctx.font = '12px Courier New';
     ctx.textAlign = 'right';
-    ctx.fillText(`击杀: ${p.kills}`, CONFIG.CANVAS_W - 20, 25);
-    ctx.fillText(`敌人: ${this.enemies.length}`, CONFIG.CANVAS_W - 20, 40);
+    const infoX = visible.x + visible.w - 12;
+    ctx.fillText(`击杀: ${p.kills}`, infoX, visible.y + 25);
+    ctx.fillText(`敌人: ${this.enemies.length}`, infoX, visible.y + 40);
 
     // weapon icons
     ctx.textAlign = 'left';
-    const wY = CONFIG.CANVAS_H - 40;
+    const weaponGap = 42;
+    const weaponTotalW = Math.max(0, p.weapons.length - 1) * weaponGap + 36;
+    const weaponStartX = portrait ? visible.x + (visible.w - weaponTotalW) / 2 : visible.x + 20;
+    // Keep the bar above the mobile controls' large touch targets.
+    const wY = portrait ? visible.y + visible.h - 165 : visible.y + visible.h - 40;
     for (let i = 0; i < p.weapons.length; i++) {
       const w = p.weapons[i];
-      const wx = 20 + i * 50;
+      const wx = weaponStartX + i * weaponGap;
       // bg
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillRect(wx-2, wY-2, 36, 36);
@@ -1018,9 +1092,9 @@ const Game = {
     // dash cooldown indicator
     if (p.dashCooldown > 0) {
       ctx.fillStyle = 'rgba(120,180,255,0.3)';
-      ctx.fillRect(20, wY - 20, 100, 6);
+      ctx.fillRect(weaponStartX, wY - 20, 100, 6);
       ctx.fillStyle = '#78b4ff';
-      ctx.fillRect(20, wY - 20, 100 * (1 - p.dashCooldown / CONFIG.PLAYER.dashCooldown), 6);
+      ctx.fillRect(weaponStartX, wY - 20, 100 * (1 - p.dashCooldown / CONFIG.PLAYER.dashCooldown), 6);
     }
 
     // messages
@@ -1031,15 +1105,17 @@ const Game = {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = m.color;
       ctx.font = 'bold 14px Courier New';
-      ctx.fillText(m.text, CONFIG.CANVAS_W/2, 80 + i * 22);
+      ctx.fillText(m.text, visible.x + visible.w/2, visible.y + 80 + i * 22);
     }
     ctx.globalAlpha = 1;
 
     // controls hint
-    ctx.fillStyle = 'rgba(138,122,90,0.5)';
-    ctx.font = '10px Courier New';
-    ctx.textAlign = 'right';
-    ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', CONFIG.CANVAS_W - 20, CONFIG.CANVAS_H - 10);
+    if (!portrait) {
+      ctx.fillStyle = 'rgba(138,122,90,0.5)';
+      ctx.font = '10px Courier New';
+      ctx.textAlign = 'right';
+      ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', visible.x + visible.w - 20, visible.y + visible.h - 10);
+    }
 
     // portrait orientation hint (show for first 30 seconds of gameplay)
     if (this.isPortrait() && !this.forcedLandscape && this.levelTime < 30) {
@@ -1106,9 +1182,10 @@ const Game = {
     ctx.fillText('闪避', d.anchorX, d.anchorY);
     ctx.textBaseline = 'alphabetic';
 
-    // ---- Pause button (top-right corner, always visible) ----
-    const px = CONFIG.CANVAS_W - 30;
-    const py = 60;
+    // ---- Pause button (top-right of the actually visible canvas) ----
+    const pause = this.getPauseButtonRect();
+    const px = pause.x + pause.w / 2;
+    const py = pause.y + pause.h / 2;
     ctx.fillStyle = 'rgba(200,180,120,0.3)';
     ctx.fillRect(px - 12, py - 12, 24, 24);
     ctx.fillStyle = 'rgba(200,180,120,0.7)';
@@ -1119,8 +1196,9 @@ const Game = {
   // Draw rotate button in all states (top-left corner)
   renderRotateButton() {
     const ctx = this.ctx;
-    const rx = 30;
-    const ry = 70;
+    const button = this.getRotateButtonRect();
+    const rx = button.x + button.w / 2;
+    const ry = button.y + button.h / 2;
     const r = 18;
     // Background circle
     ctx.fillStyle = 'rgba(120,180,255,0.25)';
@@ -1219,34 +1297,37 @@ const Game = {
     const line = this.storyLines[this.storyIndex];
     if (!line) return;
 
-    // dialogue box
-    const boxY = CONFIG.CANVAS_H - 180;
+    const visible = this.getVisibleCanvasRect();
+    // Keep the dialogue entirely within the viewport after cover cropping.
+    const boxX = visible.x + 10;
+    const boxW = visible.w - 20;
+    const boxY = visible.y + visible.h - 180;
     const boxH = 140;
     ctx.fillStyle = 'rgba(20,15,10,0.95)';
-    ctx.fillRect(40, boxY, CONFIG.CANVAS_W - 80, boxH);
+    ctx.fillRect(boxX, boxY, boxW, boxH);
     ctx.strokeStyle = '#4a3a20';
     ctx.lineWidth = 3;
-    ctx.strokeRect(40, boxY, CONFIG.CANVAS_W - 80, boxH);
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
 
     // speaker
     ctx.fillStyle = '#c4a87a';
     ctx.font = 'bold 16px Courier New';
     ctx.textAlign = 'left';
-    ctx.fillText('【' + line.speaker + '】', 60, boxY + 30);
+    ctx.fillText('【' + line.speaker + '】', boxX + 15, boxY + 30);
 
     // text (with typewriter effect)
     ctx.fillStyle = '#e0d0b0';
     ctx.font = '15px Courier New';
     const maxChars = Math.floor(this.storyTimer * 40);
     const displayText = line.text.substring(0, Math.min(line.text.length, maxChars));
-    this.drawTextWrapped(ctx, displayText, 60, boxY + 60, CONFIG.CANVAS_W - 120, 22);
+    this.drawTextWrapped(ctx, displayText, boxX + 15, boxY + 60, boxW - 30, 22);
 
     // skip indicator
     if (this.storyTimer > 0.3) {
       ctx.fillStyle = '#5a4a30';
       ctx.font = '11px Courier New';
       ctx.textAlign = 'right';
-      ctx.fillText(this.storyIndex < this.storyLines.length - 1 ? '点击/空格 继续 →' : '点击/空格 结束 →', CONFIG.CANVAS_W - 60, boxY + boxH - 15);
+      ctx.fillText(this.storyIndex < this.storyLines.length - 1 ? '点击/空格 继续 →' : '点击/空格 结束 →', boxX + boxW - 15, boxY + boxH - 15);
     }
   },
 
@@ -1283,9 +1364,7 @@ const Game = {
   },
 
   isPortrait() {
-    const rect = this.canvas.getBoundingClientRect();
-    // If visible area is taller than wide, we're in portrait-like view
-    return rect.height > rect.width;
+    return !this._rotate90 && window.innerHeight > window.innerWidth;
   },
 
   renderLevelUp() {
@@ -1293,13 +1372,8 @@ const Game = {
     ctx.fillStyle = 'rgba(0,0,20,0.8)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
-    const portrait = this.isPortrait();
-    const cardW = portrait ? 260 : 200;
-    const cardH = portrait ? 180 : 260;
-    const gap = portrait ? 15 : 20;
-    const totalW = this.upgradeChoices.length * cardW + (this.upgradeChoices.length - 1) * gap;
-    const startX = (CONFIG.CANVAS_W - totalW) / 2;
-    const cardY = portrait ? 130 : 160;
+    const layout = this.getChoiceLayout(this.upgradeChoices.length);
+    const portrait = layout.portrait;
 
     ctx.fillStyle = '#ffd040';
     ctx.font = 'bold 32px Courier New';
@@ -1312,7 +1386,8 @@ const Game = {
     // draw 3 cards
     for (let i = 0; i < this.upgradeChoices.length; i++) {
       const choice = this.upgradeChoices[i];
-      const cardX = startX + i * (cardW + gap);
+      const card = layout.cards[i];
+      const cardX = card.x, cardY = card.y, cardW = card.w, cardH = card.h;
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
       // Rarity-based colors
@@ -1346,16 +1421,16 @@ const Game = {
       if (portrait) {
         // Horizontal card layout: icon on left, text on right
         const iconScale = 3.0;
-        Assets.drawCentered(ctx, choice.icon, cardX + 40, cardY + cardH/2, iconScale, 0, 1);
+        Assets.drawCentered(ctx, choice.icon, cardX + 32, cardY + cardH/2, iconScale, 0, 1);
 
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 14px Courier New';
         ctx.textAlign = 'left';
-        this.drawTextWrapped(ctx, choice.name, cardX + 80, cardY + 45, cardW - 90, 18);
+        this.drawTextWrapped(ctx, choice.name, cardX + 65, cardY + 42, cardW - 75, 17);
 
         ctx.fillStyle = '#c4a87a';
         ctx.font = '12px Courier New';
-        if (descText) this.drawTextWrapped(ctx, descText, cardX + 80, cardY + 90, cardW - 90, 16);
+        if (descText) this.drawTextWrapped(ctx, descText, cardX + 65, cardY + 68, cardW - 75, 15);
       } else {
         // Vertical card layout: icon on top, text below
         const iconScale = 3.0;
@@ -1384,13 +1459,8 @@ const Game = {
     ctx.fillStyle = 'rgba(20,15,5,0.85)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
-    const portrait = this.isPortrait();
-    const cardW = portrait ? 260 : 200;
-    const cardH = portrait ? 180 : 260;
-    const gap = portrait ? 15 : 20;
-    const totalW = this.chestRewardChoices.length * cardW + (this.chestRewardChoices.length - 1) * gap;
-    const startX = (CONFIG.CANVAS_W - totalW) / 2;
-    const cardY = portrait ? 130 : 160;
+    const layout = this.getChoiceLayout(this.chestRewardChoices.length);
+    const portrait = layout.portrait;
 
     ctx.fillStyle = '#ffd040';
     ctx.font = 'bold 32px Courier New';
@@ -1402,7 +1472,8 @@ const Game = {
 
     for (let i = 0; i < this.chestRewardChoices.length; i++) {
       const choice = this.chestRewardChoices[i];
-      const cardX = startX + i * (cardW + gap);
+      const card = layout.cards[i];
+      const cardX = card.x, cardY = card.y, cardW = card.w, cardH = card.h;
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
       // Rarity-based colors
@@ -1434,15 +1505,15 @@ const Game = {
       const descText = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
 
       if (portrait) {
-        Assets.drawCentered(ctx, choice.icon, cardX + 40, cardY + cardH/2, chestIconScale, 0, 1);
+        Assets.drawCentered(ctx, choice.icon, cardX + 32, cardY + cardH/2, chestIconScale, 0, 1);
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 14px Courier New';
         ctx.textAlign = 'left';
-        this.drawTextWrapped(ctx, choice.name, cardX + 80, cardY + 45, cardW - 90, 18);
+        this.drawTextWrapped(ctx, choice.name, cardX + 65, cardY + 42, cardW - 75, 17);
         if (descText) {
           ctx.fillStyle = '#c4a87a';
           ctx.font = '12px Courier New';
-          this.drawTextWrapped(ctx, descText, cardX + 80, cardY + 90, cardW - 90, 16);
+          this.drawTextWrapped(ctx, descText, cardX + 65, cardY + 68, cardW - 75, 15);
         }
       } else {
         Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, chestIconScale, 0, 1);

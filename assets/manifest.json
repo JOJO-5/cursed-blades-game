@@ -183,6 +183,46 @@
     "w": 16,
     "h": 16
   },
+  "ui/upgrade_projspeed": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_knockback": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_pickuprange": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_xpmult": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_critdamage": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_cooldown": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_dashcd": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_armor": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_luck": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_lifesteal": {
+    "w": 16,
+    "h": 16
+  },
   "backgrounds/scene_village_forest": {
     "w": 588,
     "h": 418

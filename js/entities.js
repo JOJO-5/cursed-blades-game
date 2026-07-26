@@ -304,7 +304,7 @@ class Weapon {
               if (player.stats.lifesteal > 0) {
                 player.heal(damage * player.stats.lifesteal);
               }
-              if (this.def.type === 'orbit' && this.def.id !== 'shield') {
+              if (this.def.type === 'orbit' && this.id !== 'shield') {
                 Audio2.hit();
               }
             }
@@ -345,8 +345,8 @@ class Weapon {
       Math.cos(ang) * projSpeed,
       Math.sin(ang) * projSpeed,
       dmg, this.def.range, pierce, crit, critMult,
-      this.def.id === 'fireball' ? '#ff8030' : this.def.color,
-      this.def.icon, this.def.size, this.def.id
+      this.id === 'fireball' ? '#ff8030' : this.def.color,
+      this.def.icon, this.def.size, this.id
     );
     proj.homing = this.def.type === 'homing';
     proj.homingStrength = this.def.homingStrength || 0;
@@ -853,7 +853,9 @@ class Pickup {
     if (d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized) {
       this.magnetized = true;
       const ang = angleTo(this.x, this.y, player.x, player.y);
-      const speed = 200 + (CONFIG.PLAYER.pickupRadius - d) * 4;
+      // pickupRangeBonus can magnetize gems outside the base radius; never let
+      // that turn the attraction velocity negative.
+      const speed = Math.max(80, 200 + (CONFIG.PLAYER.pickupRadius - d) * 4);
       this.vx = Math.cos(ang) * speed;
       this.vy = Math.sin(ang) * speed;
     }
