@@ -103,6 +103,22 @@ const Game = {
       container.style.overflow = 'hidden';
       container.style.position = 'relative';
     }
+
+    // Update touch control anchor positions based on portrait/landscape
+    const portrait = winH > winW;
+    if (portrait) {
+      // Portrait: joystick bottom-left, dash bottom-right, higher up to avoid crop
+      Input.joystick.anchorX = 100;
+      Input.joystick.anchorY = CONFIG.CANVAS_H - 80;
+      Input.dashButton.anchorX = CONFIG.CANVAS_W - 80;
+      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
+    } else {
+      // Landscape: joystick bottom-left, dash bottom-right
+      Input.joystick.anchorX = 110;
+      Input.joystick.anchorY = CONFIG.CANVAS_H - 70;
+      Input.dashButton.anchorX = CONFIG.CANVAS_W - 70;
+      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
+    }
   },
 
   fallbackLoad() {
@@ -979,6 +995,20 @@ const Game = {
     ctx.textAlign = 'right';
     ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', CONFIG.CANVAS_W - 20, CONFIG.CANVAS_H - 10);
 
+    // portrait orientation hint (show for first 30 seconds of gameplay)
+    if (this.isPortrait() && this.levelTime < 30) {
+      const alpha = this.levelTime < 25 ? 0.8 : (0.8 * (30 - this.levelTime) / 5);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#c4a87a';
+      ctx.font = 'bold 13px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('建议横屏游戏体验更佳', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 40);
+      ctx.font = '11px Courier New';
+      ctx.fillStyle = '#8a7a5a';
+      ctx.fillText('← 摇杆移动    闪避 →', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 20);
+      ctx.globalAlpha = 1;
+    }
+
     // ---- Touch controls overlay ----
     this.renderTouchControls(ctx);
   },
@@ -987,71 +1017,50 @@ const Game = {
     // Only show during active gameplay
     if (this.state !== 'playing') return;
 
-    // Virtual joystick
-    if (Input.joystick.active) {
-      const j = Input.joystick;
-      // Outer ring
-      ctx.strokeStyle = 'rgba(200,180,120,0.4)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(j.cx, j.cy, j.radius, 0, TAU);
-      ctx.stroke();
-      // Inner ring (translucent fill)
-      ctx.fillStyle = 'rgba(60,50,30,0.3)';
-      ctx.beginPath();
-      ctx.arc(j.cx, j.cy, j.radius, 0, TAU);
-      ctx.fill();
-      // Thumbstick
-      const thumbX = j.cx + j.dx * j.radius;
-      const thumbY = j.cy + j.dy * j.radius;
-      ctx.fillStyle = 'rgba(200,180,120,0.7)';
-      ctx.beginPath();
-      ctx.arc(thumbX, thumbY, 20, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,220,150,0.8)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
+    const j = Input.joystick;
+    const d = Input.dashButton;
 
-    // Dash button
-    if (Input.dashButton.active) {
-      const d = Input.dashButton;
-      const ready = this.player.dashCooldown <= 0;
-      ctx.fillStyle = ready ? 'rgba(120,180,255,0.4)' : 'rgba(60,60,80,0.3)';
-      ctx.beginPath();
-      ctx.arc(d.cx, d.cy, d.radius, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = ready ? 'rgba(120,180,255,0.8)' : 'rgba(80,80,100,0.5)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      // Label
-      ctx.fillStyle = ready ? '#78b4ff' : '#555566';
-      ctx.font = 'bold 14px Courier New';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('闪避', d.cx, d.cy);
-      ctx.textBaseline = 'alphabetic';
-    } else {
-      // Show a hint dash button at bottom-right when not active
-      const hintX = CONFIG.CANVAS_W - 70;
-      const hintY = CONFIG.CANVAS_H - 90;
-      const ready = this.player.dashCooldown <= 0;
-      ctx.fillStyle = ready ? 'rgba(120,180,255,0.15)' : 'rgba(60,60,80,0.1)';
-      ctx.beginPath();
-      ctx.arc(hintX, hintY, 35, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = ready ? 'rgba(120,180,255,0.4)' : 'rgba(80,80,100,0.2)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = ready ? 'rgba(120,180,255,0.5)' : 'rgba(80,80,100,0.3)';
-      ctx.font = '12px Courier New';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('闪避', hintX, hintY);
-      ctx.textBaseline = 'alphabetic';
-    }
+    // ---- Virtual joystick (always show at fixed anchor) ----
+    // Outer ring
+    ctx.strokeStyle = j.active ? 'rgba(200,180,120,0.5)' : 'rgba(200,180,120,0.25)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(j.anchorX, j.anchorY, j.radius, 0, TAU);
+    ctx.stroke();
+    // Inner ring (translucent fill)
+    ctx.fillStyle = j.active ? 'rgba(60,50,30,0.4)' : 'rgba(60,50,30,0.15)';
+    ctx.beginPath();
+    ctx.arc(j.anchorX, j.anchorY, j.radius, 0, TAU);
+    ctx.fill();
+    // Thumbstick
+    const thumbX = j.active ? (j.anchorX + j.dx * j.radius) : j.anchorX;
+    const thumbY = j.active ? (j.anchorY + j.dy * j.radius) : j.anchorY;
+    ctx.fillStyle = j.active ? 'rgba(200,180,120,0.8)' : 'rgba(200,180,120,0.4)';
+    ctx.beginPath();
+    ctx.arc(thumbX, thumbY, 20, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = j.active ? 'rgba(255,220,150,0.9)' : 'rgba(200,180,120,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    // Pause button (top-right corner, always visible)
+    // ---- Dash button (always show at fixed anchor) ----
+    const ready = this.player.dashCooldown <= 0;
+    ctx.fillStyle = ready ? 'rgba(120,180,255,0.3)' : 'rgba(60,60,80,0.2)';
+    ctx.beginPath();
+    ctx.arc(d.anchorX, d.anchorY, d.radius, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = ready ? 'rgba(120,180,255,0.7)' : 'rgba(80,80,100,0.4)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = ready ? '#78b4ff' : '#555566';
+    ctx.font = 'bold 14px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('闪避', d.anchorX, d.anchorY);
+    ctx.textBaseline = 'alphabetic';
+
+    // ---- Pause button (top-right corner, always visible) ----
     const px = CONFIG.CANVAS_W - 30;
     const py = 60;
     ctx.fillStyle = 'rgba(200,180,120,0.3)';

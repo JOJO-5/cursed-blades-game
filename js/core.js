@@ -35,14 +35,18 @@ const Input = {
     cx: 0, cy: 0,       // center position (where touch started)
     dx: 0, dy: 0,       // delta from center (normalized -1..1)
     radius: 60,         // max drag radius
+    // fixed anchor position (set by Game based on portrait/landscape)
+    anchorX: 110, anchorY: 0,  // updated by Game.resizeCanvas
   },
   // Dash button state
   dashButton: {
     active: false,
     touchId: null,
     cx: 0, cy: 0,
-    radius: 40,
+    radius: 42,
     pressed: false,     // just pressed this frame
+    // fixed anchor position (set by Game based on portrait/landscape)
+    anchorX: 0, anchorY: 0,  // updated by Game.resizeCanvas
   },
   // Track if any touch is on UI elements (don't trigger joystick)
   _touchIsUI: false,
@@ -99,19 +103,19 @@ const Input = {
         }
 
         if (tx < CONFIG.CANVAS_W * 0.5 && !this.joystick.active) {
-          // Start joystick
+          // Start joystick at fixed anchor position
           this.joystick.active = true;
           this.joystick.touchId = touch.identifier;
-          this.joystick.cx = tx;
-          this.joystick.cy = ty;
+          this.joystick.cx = this.joystick.anchorX;
+          this.joystick.cy = this.joystick.anchorY;
           this.joystick.dx = 0;
           this.joystick.dy = 0;
         } else if (tx >= CONFIG.CANVAS_W * 0.5 && !this.dashButton.active) {
-          // Dash button area (right side)
+          // Dash button at fixed anchor position
           this.dashButton.active = true;
           this.dashButton.touchId = touch.identifier;
-          this.dashButton.cx = tx;
-          this.dashButton.cy = ty;
+          this.dashButton.cx = this.dashButton.anchorX;
+          this.dashButton.cy = this.dashButton.anchorY;
           this.dashButton.pressed = true;
         }
       }
