@@ -250,6 +250,44 @@ const CONFIG = {
       projectileSpeed: 200, projectileColor: '#ff4030',
       summonCooldown: 8, summonCount: 3,
     },
+    // level 2 enemies
+    miner: {
+      name: '腐化矿工', sprite: 'enemies/hooded_warrior',
+      hp: 35, speed: 48, damage: 12, xp: 5, radius: 16,
+      color: '#6a5a3a', behavior: 'chase',
+    },
+    rat: {
+      name: '疫病鼠群', sprite: 'enemies/toxic_slime',
+      hp: 12, speed: 90, damage: 6, xp: 2, radius: 12,
+      color: '#8a6a3a', behavior: 'chase',
+    },
+    beetle: {
+      name: '岩甲甲虫', sprite: 'enemies/bone_spider',
+      hp: 40, speed: 55, damage: 10, xp: 5, radius: 18,
+      color: '#5a4a2a', behavior: 'chase',
+    },
+    crystal: {
+      name: '水晶法师', sprite: 'enemies/dwarf_mage',
+      hp: 35, speed: 30, damage: 16, xp: 8, radius: 15,
+      color: '#4a8aaa', behavior: 'ranged', shootRange: 240, shootCooldown: 2.0,
+      projectileSpeed: 180, projectileColor: '#80e0ff',
+    },
+    // level 2 elite
+    crusher: {
+      name: '岩石粉碎者', sprite: 'enemies/fungal_golem',
+      hp: 240, speed: 28, damage: 28, xp: 25, radius: 30,
+      color: '#6a5a4a', behavior: 'chase', elite: true,
+    },
+    // level 2 boss
+    bossSpider: {
+      name: '腐化巨蛛', sprite: 'enemies/bone_spider',
+      hp: 1200, speed: 50, damage: 35, xp: 150, radius: 42,
+      color: '#4a2a3a', behavior: 'boss',
+      phases: 3, enrageHpPct: 0.4,
+      shootRange: 350, shootCooldown: 1.2,
+      projectileSpeed: 220, projectileColor: '#c040c0',
+      summonCooldown: 6, summonCount: 4,
+    },
   },
 
   // ---- Level 1: Abandoned Village ----
@@ -269,6 +307,14 @@ const CONFIG = {
       bossId: 'boss',
       chestCount: 5,
       mimicChance: 0.4,
+      // ---- Phased spawning (data-driven) ----
+      phases: [
+        { time: 0,   name: '初始骚扰',   enemyPool: ['slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
+        { time: 120, name: '远程加入',   enemyPool: ['slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
+        { time: 240, name: '精英登场',   enemyPool: ['slime','bat','spider','skeleton'],      rangedPool: ['archer'],     maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '腐化加剧',   enemyPool: ['slime','bat','spider','skeleton','boar'], rangedPool: ['archer','mage'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 480, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
+      ],
       props: {
         trees: ['props/tree_dead_gnarled_01'],
         tombstones: ['props/tombstone_single_rounded','props/tombstone_single_tall_ornate','props/tombstone_double_rounded'],
@@ -279,6 +325,40 @@ const CONFIG = {
         houses: ['props/shrine_stone_lit'],
       },
       groundTiles: ['tiles/ground_dirt_grass_01','tiles/ground_dirt_stones_01','tiles/ground_dirt_path_01','tiles/ground_mossy_stone_01'],
+    },
+    mine: {
+      name: '地下矿洞',
+      theme: 'mine',
+      bgMusic: null,
+      mapW: 36, mapH: 36,
+      spawnInterval: 2.5,
+      maxEnemies: 30,
+      enemyPool: ['rat','miner','beetle','spider','skeleton'],
+      rangedPool: ['crystal','archer'],
+      elitePool: ['crusher','reaper'],
+      eliteInterval: 75,
+      bossSpawnTime: 420,  // boss appears at 7 minutes
+      bossId: 'bossSpider',
+      chestCount: 6,
+      mimicChance: 0.45,
+      // ---- Phased spawning (data-driven) ----
+      phases: [
+        { time: 0,   name: '矿洞探索',   enemyPool: ['rat','beetle'],                          rangedPool: [],             maxEnemies: 14, spawnInterval: 2.5, events: [] },
+        { time: 120, name: '水晶法师',   enemyPool: ['rat','beetle','miner'],                   rangedPool: ['crystal'],    maxEnemies: 18, spawnInterval: 2.2, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'水晶法师出现了！', color:'#ff8030'}] },
+        { time: 240, name: '腐化蔓延',   enemyPool: ['rat','beetle','miner','spider'],          rangedPool: ['crystal'],    maxEnemies: 22, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '深渊回响',   enemyPool: ['rat','beetle','miner','spider','skeleton'], rangedPool: ['crystal','archer'], maxEnemies: 30, spawnInterval: 1.6, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 420, name: 'Boss降临',   enemyPool: [],                                         rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
+      ],
+      props: {
+        trees: ['props/stone_pillars_01'],
+        tombstones: ['props/stone_pillars_01'],
+        fences: ['props/fence_wooden_broken_01'],
+        barrels: ['props/barrel_wooden_single','props/barrels_wooden_group'],
+        braziers: ['props/brazier_single_lit','props/brazier_double_lit'],
+        ruins: ['props/stone_arch_broken','props/stone_pillars_01','props/stone_well_broken'],
+        houses: ['props/shrine_stone_lit'],
+      },
+      groundTiles: ['tiles/ground_dirt_stones_01','tiles/ground_mossy_stone_01','tiles/ground_dirt_path_01'],
     },
   },
 
@@ -300,6 +380,25 @@ const CONFIG = {
         { speaker: '旅者', text: '诅咒……消散了一些，但并未根除。' },
         { speaker: '旁白', text: '骑士倒下了，但他提到诅咒来自更深处……' },
         { speaker: '旅者', text: '地下矿洞，或许藏着真正的答案。' },
+      ],
+    },
+    mine: {
+      intro: [
+        { speaker: '旁白', text: '幽暗的矿洞深处，空气中弥漫着腐朽的气息……' },
+        { speaker: '旅者', text: '这里的诅咒浓度远超村庄。' },
+        { speaker: '旅者', text: '那些矿工……已经被腐化成了怪物。' },
+        { speaker: '旁白', text: '深入矿洞，找到诅咒真正的源头。' },
+      ],
+      bossIntro: [
+        { speaker: '???', text: '嘶嘶嘶……又有猎物送上门了……' },
+        { speaker: '腐化巨蛛', text: '我的蛛网遍布整个矿洞，你逃不掉的！' },
+        { speaker: '旅者', text: '一只巨大的腐化蜘蛛？来吧！' },
+      ],
+      victory: [
+        { speaker: '旅者', text: '终于……结束了。' },
+        { speaker: '旁白', text: '巨蛛倒下了，矿洞中的腐化气息开始消退。' },
+        { speaker: '旅者', text: '诅咒的源头已被根除，村庄终于安全了。' },
+        { speaker: '旁白', text: '旅者带着环刀，踏上了新的旅途……' },
       ],
     },
   },
