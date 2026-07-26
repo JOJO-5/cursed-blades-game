@@ -496,10 +496,17 @@ const Game = {
 
   // ---- Level up UI ----
   updateLevelUp() {
-    for (let i = 0; i < 3; i++) {
-      const cardX = CONFIG.CANVAS_W/2 - 330 + i * 220;
-      const cardY = 160;
-      if (Input.consumeClick(cardX, cardY, 200, 260)) {
+    const portrait = this.isPortrait();
+    const cardW = portrait ? 260 : 200;
+    const cardH = portrait ? 180 : 260;
+    const gap = portrait ? 15 : 20;
+    const totalW = this.upgradeChoices.length * cardW + (this.upgradeChoices.length - 1) * gap;
+    const startX = (CONFIG.CANVAS_W - totalW) / 2;
+    const cardY = portrait ? 130 : 160;
+
+    for (let i = 0; i < this.upgradeChoices.length; i++) {
+      const cardX = startX + i * (cardW + gap);
+      if (Input.consumeClick(cardX, cardY, cardW, cardH)) {
         this.selectUpgrade(i);
         return;
       }
@@ -512,10 +519,17 @@ const Game = {
   },
 
   updateChestReward() {
-    for (let i = 0; i < 3; i++) {
-      const cardX = CONFIG.CANVAS_W/2 - 330 + i * 220;
-      const cardY = 160;
-      if (Input.consumeClick(cardX, cardY, 200, 260)) {
+    const portrait = this.isPortrait();
+    const cardW = portrait ? 260 : 200;
+    const cardH = portrait ? 180 : 260;
+    const gap = portrait ? 15 : 20;
+    const totalW = this.chestRewardChoices.length * cardW + (this.chestRewardChoices.length - 1) * gap;
+    const startX = (CONFIG.CANVAS_W - totalW) / 2;
+    const cardY = portrait ? 130 : 160;
+
+    for (let i = 0; i < this.chestRewardChoices.length; i++) {
+      const cardX = startX + i * (cardW + gap);
+      if (Input.consumeClick(cardX, cardY, cardW, cardH)) {
         this.selectChestReward(i);
         return;
       }
@@ -1111,25 +1125,37 @@ const Game = {
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 340, 200, 45, '返回主菜单', '#aa6a4a');
   },
 
+  isPortrait() {
+    const rect = this.canvas.getBoundingClientRect();
+    // If visible area is taller than wide, we're in portrait-like view
+    return rect.height > rect.width;
+  },
+
   renderLevelUp() {
     const ctx = this.ctx;
     ctx.fillStyle = 'rgba(0,0,20,0.8)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
+    const portrait = this.isPortrait();
+    const cardW = portrait ? 260 : 200;
+    const cardH = portrait ? 180 : 260;
+    const gap = portrait ? 15 : 20;
+    const totalW = this.upgradeChoices.length * cardW + (this.upgradeChoices.length - 1) * gap;
+    const startX = (CONFIG.CANVAS_W - totalW) / 2;
+    const cardY = portrait ? 130 : 160;
+
     ctx.fillStyle = '#ffd040';
     ctx.font = 'bold 32px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('升级!', CONFIG.CANVAS_W/2, 80);
+    ctx.fillText('升级!', CONFIG.CANVAS_W/2, portrait ? 60 : 80);
     ctx.fillStyle = '#c4a87a';
     ctx.font = '14px Courier New';
-    ctx.fillText(`等级 ${this.player.level}  —  选择一项强化`, CONFIG.CANVAS_W/2, 110);
+    ctx.fillText(`等级 ${this.player.level}  —  选择一项强化`, CONFIG.CANVAS_W/2, portrait ? 90 : 110);
 
     // draw 3 cards
     for (let i = 0; i < this.upgradeChoices.length; i++) {
       const choice = this.upgradeChoices[i];
-      const cardX = CONFIG.CANVAS_W/2 - 330 + i * 220;
-      const cardY = 160;
-      const cardW = 200, cardH = 260;
+      const cardX = startX + i * (cardW + gap);
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
       ctx.fillStyle = hover ? 'rgba(50,40,20,0.95)' : 'rgba(25,20,12,0.9)';
@@ -1138,24 +1164,38 @@ const Game = {
       ctx.lineWidth = hover ? 4 : 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
-      // icon - larger scale for visibility
-      const iconScale = 3.0; // 16px * 3 = 48px, clearly visible
-      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, iconScale, 0, 1);
+      if (portrait) {
+        // Horizontal card layout: icon on left, text on right
+        const iconScale = 3.0;
+        Assets.drawCentered(ctx, choice.icon, cardX + 40, cardY + cardH/2, iconScale, 0, 1);
 
-      // name
-      ctx.fillStyle = '#ffd040';
-      ctx.font = 'bold 15px Courier New';
-      ctx.textAlign = 'center';
-      this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
+        ctx.fillStyle = '#ffd040';
+        ctx.font = 'bold 14px Courier New';
+        ctx.textAlign = 'left';
+        this.drawTextWrapped(ctx, choice.name, cardX + 80, cardY + 45, cardW - 90, 18);
 
-      // description
-      ctx.fillStyle = '#c4a87a';
-      ctx.font = '12px Courier New';
-      this.drawTextWrapped(ctx, choice.desc, cardX + 10, cardY + 175, cardW - 20, 16);
+        ctx.fillStyle = '#c4a87a';
+        ctx.font = '12px Courier New';
+        this.drawTextWrapped(ctx, choice.desc, cardX + 80, cardY + 90, cardW - 90, 16);
+      } else {
+        // Vertical card layout: icon on top, text below
+        const iconScale = 3.0;
+        Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, iconScale, 0, 1);
+
+        ctx.fillStyle = '#ffd040';
+        ctx.font = 'bold 15px Courier New';
+        ctx.textAlign = 'center';
+        this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
+
+        ctx.fillStyle = '#c4a87a';
+        ctx.font = '12px Courier New';
+        this.drawTextWrapped(ctx, choice.desc, cardX + 10, cardY + 175, cardW - 20, 16);
+      }
 
       // key hint
       ctx.fillStyle = '#5a4a30';
       ctx.font = '11px Courier New';
+      ctx.textAlign = 'center';
       ctx.fillText(`[${i+1}]`, cardX + cardW/2, cardY + cardH - 15);
     }
   },
@@ -1165,19 +1205,25 @@ const Game = {
     ctx.fillStyle = 'rgba(20,15,5,0.85)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
+    const portrait = this.isPortrait();
+    const cardW = portrait ? 260 : 200;
+    const cardH = portrait ? 180 : 260;
+    const gap = portrait ? 15 : 20;
+    const totalW = this.chestRewardChoices.length * cardW + (this.chestRewardChoices.length - 1) * gap;
+    const startX = (CONFIG.CANVAS_W - totalW) / 2;
+    const cardY = portrait ? 130 : 160;
+
     ctx.fillStyle = '#ffd040';
     ctx.font = 'bold 32px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('宝箱奖励!', CONFIG.CANVAS_W/2, 80);
+    ctx.fillText('宝箱奖励!', CONFIG.CANVAS_W/2, portrait ? 60 : 80);
     ctx.fillStyle = '#c4a87a';
     ctx.font = '14px Courier New';
-    ctx.fillText('选择一项奖励', CONFIG.CANVAS_W/2, 110);
+    ctx.fillText('选择一项奖励', CONFIG.CANVAS_W/2, portrait ? 90 : 110);
 
     for (let i = 0; i < this.chestRewardChoices.length; i++) {
       const choice = this.chestRewardChoices[i];
-      const cardX = CONFIG.CANVAS_W/2 - 330 + i * 220;
-      const cardY = 160;
-      const cardW = 200, cardH = 260;
+      const cardX = startX + i * (cardW + gap);
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
       ctx.fillStyle = hover ? 'rgba(50,40,15,0.95)' : 'rgba(30,22,10,0.9)';
@@ -1187,21 +1233,30 @@ const Game = {
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
       const chestIconScale = choice.weaponId ? 2.5 : 3.0;
-      Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, chestIconScale, 0, 1);
+      const descText = choice.desc || (choice.weaponId ? CONFIG.WEAPONS[choice.weaponId].desc : '');
 
-      ctx.fillStyle = '#ffd040';
-      ctx.font = 'bold 15px Courier New';
-      ctx.textAlign = 'center';
-      this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
-
-      if (choice.desc) {
-        ctx.fillStyle = '#c4a87a';
-        ctx.font = '12px Courier New';
-        this.drawTextWrapped(ctx, choice.desc, cardX + 10, cardY + 175, cardW - 20, 16);
-      } else if (choice.weaponId) {
-        ctx.fillStyle = '#c4a87a';
-        ctx.font = '12px Courier New';
-        this.drawTextWrapped(ctx, CONFIG.WEAPONS[choice.weaponId].desc, cardX + 10, cardY + 175, cardW - 20, 16);
+      if (portrait) {
+        Assets.drawCentered(ctx, choice.icon, cardX + 40, cardY + cardH/2, chestIconScale, 0, 1);
+        ctx.fillStyle = '#ffd040';
+        ctx.font = 'bold 14px Courier New';
+        ctx.textAlign = 'left';
+        this.drawTextWrapped(ctx, choice.name, cardX + 80, cardY + 45, cardW - 90, 18);
+        if (descText) {
+          ctx.fillStyle = '#c4a87a';
+          ctx.font = '12px Courier New';
+          this.drawTextWrapped(ctx, descText, cardX + 80, cardY + 90, cardW - 90, 16);
+        }
+      } else {
+        Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 70, chestIconScale, 0, 1);
+        ctx.fillStyle = '#ffd040';
+        ctx.font = 'bold 15px Courier New';
+        ctx.textAlign = 'center';
+        this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
+        if (descText) {
+          ctx.fillStyle = '#c4a87a';
+          ctx.font = '12px Courier New';
+          this.drawTextWrapped(ctx, descText, cardX + 10, cardY + 175, cardW - 20, 16);
+        }
       }
     }
   },
