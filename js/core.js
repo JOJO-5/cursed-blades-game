@@ -28,7 +28,27 @@ const Input = {
   mouse: { x: 0, y: 0, down: false, clicked: false },
   _justPressed: {},
 
+  // Virtual joystick state
+  joystick: {
+    active: false,
+    touchId: null,
+    cx: 0, cy: 0,       // center position (where touch started)
+    dx: 0, dy: 0,       // delta from center (normalized -1..1)
+    radius: 60,         // max drag radius
+  },
+  // Dash button state
+  dashButton: {
+    active: false,
+    touchId: null,
+    cx: 0, cy: 0,
+    radius: 40,
+    pressed: false,     // just pressed this frame
+  },
+  // Track if any touch is on UI elements (don't trigger joystick)
+  _touchIsUI: false,
+
   init(canvas) {
+    this.canvas = canvas;
     window.addEventListener('keydown', (e) => {
       if (!this.keys[e.code]) this._justPressed[e.code] = true;
       this.keys[e.code] = true;
@@ -48,6 +68,109 @@ const Input = {
       this.mouse.clicked = true;
     });
     canvas.addEventListener('mouseup', (e) => { this.mouse.down = false; });
+
+    // ---- Touch events for mobile ----
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+
+      for (const touch of e.changedTouches) {
+        const tx = (touch.clientX - rect.left) * sx;
+        const ty = (touch.clientY - rect.top) * sy;
+
+        // Check if touch is on a UI button area (top half of screen = UI clicks)
+        // For menu/pause/upgrade screens, treat as mouse click
+        if (Game.state !== 'playing') {
+          this.mouse.x = tx;
+          this.mouse.y = ty;
+          this.mouse.clicked = true;
+          this.mouse.down = true;
+          continue;
+        }
+
+        // In playing state: check pause button first, then left side = joystick, right-bottom = dash
+        // Pause button at (CANVAS_W - 30, 60), size ~24
+        if (tx >= CONFIG.CANVAS_W - 50 && tx <= CONFIG.CANVAS_W - 10 && ty >= 40 && ty <= 80) {
+          this._justPressed['Escape'] = true;
+          this.keys['Escape'] = true;
+          continue;
+        }
+
+        if (tx < CONFIG.CANVAS_W * 0.5 && !this.joystick.active) {
+          // Start joystick
+          this.joystick.active = true;
+          this.joystick.touchId = touch.identifier;
+          this.joystick.cx = tx;
+          this.joystick.cy = ty;
+          this.joystick.dx = 0;
+          this.joystick.dy = 0;
+        } else if (tx >= CONFIG.CANVAS_W * 0.5 && !this.dashButton.active) {
+          // Dash button area (right side)
+          this.dashButton.active = true;
+          this.dashButton.touchId = touch.identifier;
+          this.dashButton.cx = tx;
+          this.dashButton.cy = ty;
+          this.dashButton.pressed = true;
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+
+      for (const touch of e.changedTouches) {
+        const tx = (touch.clientX - rect.left) * sx;
+        const ty = (touch.clientY - rect.top) * sy;
+
+        if (touch.identifier === this.joystick.touchId) {
+          let dx = tx - this.joystick.cx;
+          let dy = ty - this.joystick.cy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist > this.joystick.radius) {
+            dx = (dx / dist) * this.joystick.radius;
+            dy = (dy / dist) * this.joystick.radius;
+          }
+          this.joystick.dx = dx / this.joystick.radius;
+          this.joystick.dy = dy / this.joystick.radius;
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      for (const touch of e.changedTouches) {
+        if (touch.identifier === this.joystick.touchId) {
+          this.joystick.active = false;
+          this.joystick.touchId = null;
+          this.joystick.dx = 0;
+          this.joystick.dy = 0;
+        }
+        if (touch.identifier === this.dashButton.touchId) {
+          this.dashButton.active = false;
+          this.dashButton.touchId = null;
+        }
+      }
+      // If no more touches, release mouse
+      if (e.touches.length === 0) {
+        this.mouse.down = false;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      this.joystick.active = false;
+      this.joystick.touchId = null;
+      this.joystick.dx = 0;
+      this.joystick.dy = 0;
+      this.dashButton.active = false;
+      this.dashButton.touchId = null;
+      this.mouse.down = false;
+    }, { passive: false });
   },
 
   isDown(code) { return !!this.keys[code]; },
@@ -66,6 +189,7 @@ const Input = {
   clearFrame() {
     this._justPressed = {};
     this.mouse.clicked = false;
+    this.dashButton.pressed = false;
   }
 };
 

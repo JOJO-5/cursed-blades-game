@@ -115,6 +115,12 @@ class Player {
     if (Input.isDown('KeyA') || Input.isDown('ArrowLeft')) mx -= 1;
     if (Input.isDown('KeyD') || Input.isDown('ArrowRight')) mx += 1;
 
+    // Virtual joystick input (overrides keyboard if active)
+    if (Input.joystick.active && (Math.abs(Input.joystick.dx) > 0.1 || Math.abs(Input.joystick.dy) > 0.1)) {
+      mx = Input.joystick.dx;
+      my = Input.joystick.dy;
+    }
+
     this.isMoving = (mx !== 0 || my !== 0);
     if (this.isMoving) {
       const len = Math.sqrt(mx*mx + my*my);
@@ -122,8 +128,8 @@ class Player {
       this.moveAngle = Math.atan2(my, mx);
     }
 
-    // dash
-    if (Input.wasPressed('Space') && this.dashCooldown <= 0 && this.isMoving) {
+    // dash (keyboard or touch button)
+    if ((Input.wasPressed('Space') || Input.dashButton.pressed) && this.dashCooldown <= 0 && this.isMoving) {
       this.dashTimer = CONFIG.PLAYER.dashDuration;
       this.dashCooldown = CONFIG.PLAYER.dashCooldown;
       this.dashDir = { x: mx, y: my };

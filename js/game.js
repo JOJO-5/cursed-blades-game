@@ -856,7 +856,88 @@ const Game = {
     ctx.fillStyle = 'rgba(138,122,90,0.5)';
     ctx.font = '10px Courier New';
     ctx.textAlign = 'right';
-    ctx.fillText('WASD移动  空格闪避  ESC暂停', CONFIG.CANVAS_W - 20, CONFIG.CANVAS_H - 10);
+    ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', CONFIG.CANVAS_W - 20, CONFIG.CANVAS_H - 10);
+
+    // ---- Touch controls overlay ----
+    this.renderTouchControls(ctx);
+  },
+
+  renderTouchControls(ctx) {
+    // Only show during active gameplay
+    if (this.state !== 'playing') return;
+
+    // Virtual joystick
+    if (Input.joystick.active) {
+      const j = Input.joystick;
+      // Outer ring
+      ctx.strokeStyle = 'rgba(200,180,120,0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(j.cx, j.cy, j.radius, 0, TAU);
+      ctx.stroke();
+      // Inner ring (translucent fill)
+      ctx.fillStyle = 'rgba(60,50,30,0.3)';
+      ctx.beginPath();
+      ctx.arc(j.cx, j.cy, j.radius, 0, TAU);
+      ctx.fill();
+      // Thumbstick
+      const thumbX = j.cx + j.dx * j.radius;
+      const thumbY = j.cy + j.dy * j.radius;
+      ctx.fillStyle = 'rgba(200,180,120,0.7)';
+      ctx.beginPath();
+      ctx.arc(thumbX, thumbY, 20, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,220,150,0.8)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Dash button
+    if (Input.dashButton.active) {
+      const d = Input.dashButton;
+      const ready = this.player.dashCooldown <= 0;
+      ctx.fillStyle = ready ? 'rgba(120,180,255,0.4)' : 'rgba(60,60,80,0.3)';
+      ctx.beginPath();
+      ctx.arc(d.cx, d.cy, d.radius, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = ready ? 'rgba(120,180,255,0.8)' : 'rgba(80,80,100,0.5)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Label
+      ctx.fillStyle = ready ? '#78b4ff' : '#555566';
+      ctx.font = 'bold 14px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('闪避', d.cx, d.cy);
+      ctx.textBaseline = 'alphabetic';
+    } else {
+      // Show a hint dash button at bottom-right when not active
+      const hintX = CONFIG.CANVAS_W - 70;
+      const hintY = CONFIG.CANVAS_H - 90;
+      const ready = this.player.dashCooldown <= 0;
+      ctx.fillStyle = ready ? 'rgba(120,180,255,0.15)' : 'rgba(60,60,80,0.1)';
+      ctx.beginPath();
+      ctx.arc(hintX, hintY, 35, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = ready ? 'rgba(120,180,255,0.4)' : 'rgba(80,80,100,0.2)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = ready ? 'rgba(120,180,255,0.5)' : 'rgba(80,80,100,0.3)';
+      ctx.font = '12px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('闪避', hintX, hintY);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // Pause button (top-right corner, always visible)
+    const px = CONFIG.CANVAS_W - 30;
+    const py = 60;
+    ctx.fillStyle = 'rgba(200,180,120,0.3)';
+    ctx.fillRect(px - 12, py - 12, 24, 24);
+    ctx.fillStyle = 'rgba(200,180,120,0.7)';
+    ctx.fillRect(px - 7, py - 7, 4, 14);
+    ctx.fillRect(px + 3, py - 7, 4, 14);
   },
 
   renderMenu() {
