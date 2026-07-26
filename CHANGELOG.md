@@ -1,5 +1,48 @@
 # 修改记录 (CHANGELOG)
 
+## [v0.8.0] - 2026-07-26
+
+### Boss无头骑士双阶段战（阶段4.2）
+- **Boss 重设计**：将第一关 Boss 从"诅咒骑士"重命名为"无头骑士"，HP 提升至 1000，实现真正的双阶段 Boss 战
+  - 影响文件：`js/config.js`
+- **Boss 状态机**：新增 `bossState`（idle/windup/attack/recover/charging）和 `currentAbility` 状态机，替代原有的固定冷却技能逻辑
+  - `pickNextAbility()`：根据当前阶段从技能队列中选择下一个技能，阶段一和阶段二有不同技能池
+  - `getWindupDuration()` / `getAttackDuration()`：数据驱动的前摇和攻击持续时间
+  - `executeAbilityStart()` / `endAbility()`：技能执行和结束的生命周期管理
+  - 影响文件：`js/entities.js`
+- **阶段一技能（HP > 50%）**：
+  - 近战挥砍（cleave）：扇形范围伤害，前摇 0.7s，有扇形预警圈
+  - 扇形弹幕（fanShot）：5 发扇形弹丸，前摇 0.6s，有圆圈预警
+  - 直线冲锋（charge）：高速直线冲刺，前摇 0.9s，有虚线方向预警，冲锋碰撞造成 1.4 倍伤害
+- **阶段二技能（HP < 50%，阶段转换时触发）**：
+  - 环绕武器（orbit）：3 把旋转剑环绕 Boss，持续碰撞伤害
+  - 投掷巨剑（swordThrow）：发射大型剑弹丸（radius=18），前摇 0.8s
+  - 召唤腐化士兵（soldierSummon）：召唤 2 个骷髅战士
+  - 地面危险区域（hazard）：在玩家位置生成腐化之火伤害圈，持续 4 秒，每 0.5 秒造成伤害
+- **阶段转换**：HP 降至 50% 时触发，Boss 速度+25%、伤害+15%，生成环绕武器，显示"无头骑士拔出腐化巨剑！第二阶段！"提示，屏幕震动
+- **攻击预警系统**：
+  - cleave：红色扇形区域逐渐变亮
+  - charge：红色虚线指示冲锋方向
+  - fanShot/swordThrow：Boss 周围脉冲圆圈
+  - hazard：紫色虚线圆圈标记目标区域
+- **地面危险区域渲染**：紫色径向渐变伤害圈，随生命衰减透明度，边缘闪烁
+- **环绕武器渲染**：旋转剑精灵 + 运动拖尾
+- **新增辅助函数**：`shuffle()`（Fisher-Yates 洗牌）、`normalizeAngle()`（角度归一化到 [-π, π]）
+  - 影响文件：`js/core.js`
+- **剧情更新**：Boss 登场台词改为无头骑士
+- **缓存版本**：index.html 脚本版本号 v8 → v9
+
+### 验证结果
+- [x] Boss 双阶段配置正确（enrageHpPct: 0.5，阶段一/二技能参数齐全）
+- [x] 状态机正确流转（idle → windup → attack → recover → idle）
+- [x] 阶段一三技能均可触发（cleave/fanShot/charge）
+- [x] 阶段二四技能均可触发（orbit/swordThrow/soldierSummon/hazard）
+- [x] 阶段转换在 HP<50% 时触发，环绕武器生成
+- [x] 所有攻击有前摇预警
+- [x] 地面危险区域正确渲染和伤害
+- [x] npm test 通过（17 敌人，2 关卡，Boss 配置校验）
+- [x] node -c 语法检查全部通过
+
 ## [v0.7.0] - 2026-07-26
 
 ### 关卡分阶段刷怪系统（阶段4.1）

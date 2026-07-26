@@ -21,6 +21,20 @@ function pickN(arr, n) {
   }
   return result;
 }
+// Fisher-Yates shuffle (in-place)
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+// normalize angle to [-PI, PI]
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= TAU;
+  while (a < -Math.PI) a += TAU;
+  return a;
+}
 
 // ---- Input manager ----
 const Input = {

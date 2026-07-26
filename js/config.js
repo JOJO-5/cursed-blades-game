@@ -240,15 +240,26 @@ const CONFIG = {
       hp: 100, speed: 35, damage: 18, xp: 15, radius: 22,
       color: '#aa6a3a', behavior: 'chase', isMimic: true,
     },
-    // boss
+    // boss — 无头骑士 (Headless Knight), two-phase boss
     boss: {
-      name: '诅咒骑士', sprite: 'bosses/dark_knight_flame',
-      hp: 800, speed: 45, damage: 30, xp: 100, radius: 36,
+      name: '无头骑士', sprite: 'bosses/dark_knight_flame',
+      hp: 1000, speed: 42, damage: 28, xp: 120, radius: 38,
       color: '#3a1a2a', behavior: 'boss',
-      phases: 3, enrageHpPct: 0.33,
-      shootRange: 300, shootCooldown: 1.5,
+      phases: 2, enrageHpPct: 0.5,
+      shootRange: 320, shootCooldown: 1.8,
       projectileSpeed: 200, projectileColor: '#ff4030',
-      summonCooldown: 8, summonCount: 3,
+      summonCooldown: 9, summonCount: 3,
+      // phase-1 abilities (melee cleave / fan shot / charge)
+      cleaveRange: 110, cleaveDamage: 1.1, cleaveCooldown: 4.0, cleaveWindup: 0.7, cleaveArc: 1.4,
+      fanShotCooldown: 3.0, fanShotWindup: 0.6, fanShotCount: 5,
+      chargeCooldown: 5.5, chargeWindup: 0.9, chargeSpeed: 380, chargeDamage: 1.4,
+      // phase-2 abilities (orbiting weapons / sword throw / summon soldiers / ground hazards)
+      orbitWeaponCooldown: 6.0, orbitWeaponCount: 3, orbitWeaponSpeed: 3.2, orbitWeaponDamage: 22,
+      swordThrowCooldown: 5.0, swordThrowWindup: 0.8, swordThrowDamage: 1.3,
+      soldierSummonCooldown: 8.0, soldierSummonCount: 2,
+      hazardCooldown: 7.0, hazardRadius: 90, hazardDamage: 14, hazardDuration: 4.0,
+      // ability cycle timer for phase-1 rotation
+      abilityInterval: 1.2,
     },
     // level 2 enemies
     miner: {
@@ -373,7 +384,7 @@ const CONFIG = {
       ],
       bossIntro: [
         { speaker: '???', text: '你竟敢踏入我的领地……' },
-        { speaker: '诅咒骑士', text: '这把剑的诅咒，正是我赋予的！' },
+        { speaker: '无头骑士', text: '这把剑的诅咒，正是我赋予的！头颅又算什么……' },
         { speaker: '旅者', text: '你就是诅咒的源头？受死吧！' },
       ],
       victory: [

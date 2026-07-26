@@ -422,6 +422,28 @@ class Enemy {
     this.phase = 1;
     this.enraged = false;
     this.contactCooldown = 0;
+
+    // ---- Boss state machine (无头骑士) ----
+    // bossState: 'idle' | 'windup' | 'attack' | 'recover' | 'charging'
+    // currentAbility: 'cleave' | 'fanShot' | 'charge' | 'orbit' | 'swordThrow' | 'soldierSummon' | 'hazard' | 'summon'
+    if (this.isBoss) {
+      this.bossState = 'idle';
+      this.currentAbility = null;
+      this.stateTimer = 0;          // generic timer for current state
+      this.abilityTimer = 0;        // counts down between abilities
+      this.abilityQueue = [];       // upcoming abilities to execute
+      this.abilityDir = 0;          // facing angle for current attack
+      this.chargeVx = 0;            // charge velocity
+      this.chargeVy = 0;
+      this.chargeDuration = 0;
+      // phase-2 orbiting weapons
+      this.orbitWeapons = [];       // { angle, radius }
+      this.orbitAngle = 0;
+      // ground hazards (damage zones)
+      this.hazards = [];            // { x, y, r, life, damage }
+      // sword-throw tracking
+      this.thrownSwords = [];
+    }
   }
 
   static nextId = 0;
@@ -454,11 +476,22 @@ class Enemy {
       const hpPct = this.hp / this.maxHp;
       if (!this.enraged && hpPct <= this.def.enrageHpPct) {
         this.enraged = true;
-        this.speed *= 1.5;
-        this.damage *= 1.3;
-        this.shootTimer = 0.5;
+        this.phase = 2;
+        // phase transition: speed up, refresh timers, spawn orbiting weapons
+        this.speed *= 1.25;
+        this.damage *= 1.15;
+        this.shootTimer = 0.4;
+        this.abilityTimer = 0;
+        this.abilityQueue = [];
+        this.bossState = 'idle';
+        // initialize orbiting weapons for phase 2
+        const wCount = this.def.orbitWeaponCount || 3;
+        for (let i = 0; i < wCount; i++) {
+          this.orbitWeapons.push({ angle: (i / wCount) * TAU, radius: this.radius + 30 });
+        }
         Audio2.boss();
-        Game.addMessage('诅咒骑士进入狂暴状态!', '#ff4040');
+        Game.addMessage('无头骑士拔出腐化巨剑！第二阶段！', '#ff4040');
+        Game.shakeScreen(12, 0.4);
       }
     }
 
@@ -520,8 +553,16 @@ class Enemy {
       const ang = angleTo(this.x, this.y, player.x, player.y);
       let sp = this.speed;
       if (this.def.behavior === 'boss') {
-        // boss keeps some distance sometimes
-        if (d < 100) sp *= 0.3;
+        // boss movement handled by state machine; idle moves slowly toward player
+        if (this.bossState === 'charging') {
+          sp = 0; // velocity set by charge
+        } else if (this.bossState === 'windup' || this.bossState === 'attack') {
+          sp = this.speed * 0.2; // slow during attacks
+        } else {
+          // idle: keep moderate distance, approach if far
+          if (d < 120) sp *= 0.3;
+          else if (d > 260) sp *= 1.2;
+        }
       }
       this.vx = Math.cos(ang) * sp;
       this.vy = Math.sin(ang) * sp;
@@ -546,34 +587,18 @@ class Enemy {
       }
     }
 
+    // charge velocity overrides normal movement
+    if (this.isBoss && this.bossState === 'charging') {
+      this.vx = this.chargeVx;
+      this.vy = this.chargeVy;
+    }
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // boss abilities
-    if (this.def.behavior === 'boss') {
-      this.shootTimer -= dt;
-      if (this.shootTimer <= 0 && d < this.def.shootRange) {
-        this.shootTimer = this.def.shootCooldown;
-        // fan shot
-        const baseAng = angleTo(this.x, this.y, player.x, player.y);
-        const shots = this.enraged ? 5 : 3;
-        for (let i = 0; i < shots; i++) {
-          const a = baseAng + (i - (shots-1)/2) * 0.25;
-          Game.enemyProjectiles.push(new EnemyProjectile(
-            this.x, this.y,
-            Math.cos(a) * this.def.projectileSpeed,
-            Math.sin(a) * this.def.projectileSpeed,
-            this.damage * 0.6, this.def.projectileColor, 400
-          ));
-        }
-        Audio2.play('sawtooth', 120, 0.1, 0.08);
-      }
-
-      this.summonTimer -= dt;
-      if (this.summonTimer <= 0) {
-        this.summonTimer = this.def.summonCooldown;
-        this.summon();
-      }
+    // boss state machine
+    if (this.isBoss) {
+      this.updateBoss(dt, player, d);
     }
 
     // contact damage
@@ -585,6 +610,279 @@ class Enemy {
       this.knockbackVx += Math.cos(ang) * 50;
       this.knockbackVy += Math.sin(ang) * 50;
     }
+  }
+
+  // ---- Boss state machine (无头骑士 two-phase boss) ----
+  updateBoss(dt, player, d) {
+    // update phase-2 persistent effects (orbit weapons, hazards, thrown swords)
+    if (this.phase >= 2) {
+      this.updateOrbitWeapons(dt, player);
+      this.updateHazards(dt, player);
+      this.updateThrownSwords(dt, player);
+    }
+
+    this.stateTimer -= dt;
+
+    switch (this.bossState) {
+      case 'idle':
+        this.abilityTimer -= dt;
+        if (this.abilityTimer <= 0) {
+          this.pickNextAbility(player, d);
+        }
+        break;
+
+      case 'windup':
+        // telegraph the attack; boss is slow/vulnerable
+        if (this.stateTimer <= 0) {
+          this.bossState = 'attack';
+          this.stateTimer = this.getAttackDuration();
+          this.executeAbilityStart(player, d);
+        }
+        break;
+
+      case 'attack':
+        if (this.bossState === 'attack' && this.currentAbility === 'charge') {
+          // charge moves the boss; check duration
+          this.chargeDuration -= dt;
+          // charge collision damage
+          if (d < this.radius + player.radius && this.contactCooldown <= 0) {
+            player.takeDamage(this.damage * this.def.chargeDamage);
+            this.contactCooldown = 0.5;
+            Game.shakeScreen(10, 0.3);
+          }
+          if (this.chargeDuration <= 0) {
+            this.endAbility();
+          }
+        } else if (this.stateTimer <= 0) {
+          this.endAbility();
+        }
+        break;
+
+      case 'recover':
+        if (this.stateTimer <= 0) {
+          this.bossState = 'idle';
+          this.abilityTimer = this.def.abilityInterval || 1.0;
+        }
+        break;
+
+      case 'charging':
+        // charge handled in attack state; this is a fallback
+        this.bossState = 'attack';
+        break;
+    }
+  }
+
+  pickNextAbility(player, d) {
+    // build a queue of abilities if empty
+    if (this.abilityQueue.length === 0) {
+      if (this.phase === 1) {
+        // phase-1 rotation: cleave (if close), fan shot, charge
+        this.abilityQueue.push('fanShot');
+        this.abilityQueue.push('charge');
+        if (d < this.def.cleaveRange + 40) this.abilityQueue.push('cleave');
+        // occasional summon
+        this.summonTimer -= 2;
+        if (this.summonTimer <= 0) {
+          this.summonTimer = this.def.summonCooldown;
+          this.abilityQueue.push('summon');
+        }
+        // shuffle
+        shuffle(this.abilityQueue);
+      } else {
+        // phase-2 rotation: all phase-1 abilities + phase-2 abilities
+        this.abilityQueue.push('fanShot');
+        this.abilityQueue.push('charge');
+        this.abilityQueue.push('swordThrow');
+        this.abilityQueue.push('hazard');
+        if (d < this.def.cleaveRange + 40) this.abilityQueue.push('cleave');
+        // soldier summon on cooldown
+        this.soldierSummonTimer = (this.soldierSummonTimer || this.def.soldierSummonCooldown) - 2;
+        if (this.soldierSummonTimer <= 0) {
+          this.soldierSummonTimer = this.def.soldierSummonCooldown;
+          this.abilityQueue.push('soldierSummon');
+        }
+        shuffle(this.abilityQueue);
+      }
+    }
+
+    const ability = this.abilityQueue.shift();
+    if (!ability) {
+      this.abilityTimer = 0.5;
+      return;
+    }
+
+    this.currentAbility = ability;
+    this.bossState = 'windup';
+    this.stateTimer = this.getWindupDuration(ability);
+    this.abilityDir = angleTo(this.x, this.y, player.x, player.y);
+  }
+
+  getWindupDuration(ability) {
+    switch (ability) {
+      case 'cleave': return this.def.cleaveWindup;
+      case 'fanShot': return this.def.fanShotWindup;
+      case 'charge': return this.def.chargeWindup;
+      case 'swordThrow': return this.def.swordThrowWindup;
+      default: return 0.5;
+    }
+  }
+
+  getAttackDuration() {
+    switch (this.currentAbility) {
+      case 'cleave': return 0.3;
+      case 'fanShot': return 0.2;
+      case 'charge': return 0; // handled by chargeDuration
+      case 'swordThrow': return 0.3;
+      default: return 0.3;
+    }
+  }
+
+  executeAbilityStart(player, d) {
+    switch (this.currentAbility) {
+      case 'cleave': this.doCleave(player); break;
+      case 'fanShot': this.doFanShot(player); break;
+      case 'charge': this.doCharge(player); break;
+      case 'summon': this.summon(); break;
+      case 'swordThrow': this.doSwordThrow(player); break;
+      case 'soldierSummon': this.doSoldierSummon(); break;
+      case 'hazard': this.doHazard(player); break;
+    }
+  }
+
+  endAbility() {
+    this.bossState = 'recover';
+    this.stateTimer = 0.5;
+    this.currentAbility = null;
+  }
+
+  // ---- Phase-1 abilities ----
+  doCleave(player) {
+    Audio2.play('sawtooth', 80, 0.2, 0.1);
+    Game.shakeScreen(8, 0.2);
+    const range = this.def.cleaveRange;
+    const arc = this.def.cleaveArc;
+    const dmg = this.damage * this.def.cleaveDamage;
+    const ang = angleTo(this.x, this.y, player.x, player.y);
+    // hit player if within arc
+    const pd = dist(this.x, this.y, player.x, player.y);
+    const pang = angleTo(this.x, this.y, player.x, player.y);
+    let angDiff = Math.abs(normalizeAngle(pang - ang));
+    if (pd < range + player.radius && angDiff < arc / 2) {
+      player.takeDamage(dmg);
+    }
+    // cleave particles
+    for (let i = 0; i < 12; i++) {
+      const a = ang + rand(-arc/2, arc/2);
+      const r = range * (0.5 + Math.random() * 0.5);
+      const px = this.x + Math.cos(a) * r;
+      const py = this.y + Math.sin(a) * r;
+      Game.particles.push(new Particle(px, py, Math.cos(a)*30, Math.sin(a)*30, '#c04040', rand(0.2,0.4), rand(2,4)));
+    }
+  }
+
+  doFanShot(player) {
+    const baseAng = angleTo(this.x, this.y, player.x, player.y);
+    const shots = this.def.fanShotCount;
+    for (let i = 0; i < shots; i++) {
+      const a = baseAng + (i - (shots-1)/2) * 0.2;
+      Game.enemyProjectiles.push(new EnemyProjectile(
+        this.x, this.y,
+        Math.cos(a) * this.def.projectileSpeed,
+        Math.sin(a) * this.def.projectileSpeed,
+        this.damage * 0.6, this.def.projectileColor, 400
+      ));
+    }
+    Audio2.play('sawtooth', 120, 0.1, 0.08);
+  }
+
+  doCharge(player) {
+    const ang = angleTo(this.x, this.y, player.x, player.y);
+    this.abilityDir = ang;
+    this.chargeVx = Math.cos(ang) * this.def.chargeSpeed;
+    this.chargeVy = Math.sin(ang) * this.def.chargeSpeed;
+    this.chargeDuration = 0.8;
+    this.bossState = 'attack';
+    this.stateTimer = 0; // charge uses chargeDuration instead
+    Audio2.play('square', 200, 0.3, 0.08);
+    Game.shakeScreen(6, 0.3);
+    // charge hit handled in updateBossContact during charging
+  }
+
+  // ---- Phase-2 abilities ----
+  doSwordThrow(player) {
+    // throw a giant sword projectile toward player
+    const ang = angleTo(this.x, this.y, player.x, player.y);
+    const dmg = this.damage * this.def.swordThrowDamage;
+    const proj = new EnemyProjectile(
+      this.x, this.y,
+      Math.cos(ang) * this.def.projectileSpeed * 0.8,
+      Math.sin(ang) * this.def.projectileSpeed * 0.8,
+      dmg, '#ff6030', 500
+    );
+    proj.radius = 18;
+    Game.enemyProjectiles.push(proj);
+    Audio2.play('sawtooth', 180, 0.15, 0.1);
+  }
+
+  doSoldierSummon() {
+    const count = this.def.soldierSummonCount;
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * TAU;
+      const r = 80;
+      const ex = this.x + Math.cos(ang) * r;
+      const ey = this.y + Math.sin(ang) * r;
+      Game.enemies.push(new Enemy('skeleton', ex, ey));
+    }
+    Game.addMessage((this.def.name || 'Boss') + '召唤了腐化士兵!', '#ff6040');
+    Audio2.boss();
+  }
+
+  doHazard(player) {
+    // create a ground damage zone at player's current position
+    const r = this.def.hazardRadius;
+    this.hazards.push({
+      x: player.x, y: player.y, r: r,
+      life: this.def.hazardDuration, maxLife: this.def.hazardDuration,
+      damage: this.def.hazardDamage, tickTimer: 0
+    });
+    Game.addMessage('地面冒出腐化之火!', '#c040c0');
+    Audio2.play('sine', 90, 0.3, 0.06);
+  }
+
+  updateOrbitWeapons(dt, player) {
+    if (this.orbitWeapons.length === 0) return;
+    this.orbitAngle += (this.def.orbitWeaponSpeed || 3) * dt;
+    const dmg = this.def.orbitWeaponDamage || 20;
+    for (const w of this.orbitWeapons) {
+      const wx = this.x + Math.cos(w.angle + this.orbitAngle) * w.radius;
+      const wy = this.y + Math.sin(w.angle + this.orbitAngle) * w.radius;
+      // hit player
+      const pd = dist(wx, wy, player.x, player.y);
+      if (pd < 20 + player.radius && this.contactCooldown <= 0) {
+        player.takeDamage(dmg);
+        this.contactCooldown = 0.6;
+      }
+    }
+  }
+
+  updateHazards(dt, player) {
+    for (const h of this.hazards) {
+      h.life -= dt;
+      h.tickTimer -= dt;
+      if (h.tickTimer <= 0) {
+        h.tickTimer = 0.5;
+        const pd = dist(h.x, h.y, player.x, player.y);
+        if (pd < h.r + player.radius) {
+          player.takeDamage(h.damage);
+        }
+      }
+    }
+    this.hazards = this.hazards.filter(h => h.life > 0);
+  }
+
+  updateThrownSwords(dt, player) {
+    // thrown swords are EnemyProjectiles; nothing extra to update here
+    // placeholder for future homing behavior
   }
 
   shoot(player) {
@@ -608,7 +906,7 @@ class Enemy {
       const type = pick(['slime', 'bat', 'spider']);
       Game.enemies.push(new Enemy(type, ex, ey));
     }
-    Game.addMessage('诅咒骑士召唤了仆从!', '#ff6040');
+    Game.addMessage((this.def.name || 'Boss') + '召唤了仆从!', '#ff6040');
     Audio2.boss();
   }
 
@@ -619,6 +917,11 @@ class Enemy {
     ctx.beginPath();
     ctx.ellipse(this.x, this.y + this.radius * 0.7, this.radius * 0.8, this.radius * 0.35, 0, 0, TAU);
     ctx.fill();
+
+    // ---- Boss extras: ground hazards, windup telegraphs, orbit weapons ----
+    if (this.isBoss) {
+      this.drawBossExtras(ctx);
+    }
 
     // bob animation
     const bob = Math.sin(this.animTime * 6) * 2;
@@ -662,6 +965,115 @@ class Enemy {
       ctx.font = 'bold 12px Courier New';
       ctx.textAlign = 'center';
       ctx.fillText(this.def.name, this.x, this.y - this.radius - 18);
+    }
+  }
+
+  // Draw boss-specific extras: ground hazards, windup telegraphs, orbiting weapons
+  drawBossExtras(ctx) {
+    // ground hazards (phase 2)
+    for (const h of this.hazards) {
+      const alpha = clamp(h.life / h.maxLife, 0, 1);
+      const grad = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r);
+      grad.addColorStop(0, 'rgba(192,64,192,' + (0.4 * alpha) + ')');
+      grad.addColorStop(0.7, 'rgba(160,32,160,' + (0.5 * alpha) + ')');
+      grad.addColorStop(1, 'rgba(120,16,120,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, h.r, 0, TAU);
+      ctx.fill();
+      // flickering edge
+      ctx.strokeStyle = 'rgba(220,80,220,' + (0.6 * alpha) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, h.r, 0, TAU);
+      ctx.stroke();
+    }
+
+    // windup telegraph (attack warning)
+    if (this.bossState === 'windup') {
+      ctx.save();
+      const t = 1 - (this.stateTimer / this.getWindupDuration(this.currentAbility));
+      const pulse = 0.4 + 0.3 * Math.sin(this.animTime * 20);
+      switch (this.currentAbility) {
+        case 'cleave': {
+          // arc telegraph
+          ctx.fillStyle = 'rgba(255,80,80,' + (0.25 + 0.2 * t) + ')';
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.arc(this.x, this.y, this.def.cleaveRange,
+            this.abilityDir - this.def.cleaveArc / 2,
+            this.abilityDir + this.def.cleaveArc / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,120,120,' + pulse + ')';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          break;
+        }
+        case 'charge': {
+          // line telegraph in charge direction
+          const len = 300;
+          ctx.strokeStyle = 'rgba(255,60,60,' + (0.4 + 0.3 * t) + ')';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([10, 6]);
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(this.x + Math.cos(this.abilityDir) * len, this.y + Math.sin(this.abilityDir) * len);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          break;
+        }
+        case 'fanShot':
+        case 'swordThrow': {
+          // small circle telegraph at boss
+          ctx.strokeStyle = 'rgba(255,100,60,' + pulse + ')';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius + 8, 0, TAU);
+          ctx.stroke();
+          break;
+        }
+        case 'hazard': {
+          // target circle at player's last position (approx)
+          ctx.strokeStyle = 'rgba(200,60,200,' + pulse + ')';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.def.hazardRadius * 0.5, 0, TAU);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          break;
+        }
+      }
+      ctx.restore();
+    }
+
+    // orbiting weapons (phase 2)
+    if (this.orbitWeapons.length > 0) {
+      for (const w of this.orbitWeapons) {
+        const wx = this.x + Math.cos(w.angle + this.orbitAngle) * w.radius;
+        const wy = this.y + Math.sin(w.angle + this.orbitAngle) * w.radius;
+        // motion trail
+        ctx.strokeStyle = 'rgba(255,80,40,0.3)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const trailAng = w.angle + this.orbitAngle - 0.3;
+        ctx.moveTo(this.x + Math.cos(trailAng) * w.radius, this.y + Math.sin(trailAng) * w.radius);
+        ctx.lineTo(wx, wy);
+        ctx.stroke();
+        // weapon sprite
+        ctx.save();
+        ctx.translate(wx, wy);
+        ctx.rotate(w.angle + this.orbitAngle + Math.PI / 4);
+        const img = Assets.get('weapons/sword');
+        if (img && img.complete) {
+          ctx.drawImage(img, -12, -12, 24, 24);
+        } else {
+          ctx.fillStyle = '#ff6040';
+          ctx.fillRect(-10, -10, 20, 20);
+        }
+        ctx.restore();
+      }
     }
   }
 }
