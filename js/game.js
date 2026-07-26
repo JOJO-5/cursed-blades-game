@@ -28,6 +28,7 @@ const Game = {
   mapData: null,
   propPositions: [],
   groundTileCache: null,
+  forcedLandscape: false,  // user toggled force-landscape on portrait screens
 
   upgradeChoices: [],
   chestRewardChoices: [],
@@ -78,25 +79,51 @@ const Game = {
     const winH = window.innerHeight;
     const gameAspect = CONFIG.CANVAS_W / CONFIG.CANVAS_H; // 1.7778
 
-    const screenAspect = winW / winH;
+    const screenPortrait = winH > winW;
+    // When forcedLandscape is on and screen is portrait, we rotate the canvas 90deg
+    const rotate90 = this.forcedLandscape && screenPortrait;
+
     let cssW, cssH;
 
-    if (screenAspect > gameAspect) {
-      // Screen is wider than game - fill width, overflow height (crop top/bottom)
-      cssW = winW;
-      cssH = winW / gameAspect;
+    if (rotate90) {
+      // Screen is portrait but we want landscape view:
+      // Swap screen dimensions so we treat it as landscape
+      const effW = winH;  // treat screen height as width
+      const effH = winW;  // treat screen width as height
+      const effAspect = effW / effH;
+      if (effAspect > gameAspect) {
+        cssW = effW;
+        cssH = effW / gameAspect;
+      } else {
+        cssH = effH;
+        cssW = effH * gameAspect;
+      }
+      // The canvas is sized as landscape but rotated to fit portrait screen
+      this.canvas.style.width = cssW + 'px';
+      this.canvas.style.height = cssH + 'px';
+      this.canvas.style.position = 'absolute';
+      // Rotate 90 degrees clockwise around center, then position
+      this.canvas.style.left = '50%';
+      this.canvas.style.top = '50%';
+      this.canvas.style.transform = 'translate(-50%, -50%) rotate(90deg)';
     } else {
-      // Screen is taller than game (portrait phone) - fill height, overflow width (crop sides)
-      cssH = winH;
-      cssW = winH * gameAspect;
+      // Normal mode: no rotation
+      const screenAspect = winW / winH;
+      if (screenAspect > gameAspect) {
+        cssW = winW;
+        cssH = winW / gameAspect;
+      } else {
+        cssH = winH;
+        cssW = winH * gameAspect;
+      }
+      this.canvas.style.width = cssW + 'px';
+      this.canvas.style.height = cssH + 'px';
+      this.canvas.style.position = 'absolute';
+      this.canvas.style.left = '50%';
+      this.canvas.style.top = '50%';
+      this.canvas.style.transform = 'translate(-50%, -50%)';
     }
 
-    this.canvas.style.width = cssW + 'px';
-    this.canvas.style.height = cssH + 'px';
-    this.canvas.style.position = 'absolute';
-    this.canvas.style.left = '50%';
-    this.canvas.style.top = '50%';
-    this.canvas.style.transform = 'translate(-50%, -50%)';
     if (container) {
       container.style.width = winW + 'px';
       container.style.height = winH + 'px';
@@ -104,21 +131,31 @@ const Game = {
       container.style.position = 'relative';
     }
 
-    // Update touch control anchor positions based on portrait/landscape
-    const portrait = winH > winW;
-    if (portrait) {
-      // Portrait: joystick bottom-left, dash bottom-right, higher up to avoid crop
-      Input.joystick.anchorX = 100;
-      Input.joystick.anchorY = CONFIG.CANVAS_H - 80;
-      Input.dashButton.anchorX = CONFIG.CANVAS_W - 80;
-      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
-    } else {
-      // Landscape: joystick bottom-left, dash bottom-right
+    // Update touch control anchor positions
+    // In forced landscape mode, the game internally sees landscape layout
+    const useLandscapeLayout = rotate90 || !screenPortrait;
+    if (useLandscapeLayout) {
+      // Landscape layout: joystick bottom-left, dash bottom-right
       Input.joystick.anchorX = 110;
       Input.joystick.anchorY = CONFIG.CANVAS_H - 70;
       Input.dashButton.anchorX = CONFIG.CANVAS_W - 70;
       Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
+    } else {
+      // Portrait layout: joystick bottom-left, dash bottom-right
+      Input.joystick.anchorX = 100;
+      Input.joystick.anchorY = CONFIG.CANVAS_H - 80;
+      Input.dashButton.anchorX = CONFIG.CANVAS_W - 80;
+      Input.dashButton.anchorY = CONFIG.CANVAS_H - 90;
     }
+
+    // Store rotation state for touch coordinate transformation
+    this._rotate90 = rotate90;
+  },
+
+  toggleForcedLandscape() {
+    this.forcedLandscape = !this.forcedLandscape;
+    this.resizeCanvas();
+    Audio2.click();
   },
 
   fallbackLoad() {
@@ -148,6 +185,12 @@ const Game = {
 
   update(dt) {
     this.time += dt;
+
+    // Rotate button click (works in all states, both mouse and touch)
+    if (Input.mouse.clicked && Input.isMouseInRect(12, 52, 36, 36)) {
+      Input.mouse.clicked = false;
+      this.toggleForcedLandscape();
+    }
 
     // camera shake decay
     if (this.camera.shakeTime > 0) {
@@ -827,6 +870,9 @@ const Game = {
       if (this.state === 'gameover') this.renderGameOver();
       if (this.state === 'victory') this.renderVictory();
     }
+
+    // Rotate button overlay - visible in all states on mobile/touch devices
+    this.renderRotateButton();
   },
 
   renderWorld() {
@@ -996,13 +1042,13 @@ const Game = {
     ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', CONFIG.CANVAS_W - 20, CONFIG.CANVAS_H - 10);
 
     // portrait orientation hint (show for first 30 seconds of gameplay)
-    if (this.isPortrait() && this.levelTime < 30) {
+    if (this.isPortrait() && !this.forcedLandscape && this.levelTime < 30) {
       const alpha = this.levelTime < 25 ? 0.8 : (0.8 * (30 - this.levelTime) / 5);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#c4a87a';
       ctx.font = 'bold 13px Courier New';
       ctx.textAlign = 'center';
-      ctx.fillText('建议横屏游戏体验更佳', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 40);
+      ctx.fillText('点击左上角按钮可旋转为横屏', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 40);
       ctx.font = '11px Courier New';
       ctx.fillStyle = '#8a7a5a';
       ctx.fillText('← 摇杆移动    闪避 →', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 20);
@@ -1068,6 +1114,41 @@ const Game = {
     ctx.fillStyle = 'rgba(200,180,120,0.7)';
     ctx.fillRect(px - 7, py - 7, 4, 14);
     ctx.fillRect(px + 3, py - 7, 4, 14);
+  },
+
+  // Draw rotate button in all states (top-left corner)
+  renderRotateButton() {
+    const ctx = this.ctx;
+    const rx = 30;
+    const ry = 70;
+    const r = 18;
+    // Background circle
+    ctx.fillStyle = 'rgba(120,180,255,0.25)';
+    ctx.beginPath();
+    ctx.arc(rx, ry, r, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120,180,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Draw rotation icon: phone outline + curved arrow
+    ctx.strokeStyle = '#78b4ff';
+    ctx.lineWidth = 2;
+    // Phone outline (portrait orientation)
+    ctx.strokeRect(rx - 5, ry - 8, 10, 16);
+    // Curved arrow indicating rotation
+    ctx.beginPath();
+    ctx.arc(rx + 8, ry, 6, -Math.PI * 0.7, Math.PI * 0.7);
+    ctx.stroke();
+    // Arrow head
+    ctx.fillStyle = '#78b4ff';
+    const ax = rx + 8 + Math.cos(Math.PI * 0.7) * 6;
+    const ay = ry + Math.sin(Math.PI * 0.7) * 6;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 3, ay - 4);
+    ctx.lineTo(ax + 2, ay - 5);
+    ctx.closePath();
+    ctx.fill();
   },
 
   renderMenu() {

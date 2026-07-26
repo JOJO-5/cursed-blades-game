@@ -61,11 +61,9 @@ const Input = {
     window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
 
     canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const sx = canvas.width / rect.width;
-      const sy = canvas.height / rect.height;
-      this.mouse.x = (e.clientX - rect.left) * sx;
-      this.mouse.y = (e.clientY - rect.top) * sy;
+      const pos = this.screenToCanvas(e.clientX, e.clientY);
+      this.mouse.x = pos.x;
+      this.mouse.y = pos.y;
     });
     canvas.addEventListener('mousedown', (e) => {
       this.mouse.down = true;
@@ -76,15 +74,23 @@ const Input = {
     // ---- Touch events for mobile ----
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
 
       for (const touch of e.changedTouches) {
-        const tx = (touch.clientX - rect.left) * scaleX;
-        const ty = (touch.clientY - rect.top) * scaleY;
+        const pos = this.screenToCanvas(touch.clientX, touch.clientY);
+        const tx = pos.x;
+        const ty = pos.y;
 
-        // Check if touch is on a UI button area (top half of screen = UI clicks)
+        // Check rotate button first (works in all states)
+        // Rotate button at center (30, 70), radius 18, touch area 40x40
+        if (tx >= 10 && tx <= 50 && ty >= 50 && ty <= 90) {
+          // Let Game.update() handle via mouse click for consistency
+          this.mouse.x = tx;
+          this.mouse.y = ty;
+          this.mouse.clicked = true;
+          this.mouse.down = true;
+          continue;
+        }
+
         // For menu/pause/upgrade screens, treat as mouse click
         if (Game.state !== 'playing') {
           this.mouse.x = tx;
@@ -94,7 +100,6 @@ const Input = {
           continue;
         }
 
-        // In playing state: check pause button first, then left side = joystick, right-bottom = dash
         // Pause button at (CANVAS_W - 30, 60), size ~24
         if (tx >= CONFIG.CANVAS_W - 50 && tx <= CONFIG.CANVAS_W - 10 && ty >= 40 && ty <= 80) {
           this._justPressed['Escape'] = true;
@@ -123,13 +128,11 @@ const Input = {
 
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const sx = canvas.width / rect.width;
-      const sy = canvas.height / rect.height;
 
       for (const touch of e.changedTouches) {
-        const tx = (touch.clientX - rect.left) * sx;
-        const ty = (touch.clientY - rect.top) * sy;
+        const pos = this.screenToCanvas(touch.clientX, touch.clientY);
+        const tx = pos.x;
+        const ty = pos.y;
 
         if (touch.identifier === this.joystick.touchId) {
           let dx = tx - this.joystick.cx;
@@ -179,6 +182,31 @@ const Input = {
 
   isDown(code) { return !!this.keys[code]; },
   wasPressed(code) { return !!this._justPressed[code]; },
+
+  // Transform screen (client) coordinates to canvas internal coordinates.
+  // Handles CSS scaling and optional 90° rotation (forced landscape on portrait screens).
+  screenToCanvas(screenX, screenY) {
+    const rect = this.canvas.getBoundingClientRect();
+
+    // If canvas is rotated 90 degrees clockwise, transform coordinates.
+    // After rotate(90deg): rect.width = canvas CSS height, rect.height = canvas CSS width.
+    // Screen Y → canvas X, Screen X → canvas Y (reversed, right-to-left).
+    if (Game && Game._rotate90) {
+      const sx = this.canvas.width / rect.height;   // canvas X range / visible height
+      const sy = this.canvas.height / rect.width;    // canvas Y range / visible width
+      const x = (screenY - rect.top) * sx;
+      const y = this.canvas.height - (screenX - rect.left) * sy;
+      return { x, y };
+    }
+
+    // Normal (no rotation)
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const x = (screenX - rect.left) * scaleX;
+    const y = (screenY - rect.top) * scaleY;
+    return { x, y };
+  },
+
   isMouseInRect(x, y, w, h) {
     return this.mouse.x >= x && this.mouse.x <= x+w && this.mouse.y >= y && this.mouse.y <= y+h;
   },
