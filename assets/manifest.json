@@ -1,0 +1,454 @@
+{
+  "props/stone_wall_doorway": {
+    "w": 160,
+    "h": 102
+  },
+  "props/brazier_double_lit": {
+    "w": 115,
+    "h": 111
+  },
+  "props/tombstone_single_rounded": {
+    "w": 77,
+    "h": 79
+  },
+  "props/gallows_wooden": {
+    "w": 160,
+    "h": 93
+  },
+  "props/cave_entrance_lit": {
+    "w": 160,
+    "h": 115
+  },
+  "props/wooden_bench_broken": {
+    "w": 150,
+    "h": 59
+  },
+  "props/wooden_shelf_rack": {
+    "w": 116,
+    "h": 122
+  },
+  "props/stone_fireplace": {
+    "w": 160,
+    "h": 94
+  },
+  "props/stone_arch_broken": {
+    "w": 156,
+    "h": 110
+  },
+  "props/campfire_burnt": {
+    "w": 160,
+    "h": 73
+  },
+  "props/wooden_spikes_01": {
+    "w": 95,
+    "h": 66
+  },
+  "props/wooden_platform_01": {
+    "w": 113,
+    "h": 66
+  },
+  "props/tombstone_double_rounded": {
+    "w": 160,
+    "h": 88
+  },
+  "props/stone_fragment_01": {
+    "w": 160,
+    "h": 62
+  },
+  "props/tree_dead_gnarled_01": {
+    "w": 144,
+    "h": 158
+  },
+  "props/rocks_small_pile": {
+    "w": 74,
+    "h": 52
+  },
+  "props/rock_mossy_01": {
+    "w": 101,
+    "h": 75
+  },
+  "props/brazier_small_lit": {
+    "w": 54,
+    "h": 98
+  },
+  "props/stone_well_broken": {
+    "w": 158,
+    "h": 100
+  },
+  "props/bone_pile": {
+    "w": 160,
+    "h": 95
+  },
+  "props/barrels_wooden_group": {
+    "w": 153,
+    "h": 107
+  },
+  "props/shrine_stone_lit": {
+    "w": 160,
+    "h": 95
+  },
+  "props/tombstone_single_tall_ornate": {
+    "w": 75,
+    "h": 90
+  },
+  "props/watchtower_wooden_lit": {
+    "w": 108,
+    "h": 119
+  },
+  "props/wooden_workbench": {
+    "w": 114,
+    "h": 62
+  },
+  "props/stone_table_01": {
+    "w": 104,
+    "h": 58
+  },
+  "props/stone_pillars_01": {
+    "w": 141,
+    "h": 56
+  },
+  "props/brazier_single_lit": {
+    "w": 63,
+    "h": 111
+  },
+  "props/brazier_single_tall_lit": {
+    "w": 73,
+    "h": 111
+  },
+  "props/stone_foundation_01": {
+    "w": 160,
+    "h": 72
+  },
+  "props/stone_monolith_01": {
+    "w": 119,
+    "h": 88
+  },
+  "props/stone_pillars_02": {
+    "w": 160,
+    "h": 65
+  },
+  "props/fence_wooden_broken_01": {
+    "w": 160,
+    "h": 73
+  },
+  "props/barrel_wooden_single": {
+    "w": 72,
+    "h": 95
+  },
+  "props/ruin_tree_stone_base": {
+    "w": 159,
+    "h": 90
+  },
+  "ui/upgrade_damage": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_regen": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_attackspeed": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_pierce": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_range": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_rotatespeed": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/title_logo": {
+    "w": 400,
+    "h": 112
+  },
+  "ui/upgrade_maxhp": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_crit": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_weaponcount": {
+    "w": 16,
+    "h": 16
+  },
+  "ui/upgrade_movespeed": {
+    "w": 16,
+    "h": 16
+  },
+  "backgrounds/scene_village_forest": {
+    "w": 588,
+    "h": 418
+  },
+  "backgrounds/scene_death_knight_rider": {
+    "w": 588,
+    "h": 421
+  },
+  "enemies/grim_reaper": {
+    "w": 96,
+    "h": 89
+  },
+  "enemies/bear_armored": {
+    "w": 96,
+    "h": 93
+  },
+  "enemies/reaper_with_minion": {
+    "w": 51,
+    "h": 96
+  },
+  "enemies/bandit_hooded": {
+    "w": 71,
+    "h": 95
+  },
+  "enemies/archer": {
+    "w": 96,
+    "h": 76
+  },
+  "enemies/hooded_warrior": {
+    "w": 96,
+    "h": 64
+  },
+  "enemies/demon_bat": {
+    "w": 96,
+    "h": 49
+  },
+  "enemies/toxic_slime": {
+    "w": 96,
+    "h": 45
+  },
+  "enemies/flame_turtle": {
+    "w": 92,
+    "h": 96
+  },
+  "enemies/spiked_boar": {
+    "w": 96,
+    "h": 70
+  },
+  "enemies/spearman": {
+    "w": 96,
+    "h": 75
+  },
+  "enemies/torchbearer": {
+    "w": 78,
+    "h": 96
+  },
+  "enemies/mimic_chest_dark": {
+    "w": 96,
+    "h": 86
+  },
+  "enemies/fungal_golem": {
+    "w": 96,
+    "h": 86
+  },
+  "enemies/bone_spider": {
+    "w": 96,
+    "h": 52
+  },
+  "enemies/corrupted_slime": {
+    "w": 96,
+    "h": 47
+  },
+  "enemies/dwarf_torchbearer": {
+    "w": 80,
+    "h": 96
+  },
+  "enemies/mimic_chest_red": {
+    "w": 96,
+    "h": 70
+  },
+  "enemies/dwarf_mage": {
+    "w": 96,
+    "h": 93
+  },
+  "player/hero": {
+    "w": 96,
+    "h": 94
+  },
+  "bosses/dark_knight_flame": {
+    "w": 116,
+    "h": 160
+  },
+  "tiles/wall_stone_horizontal_01": {
+    "w": 128,
+    "h": 61
+  },
+  "tiles/wall_stone_base_mossy": {
+    "w": 128,
+    "h": 66
+  },
+  "tiles/ground_mossy_patch_01": {
+    "w": 128,
+    "h": 70
+  },
+  "tiles/ground_dirt_large_01": {
+    "w": 128,
+    "h": 68
+  },
+  "tiles/ground_mossy_stone_01": {
+    "w": 113,
+    "h": 75
+  },
+  "tiles/ruin_stone_wall_broken_02": {
+    "w": 128,
+    "h": 57
+  },
+  "tiles/wall_stone_brick_vertical": {
+    "w": 87,
+    "h": 128
+  },
+  "tiles/wall_stone_gapped_01": {
+    "w": 128,
+    "h": 54
+  },
+  "tiles/ground_dirt_patch_01": {
+    "w": 128,
+    "h": 49
+  },
+  "tiles/ground_dirt_edge_01": {
+    "w": 128,
+    "h": 52
+  },
+  "tiles/ruin_stone_wall_broken_01": {
+    "w": 121,
+    "h": 69
+  },
+  "tiles/ground_dirt_grass_01": {
+    "w": 98,
+    "h": 75
+  },
+  "tiles/ground_dirt_stones_01": {
+    "w": 128,
+    "h": 61
+  },
+  "tiles/ground_dirt_path_01": {
+    "w": 128,
+    "h": 53
+  },
+  "tiles/wall_stone_stacked_01": {
+    "w": 119,
+    "h": 66
+  },
+  "tiles/ground_grass_strip_01": {
+    "w": 128,
+    "h": 19
+  },
+  "effects/ground_crack": {
+    "w": 96,
+    "h": 18
+  },
+  "effects/mana_orb_small": {
+    "w": 42,
+    "h": 37
+  },
+  "effects/ice_spikes_vertical": {
+    "w": 42,
+    "h": 87
+  },
+  "effects/ice_orb": {
+    "w": 42,
+    "h": 33
+  },
+  "effects/spirit_orbs_blue": {
+    "w": 41,
+    "h": 84
+  },
+  "effects/void_particle_small": {
+    "w": 42,
+    "h": 41
+  },
+  "effects/ice_shard_small": {
+    "w": 70,
+    "h": 45
+  },
+  "effects/fire_projectile": {
+    "w": 25,
+    "h": 24
+  },
+  "items/chest": {
+    "w": 24,
+    "h": 24
+  },
+  "items/xp_gem_small": {
+    "w": 10,
+    "h": 10
+  },
+  "items/xp_gem_medium": {
+    "w": 14,
+    "h": 14
+  },
+  "items/heart": {
+    "w": 16,
+    "h": 16
+  },
+  "items/xp_gem_large": {
+    "w": 18,
+    "h": 18
+  },
+  "weapons/ring_fire_double": {
+    "w": 64,
+    "h": 48
+  },
+  "weapons/soul": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/knife": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/bow": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/ring_fire_awakened": {
+    "w": 64,
+    "h": 51
+  },
+  "weapons/ring_steel": {
+    "w": 64,
+    "h": 53
+  },
+  "weapons/ring_target": {
+    "w": 64,
+    "h": 60
+  },
+  "weapons/shield": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/fireball": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/ring_void": {
+    "w": 64,
+    "h": 57
+  },
+  "weapons/sword": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/scythe": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/hammer": {
+    "w": 24,
+    "h": 24
+  },
+  "weapons/ring_fire": {
+    "w": 64,
+    "h": 53
+  },
+  "weapons/sword_slash_wind": {
+    "w": 64,
+    "h": 48
+  }
+}

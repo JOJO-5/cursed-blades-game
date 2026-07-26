@@ -1,0 +1,14 @@
+{
+  "sheet1": {
+    "count": 18,
+    "dir": "/workspace/game/assets/_raw/sheet1"
+  },
+  "sheet2": {
+    "count": 50,
+    "dir": "/workspace/game/assets/_raw/sheet2"
+  },
+  "sheet3": {
+    "count": 22,
+    "dir": "/workspace/game/assets/_raw/sheet3"
+  }
+}
