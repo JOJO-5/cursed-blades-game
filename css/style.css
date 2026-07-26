@@ -16,16 +16,12 @@ html, body {
 
 #game-container {
   position: relative;
-  /* Fill the entire screen; JS will adjust to maintain aspect ratio */
   width: 100vw;
   height: 100vh;
   width: 100dvw;
   height: 100dvh;
-  margin: 0 auto;
+  overflow: hidden;
   image-rendering: pixelated;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 #game-canvas {
@@ -34,7 +30,7 @@ html, body {
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   touch-action: none;
-  /* JS will set width/height for proper scaling */
+  /* JS sets position/size dynamically */
 }
 
 .overlay {

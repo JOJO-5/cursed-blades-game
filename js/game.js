@@ -70,7 +70,8 @@ const Game = {
   },
 
   resizeCanvas() {
-    // The internal resolution stays 960x540, but the CSS size fills the screen
+    // Fill the entire screen using "cover" strategy (may crop edges slightly)
+    // Internal resolution stays 960x540, CSS scales to fill viewport
     const container = document.getElementById('game-container');
     const winW = window.innerWidth;
     const winH = window.innerHeight;
@@ -80,20 +81,26 @@ const Game = {
     let cssW, cssH;
 
     if (screenAspect > gameAspect) {
-      // Screen is wider - fit by height, center horizontally
-      cssH = winH;
-      cssW = winH * gameAspect;
-    } else {
-      // Screen is taller - fit by width, center vertically
+      // Screen is wider than game - fill width, overflow height (crop top/bottom)
       cssW = winW;
       cssH = winW / gameAspect;
+    } else {
+      // Screen is taller than game (portrait phone) - fill height, overflow width (crop sides)
+      cssH = winH;
+      cssW = winH * gameAspect;
     }
 
     this.canvas.style.width = cssW + 'px';
     this.canvas.style.height = cssH + 'px';
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.left = '50%';
+    this.canvas.style.top = '50%';
+    this.canvas.style.transform = 'translate(-50%, -50%)';
     if (container) {
-      container.style.width = cssW + 'px';
-      container.style.height = cssH + 'px';
+      container.style.width = winW + 'px';
+      container.style.height = winH + 'px';
+      container.style.overflow = 'hidden';
+      container.style.position = 'relative';
     }
   },
 

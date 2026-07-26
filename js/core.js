@@ -73,12 +73,12 @@ const Input = {
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const sx = canvas.width / rect.width;
-      const sy = canvas.height / rect.height;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
 
       for (const touch of e.changedTouches) {
-        const tx = (touch.clientX - rect.left) * sx;
-        const ty = (touch.clientY - rect.top) * sy;
+        const tx = (touch.clientX - rect.left) * scaleX;
+        const ty = (touch.clientY - rect.top) * scaleY;
 
         // Check if touch is on a UI button area (top half of screen = UI clicks)
         // For menu/pause/upgrade screens, treat as mouse click
