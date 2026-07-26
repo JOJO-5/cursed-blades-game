@@ -16,6 +16,9 @@ class Player {
     this.dashDir = { x: 0, y: 0 };
     this.animTime = 0;
     this.isMoving = false;
+    this.hitFlash = 0;
+    this.hitShakeX = 0;
+    this.hitShakeY = 0;
 
     this.level = 1;
     this.xp = 0;
@@ -37,7 +40,21 @@ class Player {
       weaponCountBonus: 0,
       maxHpBonus: 0,
       regenBonus: 0,
+      // --- new stats (upgrade system v2) ---
+      critMultBonus: 0,         // 暴击伤害倍率加成
+      cooldownMult: 1.0,        // 武器冷却乘数 (越低越快)
+      projectileSpeedMult: 1.0, // 弹丸速度乘数
+      knockbackMult: 1.0,       // 击退乘数
+      pickupRangeBonus: 0,      // 拾取范围加成
+      dashCooldownMult: 1.0,    // 闪避冷却乘数
+      armor: 0,                 // 固定减伤
+      luck: 0,                  // 幸运 (影响稀有升级出现率)
+      xpMult: 1.0,              // 经验获取乘数
+      lifesteal: 0,             // 生命偷取比例
     };
+
+    // track upgrade levels for maxLevel enforcement
+    this.upgradeLevels = {};
 
     this.kills = 0;
     this.alive = true;
@@ -58,7 +75,7 @@ class Player {
   }
 
   gainXp(amount) {
-    this.xp += amount;
+    this.xp += amount * this.stats.xpMult;
     let leveled = false;
     while (this.level <= CONFIG.XP_CURVE.length && this.xp >= this.xpToNext) {
       this.xp -= this.xpToNext;
@@ -78,12 +95,23 @@ class Player {
     for (const w of this.weapons) {
       if (w.def.blockReduction) reduction = Math.max(reduction, w.def.blockReduction);
     }
-    amount = Math.max(1, Math.floor(amount * (1 - reduction)));
+    // armor: flat reduction after percentage reduction
+    amount = Math.max(1, Math.floor(amount * (1 - reduction)) - this.stats.armor);
     this.hp -= amount;
     this.invuln = 0.8;
+    this.hitFlash = 0.2;
+    this.hitShakeX = rand(-4, 4);
+    this.hitShakeY = rand(-4, 4);
     Audio2.hurt();
     Game.spawnDamageNumber(this.x, this.y - 20, amount, '#ff4040');
     Game.shakeScreen(6, 0.2);
+    Game.damageVignette = 0.6;
+    // red hit particles
+    for (let i = 0; i < 6; i++) {
+      const ang = Math.random() * TAU;
+      const spd = rand(40, 100);
+      Game.particles.push(new Particle(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#ff4040', rand(0.3, 0.6), rand(2, 4)));
+    }
     if (this.hp <= 0) {
       this.hp = 0;
       this.alive = false;
@@ -100,6 +128,11 @@ class Player {
 
     this.animTime += dt;
     this.invuln = Math.max(0, this.invuln - dt);
+    this.hitFlash = Math.max(0, this.hitFlash - dt);
+    this.hitShakeX *= 0.82;
+    this.hitShakeY *= 0.82;
+    if (Math.abs(this.hitShakeX) < 0.1) this.hitShakeX = 0;
+    if (Math.abs(this.hitShakeY) < 0.1) this.hitShakeY = 0;
     this.dashCooldown = Math.max(0, this.dashCooldown - dt);
     this.dashTimer = Math.max(0, this.dashTimer - dt);
 
@@ -131,7 +164,7 @@ class Player {
     // dash (keyboard or touch button)
     if ((Input.wasPressed('Space') || Input.dashButton.pressed) && this.dashCooldown <= 0 && this.isMoving) {
       this.dashTimer = CONFIG.PLAYER.dashDuration;
-      this.dashCooldown = CONFIG.PLAYER.dashCooldown;
+      this.dashCooldown = CONFIG.PLAYER.dashCooldown * this.stats.dashCooldownMult;
       this.dashDir = { x: mx, y: my };
       this.invuln = Math.max(this.invuln, CONFIG.PLAYER.dashDuration + 0.05);
       Audio2.play('sine', 400, 0.1, 0.06);
@@ -162,20 +195,44 @@ class Player {
 
   draw(ctx) {
     if (!this.alive) return;
-    // flash when invuln
-    if (this.invuln > 0 && Math.floor(this.animTime * 20) % 2 === 0) return;
+
+    // semi-transparent blink during invuln (visible but ghostly, not fully invisible)
+    let alpha = 1;
+    if (this.invuln > 0 && Math.floor(this.animTime * 20) % 2 === 0) {
+      alpha = 0.35;
+    }
+
+    // hit shake offset
+    const sx = this.hitShakeX;
+    const sy = this.hitShakeY;
 
     // shadow
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
-    ctx.ellipse(this.x, this.y + 14, 14, 6, 0, 0, TAU);
+    ctx.ellipse(this.x + sx, this.y + 14 + sy, 14, 6, 0, 0, TAU);
     ctx.fill();
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    Assets.drawCentered(ctx, 'player/hero', this.x, this.y + bob, 0.7, 0, 1);
+    Assets.drawCentered(ctx, 'player/hero', this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
 
-    // draw weapons
+    // hit flash overlay (red tint on sprite)
+    if (this.hitFlash > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.globalAlpha = alpha * 0.7 * (this.hitFlash / 0.2);
+      ctx.fillStyle = '#ff2020';
+      const img = Assets.get('player/hero');
+      const w = img ? img.width * 0.7 : 32;
+      const h = img ? img.height * 0.7 : 32;
+      ctx.fillRect(this.x + sx - w/2, this.y + bob + sy - h/2, w, h);
+      ctx.restore();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // draw weapons (always fully visible)
     for (const w of this.weapons) w.draw(ctx);
   }
 }
@@ -202,13 +259,16 @@ class Weapon {
     return this.def.rotateSpeed * Game.player.stats.rotateSpeedMult * Game.player.stats.attackSpeedMult;
   }
   getCooldown() {
-    return this.def.cooldown / (Game.player.stats.attackSpeedMult);
+    return this.def.cooldown / Game.player.stats.attackSpeedMult * Game.player.stats.cooldownMult;
   }
   getPierce() {
     return (this.def.pierce || 0) + Game.player.stats.pierceBonus;
   }
   getCritChance() {
     return (this.def.critChance || 0) + Game.player.stats.critChanceBonus;
+  }
+  getCritMult() {
+    return (this.def.critMult || 2.0) + Game.player.stats.critMultBonus;
   }
 
   update(dt, player) {
@@ -237,8 +297,13 @@ class Weapon {
               this.hitSet.add(hitId);
               let damage = dmg;
               let isCrit = Math.random() < crit;
-              if (isCrit) damage *= this.def.critMult;
-              e.takeDamage(damage, isCrit, this.def.knockback, player.x, player.y);
+              if (isCrit) damage *= this.getCritMult();
+              const kb = (this.def.knockback || 0) * player.stats.knockbackMult;
+              e.takeDamage(damage, isCrit, kb, player.x, player.y);
+              // lifesteal
+              if (player.stats.lifesteal > 0) {
+                player.heal(damage * player.stats.lifesteal);
+              }
               if (this.def.type === 'orbit' && this.def.id !== 'shield') {
                 Audio2.hit();
               }
@@ -272,12 +337,14 @@ class Weapon {
     const dmg = this.getDamage();
     const crit = this.getCritChance();
     const pierce = this.getPierce();
+    const critMult = this.getCritMult();
+    const projSpeed = this.def.projectileSpeed * player.stats.projectileSpeedMult;
 
     const proj = new Projectile(
       player.x, player.y,
-      Math.cos(ang) * this.def.projectileSpeed,
-      Math.sin(ang) * this.def.projectileSpeed,
-      dmg, this.def.range, pierce, crit, this.def.critMult,
+      Math.cos(ang) * projSpeed,
+      Math.sin(ang) * projSpeed,
+      dmg, this.def.range, pierce, crit, critMult,
       this.def.id === 'fireball' ? '#ff8030' : this.def.color,
       this.def.icon, this.def.size, this.def.id
     );
@@ -657,6 +724,10 @@ class Projectile {
         let isCrit = Math.random() < this.critChance;
         if (isCrit) dmg *= this.critMult;
         e.takeDamage(dmg, isCrit, 0, this.x, this.y);
+        // lifesteal
+        if (Game.player.stats.lifesteal > 0) {
+          Game.player.heal(dmg * Game.player.stats.lifesteal);
+        }
 
         // splash
         if (this.splash > 0) {
@@ -779,7 +850,7 @@ class Pickup {
     const d = dist(this.x, this.y, player.x, player.y);
 
     // magnet
-    if (d < CONFIG.PLAYER.pickupRadius || this.magnetized) {
+    if (d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized) {
       this.magnetized = true;
       const ang = angleTo(this.x, this.y, player.x, player.y);
       const speed = 200 + (CONFIG.PLAYER.pickupRadius - d) * 4;

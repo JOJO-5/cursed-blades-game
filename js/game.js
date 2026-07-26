@@ -17,6 +17,7 @@ const Game = {
   messages: [],
 
   camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeTime: 0, shakeMag: 0 },
+  damageVignette: 0,
   time: 0,
   levelTime: 0,
   spawnTimer: 0,
@@ -143,6 +144,11 @@ const Game = {
       this.camera.shakeY = 0;
     }
 
+    // damage vignette decay
+    if (this.damageVignette > 0) {
+      this.damageVignette = Math.max(0, this.damageVignette - dt);
+    }
+
     if (this.state === 'playing') {
       this.levelTime += dt;
       this.updatePlaying(dt);
@@ -198,6 +204,9 @@ const Game = {
 
     for (const p of this.pickups) p.update(dt);
     this.pickups = this.pickups.filter(p => p.alive);
+
+    // If a level-up or chest reward was triggered mid-frame, stop further updates
+    if (this.state !== 'playing') return;
 
     // camera follows player
     const tx = this.player.x - CONFIG.CANVAS_W / 2;
@@ -326,17 +335,51 @@ const Game = {
   },
 
   generateUpgradeChoices() {
-    const pool = CONFIG.UPGRADES.slice();
-    // also include weapon unlocks for weapons the player doesn't have yet (lower chance)
+    // Filter out maxed upgrades
+    const available = CONFIG.UPGRADES.filter(u => {
+      const currentLevel = this.player.upgradeLevels[u.id] || 0;
+      return currentLevel < u.maxLevel;
+    });
+
+    // If all upgrades are maxed, just pick from everything
+    const pool = available.length >= 3 ? available : CONFIG.UPGRADES.slice();
+
+    // Luck increases the weight of rare/epic upgrades
+    const luckMult = 1 + this.player.stats.luck * 0.15;
+
+    // Build weighted list
+    const weighted = pool.map(u => {
+      let w = u.weight || 50;
+      if (u.rarity === 'rare') w *= luckMult;
+      if (u.rarity === 'epic') w *= luckMult * 1.5;
+      return { upgrade: u, weight: w };
+    });
+
+    // Pick 3 unique via weighted random
+    const choices = [];
+    const tempPool = weighted.slice();
+    for (let i = 0; i < 3 && tempPool.length > 0; i++) {
+      const totalW = tempPool.reduce((sum, w) => sum + w.weight, 0);
+      let r = Math.random() * totalW;
+      let idx = 0;
+      for (let j = 0; j < tempPool.length; j++) {
+        r -= tempPool[j].weight;
+        if (r <= 0) { idx = j; break; }
+      }
+      choices.push(tempPool[idx].upgrade);
+      tempPool.splice(idx, 1);
+    }
+
+    // 20% chance to include a weapon unlock (replaces one choice)
     const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
     const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
-    // 20% chance to include a weapon unlock
     if (availableUnlocks.length > 0 && Math.random() < 0.2) {
       const unlock = pick(availableUnlocks);
-      this.upgradeChoices = [unlock, ...pickN(pool, 2)];
-    } else {
-      this.upgradeChoices = pickN(pool, 3);
+      // Replace the last choice with the weapon unlock
+      choices[choices.length - 1] = unlock;
     }
+
+    this.upgradeChoices = choices;
   },
 
   selectUpgrade(idx) {
@@ -346,6 +389,7 @@ const Game = {
       this.addMessage('获得武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#40c0ff');
     } else {
       choice.apply(this.player);
+      this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
       this.addMessage(choice.name, '#c0c0ff');
     }
     Audio2.click();
@@ -375,8 +419,13 @@ const Game = {
     if (availableUnlocks.length > 0) {
       rewards.push(pick(availableUnlocks));
     }
-    // add stat upgrades
-    rewards.push(...pickN(CONFIG.UPGRADES, 2));
+    // add stat upgrades (respect maxLevel)
+    const availableUpgrades = CONFIG.UPGRADES.filter(u => {
+      const currentLevel = this.player.upgradeLevels[u.id] || 0;
+      return currentLevel < u.maxLevel;
+    });
+    const upgradePool = availableUpgrades.length >= 2 ? availableUpgrades : CONFIG.UPGRADES.slice();
+    rewards.push(...pickN(upgradePool, 2));
     this.chestRewardChoices = rewards.slice(0, 3);
   },
 
@@ -393,6 +442,7 @@ const Game = {
       this.addMessage('获得新武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#ffd040');
     } else {
       choice.apply(this.player);
+      this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
     }
     Audio2.click();
     this.state = 'playing';
@@ -551,6 +601,7 @@ const Game = {
     this.eliteTimer = 0;
     this.bossSpawned = false;
     this.bossDefeated = false;
+    this.damageVignette = 0;
     this.camera.x = this.player.x - CONFIG.CANVAS_W/2;
     this.camera.y = this.player.y - CONFIG.CANVAS_H/2;
 
@@ -664,6 +715,7 @@ const Game = {
       kills: this.player.kills,
       weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level })),
       stats: this.player.stats,
+      upgradeLevels: this.player.upgradeLevels,
       levelTime: this.levelTime,
       levelId: this.levelData ? this.levelData.theme : 'village',
     };
@@ -690,6 +742,7 @@ const Game = {
       this.player.hp = data.hp || this.player.getMaxHp();
       this.player.kills = data.kills || 0;
       this.player.stats = data.stats || this.player.stats;
+      this.player.upgradeLevels = data.upgradeLevels || {};
       // load weapons
       this.player.weapons = [];
       if (data.weapons) {
@@ -736,6 +789,20 @@ const Game = {
     } else {
       this.renderWorld();
       this.renderHUD();
+
+      // damage vignette (red screen edge when player takes damage)
+      if (this.damageVignette > 0) {
+        const a = (this.damageVignette / 0.6) * 0.5;
+        const grad = ctx.createRadialGradient(
+          CONFIG.CANVAS_W/2, CONFIG.CANVAS_H/2, 150,
+          CONFIG.CANVAS_W/2, CONFIG.CANVAS_H/2, 450
+        );
+        grad.addColorStop(0, 'rgba(255,30,30,0)');
+        grad.addColorStop(0.6, 'rgba(255,20,20,' + (a * 0.3) + ')');
+        grad.addColorStop(1, 'rgba(255,20,20,' + a + ')');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+      }
 
       if (this.state === 'story') this.renderStory();
       if (this.state === 'paused') this.renderPause();
@@ -1158,11 +1225,33 @@ const Game = {
       const cardX = startX + i * (cardW + gap);
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
-      ctx.fillStyle = hover ? 'rgba(50,40,20,0.95)' : 'rgba(25,20,12,0.9)';
+      // Rarity-based colors
+      const rarityKey = choice.rarity || 'common';
+      const rarity = CONFIG.RARITY[rarityKey] || CONFIG.RARITY.common;
+
+      ctx.fillStyle = hover ? 'rgba(40,35,20,0.95)' : 'rgba(20,18,12,0.9)';
       ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = hover ? '#ffd040' : '#5a4a20';
+      ctx.strokeStyle = hover ? rarity.glow : rarity.color;
       ctx.lineWidth = hover ? 4 : 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+      // Rarity label (top center)
+      ctx.fillStyle = rarity.color;
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
+
+      // Level indicator (top right) for stat upgrades
+      if (!choice.weaponId && choice.maxLevel) {
+        const curLevel = this.player.upgradeLevels[choice.id] || 0;
+        ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Lv.${curLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
+      }
+
+      // Desc with fallback for weapon unlocks (fixes crash)
+      const descText = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
 
       if (portrait) {
         // Horizontal card layout: icon on left, text on right
@@ -1176,7 +1265,7 @@ const Game = {
 
         ctx.fillStyle = '#c4a87a';
         ctx.font = '12px Courier New';
-        this.drawTextWrapped(ctx, choice.desc, cardX + 80, cardY + 90, cardW - 90, 16);
+        if (descText) this.drawTextWrapped(ctx, descText, cardX + 80, cardY + 90, cardW - 90, 16);
       } else {
         // Vertical card layout: icon on top, text below
         const iconScale = 3.0;
@@ -1185,11 +1274,11 @@ const Game = {
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 15px Courier New';
         ctx.textAlign = 'center';
-        this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
+        this.drawTextWrapped(ctx, choice.name, cardX + cardW/2, cardY + 130, cardW - 20, 18);
 
         ctx.fillStyle = '#c4a87a';
         ctx.font = '12px Courier New';
-        this.drawTextWrapped(ctx, choice.desc, cardX + 10, cardY + 175, cardW - 20, 16);
+        if (descText) this.drawTextWrapped(ctx, descText, cardX + cardW/2, cardY + 175, cardW - 20, 16);
       }
 
       // key hint
@@ -1226,14 +1315,33 @@ const Game = {
       const cardX = startX + i * (cardW + gap);
       const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
 
-      ctx.fillStyle = hover ? 'rgba(50,40,15,0.95)' : 'rgba(30,22,10,0.9)';
+      // Rarity-based colors
+      const rarityKey = choice.rarity || 'common';
+      const rarity = CONFIG.RARITY[rarityKey] || CONFIG.RARITY.common;
+
+      ctx.fillStyle = hover ? 'rgba(40,35,15,0.95)' : 'rgba(25,20,10,0.9)';
       ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = hover ? '#ffd040' : '#6a5a20';
+      ctx.strokeStyle = hover ? rarity.glow : rarity.color;
       ctx.lineWidth = hover ? 4 : 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
+      // Rarity label (top center)
+      ctx.fillStyle = rarity.color;
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
+
+      // Level indicator (top right) for stat upgrades
+      if (!choice.weaponId && choice.maxLevel) {
+        const curLevel = this.player.upgradeLevels[choice.id] || 0;
+        ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Lv.${curLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
+      }
+
       const chestIconScale = choice.weaponId ? 2.5 : 3.0;
-      const descText = choice.desc || (choice.weaponId ? CONFIG.WEAPONS[choice.weaponId].desc : '');
+      const descText = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
 
       if (portrait) {
         Assets.drawCentered(ctx, choice.icon, cardX + 40, cardY + cardH/2, chestIconScale, 0, 1);
@@ -1251,11 +1359,11 @@ const Game = {
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 15px Courier New';
         ctx.textAlign = 'center';
-        this.drawTextWrapped(ctx, choice.name, cardX + 10, cardY + 130, cardW - 20, 18);
+        this.drawTextWrapped(ctx, choice.name, cardX + cardW/2, cardY + 130, cardW - 20, 18);
         if (descText) {
           ctx.fillStyle = '#c4a87a';
           ctx.font = '12px Courier New';
-          this.drawTextWrapped(ctx, descText, cardX + 10, cardY + 175, cardW - 20, 16);
+          this.drawTextWrapped(ctx, descText, cardX + cardW/2, cardY + 175, cardW - 20, 16);
         }
       }
     }
