@@ -103,6 +103,18 @@ const CONFIG = {
     epic:    { name: '史诗', color: '#c060e0', glow: '#e080ff' },
   },
 
+  // ---- Prop collision radii (0 = no collision) ----
+  // Map prop category to collision radius in pixels. Props not listed here are non-solid.
+  PROP_COLLISION: {
+    trees: 16,       // dead trees - solid trunk
+    tombstones: 12,  // tombstones - small obstacle
+    fences: 10,      // broken fences - small obstacle
+    barrels: 10,     // barrels - small obstacle
+    braziers: 10,    // braziers - small obstacle
+    ruins: 20,       // stone ruins - large obstacle
+    houses: 24,      // shrines - large obstacle
+  },
+
   // ---- Upgrade pool (20 upgrades with rarity/weight/maxLevel) ----
   UPGRADES: [
     // --- Common (high weight, frequent) ---

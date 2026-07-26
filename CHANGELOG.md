@@ -1,5 +1,39 @@
 # 修改记录 (CHANGELOG)
 
+## [v0.9.0] - 2026-07-26
+
+### 地图碰撞系统（阶段4.3）
+- **新增 `CONFIG.PROP_COLLISION`**：定义 7 类 prop 的碰撞半径（trees:16, tombstones:12, fences:10, barrels:10, braziers:10, ruins:20, houses:24）
+  - 影响文件：`js/config.js`
+- **`generateMap()` 重构**：props 生成时携带 `category` 和 `radius` 字段，生成 `collisionProps` 数组只包含有碰撞的 props；props 生成时避开玩家出生点（地图中心 80px 范围）
+  - 影响文件：`js/game.js`
+- **`resolvePropCollision(entity)`**：新增圆形碰撞检测方法，将实体推出碰撞 props，玩家和敌人移动后调用
+  - 影响文件：`js/game.js`
+- **玩家碰撞**：`Player.update()` 移动后调用 `resolvePropCollision`，玩家不能穿过固体物件
+  - 影响文件：`js/entities.js`
+- **敌人碰撞**：`Enemy.update()` 移动后调用 `resolvePropCollision`，敌人也不能穿过固体物件
+  - 影响文件：`js/entities.js`
+
+### 敌人AI行为拆分（阶段3.3）
+- **策略模式重构**：将 Enemy.update() 中的 if-else AI 链拆分为独立的行为策略类
+  - `EnemyBehavior` 基类：定义 `update(enemy, dt, player, d)` 接口
+  - `ChaseBehavior`：直线追击玩家
+  - `RangedBehavior`：保持距离（近了后退/远了接近/中距离侧移）+ 定时射击
+  - `BossBehavior`：根据 Boss 状态机调整移速，委托 `updateBoss` 处理技能
+  - `ENEMY_BEHAVIORS` 注册表：behavior 字符串 → 单例实例
+  - 影响文件：`js/entities.js`
+- **Enemy 构造函数**：根据 `def.behavior` 从注册表分配 `this.behavior` 策略对象
+- **Enemy.update() 简化**：用 `this.behavior.update(this, dt, player, d)` 替代 42 行 if-else 链
+
+### 验证结果
+- [x] 玩家和敌人不能穿过固体 props（树/墓碑/栅栏/桶/火盆/废墟/神龛）
+- [x] Props 不在玩家出生点生成
+- [x] ChaseBehavior 正确追击
+- [x] RangedBehavior 正确保持距离 + 射击
+- [x] BossBehavior 正确委托状态机
+- [x] npm test 通过（17 敌人，2 关卡，phases 校验）
+- [x] node -c 语法检查全部通过
+
 ## [v0.8.0] - 2026-07-26
 
 ### Boss无头骑士双阶段战（阶段4.2）

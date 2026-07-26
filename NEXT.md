@@ -82,13 +82,13 @@
 - [ ] 腐化骑士（高生命高防御，冲锋，冲锋前提示）
 
 ### 3.3 敌人AI拆分
-当前所有AI在 Enemy.update() 中，需拆分为独立行为：
-- [ ] ChaseBehavior（追击）
-- [ ] KeepDistanceBehavior（保持距离）
-- [ ] DashBehavior（冲刺）
-- [ ] RangedAttackBehavior（远程攻击）
-- [ ] SummonBehavior（召唤）
-- [ ] DeathBehavior（死亡效果）
+已用策略模式将敌人 AI 拆分为独立行为类，Enemy.update() 委托给 behavior 策略：
+- [x] ChaseBehavior（追击）— 直线追击玩家
+- [x] RangedBehavior（保持距离 + 远程攻击）— 保持距离、侧移、定时射击
+- [x] BossBehavior（Boss 移动）— 根据状态机调整移速，委托 updateBoss 处理技能
+- [ ] DashBehavior（冲刺）— 预留接口，当前无敌人使用
+- [ ] SummonBehavior（召唤）— 当前在 Boss 状态机内实现，可进一步抽离
+- [ ] DeathBehavior（死亡效果）— 当前在 Enemy.die() 内，可抽离
 
 ### 3.4 宝箱怪状态机
 - [ ] Disguise（伪装为普通宝箱）
@@ -124,9 +124,10 @@
 - [x] HP降至50%时进入第二阶段（enrageHpPct: 0.5）
 
 ### 4.3 地图碰撞
-- [ ] 场景物件添加碰撞体（当前仅装饰，可穿过）
-- [ ] 玩家不能穿过墙壁/大型物件
-- [ ] 敌人也不能穿过碰撞体
+- [x] 场景物件添加碰撞体（CONFIG.PROP_COLLISION 定义各类 prop 碰撞半径）
+- [x] 玩家不能穿过墙壁/大型物件（Player.update 调用 resolvePropCollision）
+- [x] 敌人也不能穿过碰撞体（Enemy.update 调用 resolvePropCollision）
+- [x] Props 生成时避开玩家出生点（地图中心 80px 范围内不生成）
 
 ## 阶段5：素材整理
 

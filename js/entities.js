@@ -189,6 +189,9 @@ class Player {
     this.x = clamp(this.x, 30, mapW - 30);
     this.y = clamp(this.y, 30, mapH - 30);
 
+    // resolve collision with solid props
+    Game.resolvePropCollision(this);
+
     // update weapons
     for (const w of this.weapons) w.update(dt, this);
   }
@@ -393,6 +396,75 @@ class Weapon {
   }
 }
 
+// ==================== ENEMY BEHAVIORS ====================
+// Strategy pattern: each behavior encapsulates movement + attack logic.
+// Behaviors are stateless singletons; enemy state lives on the enemy itself.
+
+class EnemyBehavior {
+  // compute movement velocity and perform attacks
+  // returns nothing; modifies enemy.vx/vy and may spawn projectiles
+  update(enemy, dt, player, d) { /* override */ }
+}
+
+class ChaseBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    enemy.vx = Math.cos(ang) * enemy.speed;
+    enemy.vy = Math.sin(ang) * enemy.speed;
+  }
+}
+
+class RangedBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    if (d < 120) {
+      // back away
+      enemy.vx = -Math.cos(ang) * enemy.speed;
+      enemy.vy = -Math.sin(ang) * enemy.speed;
+    } else if (d > 250) {
+      // approach
+      enemy.vx = Math.cos(ang) * enemy.speed * 0.5;
+      enemy.vy = Math.sin(ang) * enemy.speed * 0.5;
+    } else {
+      // strafe sideways
+      enemy.vx = -Math.sin(ang) * enemy.speed * 0.6;
+      enemy.vy = Math.cos(ang) * enemy.speed * 0.6;
+    }
+    // shoot on cooldown
+    enemy.shootTimer -= dt;
+    if (enemy.shootTimer <= 0 && d < enemy.def.shootRange) {
+      enemy.shootTimer = enemy.def.shootCooldown;
+      enemy.shoot(player);
+    }
+  }
+}
+
+class BossBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    // boss movement depends on state machine state
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    let sp = enemy.speed;
+    if (enemy.bossState === 'charging') {
+      sp = 0; // velocity set by charge
+    } else if (enemy.bossState === 'windup' || enemy.bossState === 'attack') {
+      sp = enemy.speed * 0.2; // slow during attacks
+    } else {
+      // idle: keep moderate distance, approach if far
+      if (d < 120) sp *= 0.3;
+      else if (d > 260) sp *= 1.2;
+    }
+    enemy.vx = Math.cos(ang) * sp;
+    enemy.vy = Math.sin(ang) * sp;
+  }
+}
+
+// behavior registry: map behavior string -> singleton instance
+const ENEMY_BEHAVIORS = {
+  chase: new ChaseBehavior(),
+  ranged: new RangedBehavior(),
+  boss: new BossBehavior(),
+};
+
 // ==================== ENEMY ====================
 class Enemy {
   constructor(type, x, y) {
@@ -422,6 +494,9 @@ class Enemy {
     this.phase = 1;
     this.enraged = false;
     this.contactCooldown = 0;
+
+    // assign behavior strategy
+    this.behavior = ENEMY_BEHAVIORS[def.behavior] || ENEMY_BEHAVIORS.chase;
 
     // ---- Boss state machine (无头骑士) ----
     // bossState: 'idle' | 'windup' | 'attack' | 'recover' | 'charging'
@@ -548,44 +623,8 @@ class Enemy {
 
     const d = dist(this.x, this.y, player.x, player.y);
 
-    if (this.def.behavior === 'chase' || this.def.behavior === 'boss') {
-      // move toward player
-      const ang = angleTo(this.x, this.y, player.x, player.y);
-      let sp = this.speed;
-      if (this.def.behavior === 'boss') {
-        // boss movement handled by state machine; idle moves slowly toward player
-        if (this.bossState === 'charging') {
-          sp = 0; // velocity set by charge
-        } else if (this.bossState === 'windup' || this.bossState === 'attack') {
-          sp = this.speed * 0.2; // slow during attacks
-        } else {
-          // idle: keep moderate distance, approach if far
-          if (d < 120) sp *= 0.3;
-          else if (d > 260) sp *= 1.2;
-        }
-      }
-      this.vx = Math.cos(ang) * sp;
-      this.vy = Math.sin(ang) * sp;
-    } else if (this.def.behavior === 'ranged') {
-      // keep distance, shoot
-      const ang = angleTo(this.x, this.y, player.x, player.y);
-      if (d < 120) {
-        this.vx = -Math.cos(ang) * this.speed;
-        this.vy = -Math.sin(ang) * this.speed;
-      } else if (d > 250) {
-        this.vx = Math.cos(ang) * this.speed * 0.5;
-        this.vy = Math.sin(ang) * this.speed * 0.5;
-      } else {
-        // strafe
-        this.vx = -Math.sin(ang) * this.speed * 0.6;
-        this.vy = Math.cos(ang) * this.speed * 0.6;
-      }
-      this.shootTimer -= dt;
-      if (this.shootTimer <= 0 && d < this.def.shootRange) {
-        this.shootTimer = this.def.shootCooldown;
-        this.shoot(player);
-      }
-    }
+    // delegate movement + attack to behavior strategy
+    this.behavior.update(this, dt, player, d);
 
     // charge velocity overrides normal movement
     if (this.isBoss && this.bossState === 'charging') {
@@ -595,6 +634,9 @@ class Enemy {
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+
+    // resolve collision with solid props (enemies too)
+    Game.resolvePropCollision(this);
 
     // boss state machine
     if (this.isBoss) {

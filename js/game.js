@@ -27,6 +27,7 @@ const Game = {
   levelData: null,
   mapData: null,
   propPositions: [],
+  collisionProps: [],   // solid props for collision detection
   groundTileCache: null,
   forcedLandscape: false,  // user toggled force-landscape on portrait screens
   currentPhase: -1,        // index into levelData.phases, -1 = not started
@@ -436,6 +437,24 @@ const Game = {
     }
   },
 
+  // ---- Prop collision: push entity out of solid props ----
+  // entity is { x, y, radius }. Modifies entity.x/y in place.
+  resolvePropCollision(entity) {
+    if (!this.collisionProps || this.collisionProps.length === 0) return;
+    for (const prop of this.collisionProps) {
+      const dx = entity.x - prop.x;
+      const dy = entity.y - prop.y;
+      const minDist = entity.radius + prop.radius;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < minDist * minDist && d2 > 0.001) {
+        const d = Math.sqrt(d2);
+        const push = (minDist - d) / d;
+        entity.x += dx * push;
+        entity.y += dy * push;
+      }
+    }
+  },
+
   spawnBoss() {
     this.bossSpawned = true;
     // clear normal enemies when boss appears (design: "清理普通敌人")
@@ -842,37 +861,34 @@ const Game = {
     // generate props
     const props = this.levelData.props;
     const propList = [];
+    const collRad = CONFIG.PROP_COLLISION;
+    const cx = mapW * ts / 2, cy = mapH * ts / 2; // map center (player spawn)
 
-    // scatter trees
-    for (let i = 0; i < 25; i++) {
-      propList.push({ type: pick(props.trees), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // tombstones
-    for (let i = 0; i < 15; i++) {
-      propList.push({ type: pick(props.tombstones), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // fences
-    for (let i = 0; i < 12; i++) {
-      propList.push({ type: pick(props.fences), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // barrels
-    for (let i = 0; i < 8; i++) {
-      propList.push({ type: pick(props.barrels), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // braziers
-    for (let i = 0; i < 10; i++) {
-      propList.push({ type: pick(props.braziers), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // ruins
-    for (let i = 0; i < 10; i++) {
-      propList.push({ type: pick(props.ruins), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
-    // houses
-    for (let i = 0; i < 3; i++) {
-      propList.push({ type: pick(props.houses), x: rng() * mapW * ts, y: rng() * mapH * ts });
-    }
+    // helper: scatter a prop category, avoid spawning on top of player spawn
+    const scatter = (count, categoryKey, categoryArr) => {
+      for (let i = 0; i < count; i++) {
+        let px, py, tries = 0;
+        do {
+          px = rng() * mapW * ts;
+          py = rng() * mapH * ts;
+          tries++;
+        } while (tries < 5 && dist(px, py, cx, cy) < 80);
+        const radius = collRad[categoryKey] || 0;
+        propList.push({ type: pick(categoryArr), x: px, y: py, category: categoryKey, radius: radius });
+      }
+    };
+
+    scatter(25, 'trees', props.trees);
+    scatter(15, 'tombstones', props.tombstones);
+    scatter(12, 'fences', props.fences);
+    scatter(8, 'barrels', props.barrels);
+    scatter(10, 'braziers', props.braziers);
+    scatter(10, 'ruins', props.ruins);
+    scatter(3, 'houses', props.houses);
 
     this.mapData.props = propList;
+    // build collision list (only solid props)
+    this.collisionProps = propList.filter(p => p.radius > 0);
     // sort by Y for proper depth
     this.mapData.props.sort((a, b) => a.y - b.y);
   },
