@@ -433,6 +433,17 @@ class Enemy {
     Game.spawnDamageNumber(this.x, this.y - this.radius - 5, Math.floor(amount), isCrit ? '#ffd040' : '#ffffff', isCrit);
     Audio2.hit();
 
+    // spawn hit particles scaled to enemy size
+    const particleCount = isCrit ? 8 : 4;
+    const particleSize = clamp(this.radius * 0.25, 2, 5);
+    for (let i = 0; i < particleCount; i++) {
+      const ang = fromX !== undefined ? angleTo(fromX, fromY, this.x, this.y) + rand(-1, 1) : Math.random() * TAU;
+      const spd = rand(60, 140);
+      const px = this.x + Math.cos(ang) * this.radius * 0.5;
+      const py = this.y + Math.sin(ang) * this.radius * 0.5;
+      Game.particles.push(new Particle(px, py, Math.cos(ang) * spd, Math.sin(ang) * spd, isCrit ? '#ffd040' : '#ffcc60', rand(0.2, 0.4), particleSize));
+    }
+
     if (knockback && fromX !== undefined) {
       const ang = angleTo(fromX, fromY, this.x, this.y);
       this.knockbackVx += Math.cos(ang) * knockback;
@@ -619,15 +630,14 @@ class Enemy {
     }
     Assets.drawCentered(ctx, this.def.sprite, this.x, this.y + bob, scale, 0, 1);
 
-    // hit flash overlay
+    // hit flash overlay - use collision radius so it matches enemy size
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.globalAlpha = 0.6;
       ctx.fillStyle = '#ffffff';
-      const img = Assets.get(this.def.sprite);
-      const w = img ? img.width * scale : 32;
-      const h = img ? img.height * scale : 32;
-      ctx.fillRect(this.x - w/2, this.y - h/2 + bob, w, h);
+      // Use the enemy's collision radius for the flash area
+      const flashR = this.radius * scale;
+      ctx.fillRect(this.x - flashR, this.y - flashR + bob, flashR * 2, flashR * 2);
     }
     ctx.restore();
 
