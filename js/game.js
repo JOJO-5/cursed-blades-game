@@ -29,6 +29,8 @@ const Game = {
   propPositions: [],
   groundTileCache: null,
   forcedLandscape: false,  // user toggled force-landscape on portrait screens
+  currentPhase: -1,        // index into levelData.phases, -1 = not started
+  triggeredPhases: {},     // phase index -> true once events fired
 
   upgradeChoices: [],
   chestRewardChoices: [],
@@ -267,34 +269,126 @@ const Game = {
     this.camera.y = lerp(this.camera.y, ty, 0.1);
 
     // clamp camera
-    const mapW = CONFIG.MAP_W * CONFIG.TILE_SIZE;
-    const mapH = CONFIG.MAP_H * CONFIG.TILE_SIZE;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
     this.camera.x = clamp(this.camera.x, 0, Math.max(0, mapW - CONFIG.CANVAS_W));
     this.camera.y = clamp(this.camera.y, 0, Math.max(0, mapH - CONFIG.CANVAS_H));
 
-    // spawning
+    // phased spawning — data-driven, replaces fixed spawn/elite/boss timers
+    this.updatePhase(dt);
+
+    // pause toggle
+    if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
+      this.state = 'paused';
+      Audio2.click();
+    }
+  },
+
+  // ---- Phase system ----
+  // Returns the active phase object based on levelTime, or null if no phases configured.
+  getActivePhase() {
+    const phases = this.levelData.phases;
+    if (!phases || phases.length === 0) return null;
+    let active = null;
+    for (let i = 0; i < phases.length; i++) {
+      if (this.levelTime >= phases[i].time) {
+        active = phases[i];
+        this.currentPhase = i;
+      }
+    }
+    return active;
+  },
+
+  updatePhase(dt) {
+    const phase = this.getActivePhase();
+    if (!phase) {
+      // fallback: legacy fixed spawning if no phases defined
+      this.updateLegacySpawning(dt);
+      return;
+    }
+
+    // trigger one-time events when entering a new phase
+    if (this.currentPhase >= 0 && !this.triggeredPhases[this.currentPhase]) {
+      this.triggeredPhases[this.currentPhase] = true;
+      this.triggerPhaseEvents(phase);
+    }
+
+    // regular enemy spawning using phase pool
+    this.spawnTimer -= dt;
+    const maxE = phase.maxEnemies;
+    if (this.spawnTimer <= 0 && this.enemies.length < maxE && !this.bossSpawned) {
+      this.spawnTimer = phase.spawnInterval;
+      this.spawnEnemyFromPhase(phase);
+    }
+  },
+
+  triggerPhaseEvents(phase) {
+    // show phase name banner
+    if (phase.name) {
+      this.addMessage('【' + phase.name + '】', '#ffd040');
+    }
+
+    const events = phase.events || [];
+    for (const ev of events) {
+      if (ev.type === 'chest') {
+        const pos = this.getSpawnPosition();
+        if (pos) {
+          // rare chest or mimic-or-normal based on level mimicChance and event flags
+          let isRare = !!ev.rare;
+          let isMimic = false;
+          if (ev.mimic && Math.random() < (this.levelData.mimicChance || 0.4)) {
+            isMimic = true;
+          }
+          if (isMimic) {
+            this.enemies.push(new Enemy('mimic', pos.x, pos.y));
+            this.addMessage('可疑的宝箱……', '#ff6060');
+          } else {
+            this.spawnChest(pos.x, pos.y, isRare);
+            this.addMessage(isRare ? '稀有宝箱出现!' : '宝箱出现!', isRare ? '#e080ff' : '#80c0ff');
+          }
+        }
+      } else if (ev.type === 'elite') {
+        this.spawnElite();
+      } else if (ev.type === 'boss') {
+        this.spawnBoss();
+      } else if (ev.type === 'message') {
+        this.addMessage(ev.text || '', ev.color || '#ffffff');
+      }
+    }
+  },
+
+  spawnEnemyFromPhase(phase) {
+    const pool = phase.enemyPool && phase.enemyPool.length > 0 ? phase.enemyPool : this.levelData.enemyPool;
+    if (pool.length === 0) return;
+    const type = pick(pool);
+    const pos = this.getSpawnPosition();
+    if (pos) this.enemies.push(new Enemy(type, pos.x, pos.y));
+
+    // sometimes spawn ranged from phase rangedPool
+    const rPool = phase.rangedPool || [];
+    if (rPool.length > 0 && Math.random() < 0.3) {
+      const rType = pick(rPool);
+      const pos2 = this.getSpawnPosition();
+      if (pos2) this.enemies.push(new Enemy(rType, pos2.x, pos2.y));
+    }
+  },
+
+  // Legacy fixed spawning — only used when a level has no phases array
+  updateLegacySpawning(dt) {
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0 && this.enemies.length < this.levelData.maxEnemies && !this.bossSpawned) {
       this.spawnTimer = this.levelData.spawnInterval;
       this.spawnEnemy();
     }
 
-    // elite spawning
     this.eliteTimer += dt;
     if (this.eliteTimer >= this.levelData.eliteInterval && !this.bossSpawned) {
       this.eliteTimer = 0;
       this.spawnElite();
     }
 
-    // boss spawn
     if (!this.bossSpawned && this.levelTime >= this.levelData.bossSpawnTime) {
       this.spawnBoss();
-    }
-
-    // pause toggle
-    if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
-      this.state = 'paused';
-      Audio2.click();
     }
   },
 
@@ -344,14 +438,18 @@ const Game = {
 
   spawnBoss() {
     this.bossSpawned = true;
+    // clear normal enemies when boss appears (design: "清理普通敌人")
+    this.enemies = this.enemies.filter(e => e.isBoss);
     const pos = { x: this.player.x + 200, y: this.player.y };
     // clamp to map
-    const mapW = CONFIG.MAP_W * CONFIG.TILE_SIZE;
-    const mapH = CONFIG.MAP_H * CONFIG.TILE_SIZE;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
     pos.x = clamp(pos.x, 50, mapW - 50);
     pos.y = clamp(pos.y, 50, mapH - 50);
-    this.enemies.push(new Enemy('boss', pos.x, pos.y));
-    this.addMessage('Boss出现: 诅咒骑士!', '#ff3030');
+    const bossId = this.levelData.bossId || 'boss';
+    this.enemies.push(new Enemy(bossId, pos.x, pos.y));
+    const bossName = CONFIG.ENEMIES[bossId] ? CONFIG.ENEMIES[bossId].name : 'Boss';
+    this.addMessage('Boss出现: ' + bossName + '!', '#ff3030');
     Audio2.boss();
     this.shakeScreen(10, 0.5);
     // show boss intro dialogue
@@ -360,8 +458,8 @@ const Game = {
 
   getSpawnPosition() {
     const player = this.player;
-    const mapW = CONFIG.MAP_W * CONFIG.TILE_SIZE;
-    const mapH = CONFIG.MAP_H * CONFIG.TILE_SIZE;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
     for (let attempt = 0; attempt < 20; attempt++) {
       const ang = Math.random() * TAU;
       const r = rand(350, 500);
@@ -512,7 +610,13 @@ const Game = {
     // start victory story
     setTimeout(() => {
       this.startStory(CONFIG.STORY[this.levelData.theme].victory, () => {
-        this.state = 'victory';
+        // After village victory, proceed to mine level
+        if (this.levelData.theme === 'village') {
+          this.loadLevel('mine');
+        } else {
+          // Final victory after mine
+          this.state = 'victory';
+        }
       });
     }, 1000);
   },
@@ -646,6 +750,8 @@ const Game = {
     this.eliteTimer = 0;
     this.bossSpawned = false;
     this.bossDefeated = false;
+    this.currentPhase = -1;
+    this.triggeredPhases = {};
     this.damageVignette = 0;
     this.camera.x = this.player.x - CONFIG.CANVAS_W/2;
     this.camera.y = this.player.y - CONFIG.CANVAS_H/2;
@@ -655,11 +761,32 @@ const Game = {
 
   loadLevel(levelId) {
     this.levelData = CONFIG.LEVELS[levelId];
+    // reset level state
+    this.levelTime = 0;
+    this.spawnTimer = 1;
+    this.eliteTimer = 0;
+    this.bossSpawned = false;
+    this.bossDefeated = false;
+    this.enemies = [];
+    this.projectiles = [];
+    this.enemyProjectiles = [];
+    this.pickups = [];
+    this.particles = [];
+    this.damageNumbers = [];
+    this.messages = [];
+    // place player at map center
+    this.player.x = this.levelData.mapW * CONFIG.TILE_SIZE / 2;
+    this.player.y = this.levelData.mapH * CONFIG.TILE_SIZE / 2;
+    this.camera.x = this.player.x - CONFIG.CANVAS_W/2;
+    this.camera.y = this.player.y - CONFIG.CANVAS_H/2;
+    // full heal on level transition
+    this.player.hp = this.player.getMaxHp();
+
     this.generateMap();
     // spawn initial chests
     for (let i = 0; i < this.levelData.chestCount; i++) {
-      const x = rand(200, CONFIG.MAP_W * CONFIG.TILE_SIZE - 200);
-      const y = rand(200, CONFIG.MAP_H * CONFIG.TILE_SIZE - 200);
+      const x = rand(200, this.levelData.mapW * CONFIG.TILE_SIZE - 200);
+      const y = rand(200, this.levelData.mapH * CONFIG.TILE_SIZE - 200);
       this.pickups.push(new Pickup(x, y, 'chest', 'chest', 0));
     }
 
@@ -671,7 +798,7 @@ const Game = {
   // ---- Map generation ----
   generateMap() {
     const rng = makeRNG(42);
-    const mapW = CONFIG.MAP_W, mapH = CONFIG.MAP_H, ts = CONFIG.TILE_SIZE;
+    const mapW = this.levelData.mapW, mapH = this.levelData.mapH, ts = CONFIG.TILE_SIZE;
     this.mapData = { tiles: [], props: [] };
 
     // generate ground tile texture cache
@@ -954,8 +1081,8 @@ const Game = {
     }
 
     // map bounds
-    const mapW = CONFIG.MAP_W * CONFIG.TILE_SIZE;
-    const mapH = CONFIG.MAP_H * CONFIG.TILE_SIZE;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
     ctx.strokeStyle = '#1a0a0a';
     ctx.lineWidth = 4;
     ctx.strokeRect(0, 0, mapW, mapH);
@@ -1557,17 +1684,17 @@ const Game = {
     ctx.fillStyle = '#40ff60';
     ctx.font = 'bold 48px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('通关!', CONFIG.CANVAS_W/2, 160);
+    ctx.fillText('最终通关!', CONFIG.CANVAS_W/2, 160);
 
     ctx.fillStyle = '#c4a87a';
     ctx.font = '16px Courier New';
-    ctx.fillText('诅咒骑士已被击败，村庄暂时安宁……', CONFIG.CANVAS_W/2, 210);
+    ctx.fillText('腐化巨蛛已被击败，诅咒的源头彻底消散！', CONFIG.CANVAS_W/2, 210);
     ctx.fillText(`等级: ${this.player.level}  |  击杀: ${this.player.kills}`, CONFIG.CANVAS_W/2, 240);
     ctx.fillText(`用时: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 270);
 
     ctx.fillStyle = '#8a7a5a';
     ctx.font = '13px Courier New';
-    ctx.fillText('诅咒的源头更深处的地下矿洞还在等待……', CONFIG.CANVAS_W/2, 320);
+    ctx.fillText('旅者带着环刀，踏上了新的旅途……', CONFIG.CANVAS_W/2, 320);
 
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 380, 200, 45, '返回主菜单', '#c4a87a');
   },
