@@ -236,13 +236,29 @@ const Game = {
 
     // always update particles/messages for visual continuity in some states
     if (this.state !== 'paused' && this.state !== 'loading') {
-      for (const p of this.particles) p.update(dt);
+      // skip particle updates for off-screen particles (purely visual)
+      for (const p of this.particles) {
+        if (this.isOnScreen(p.x, p.y, 60)) p.update(dt);
+      }
       this.particles = this.particles.filter(p => p.alive);
       for (const d of this.damageNumbers) d.update(dt);
       this.damageNumbers = this.damageNumbers.filter(d => d.alive);
       for (const m of this.messages) m.life -= dt;
       this.messages = this.messages.filter(m => m.life > 0);
     }
+  },
+
+  // ---- Performance: off-screen culling ----
+  // CULL_MARGIN: entities beyond this many pixels from the visible canvas edge are skipped.
+  CULL_MARGIN: 280,
+
+  // Returns true if the point (x, y) is within the visible canvas area + margin.
+  isOnScreen(x, y, margin) {
+    margin = margin !== undefined ? margin : 0;
+    const camX = this.camera.x;
+    const camY = this.camera.y;
+    return x > camX - margin && x < camX + CONFIG.CANVAS_W + margin &&
+           y > camY - margin && y < camY + CONFIG.CANVAS_H + margin;
   },
 
   updatePlaying(dt) {
@@ -262,11 +278,16 @@ const Game = {
 
     this.player.update(dt);
 
-    // update enemies
-    for (const e of this.enemies) e.update(dt);
+    // update enemies — skip far-off-screen enemies for performance (bosses always update)
+    const cm = this.CULL_MARGIN;
+    for (const e of this.enemies) {
+      if (e.isBoss || this.isOnScreen(e.x, e.y, cm)) {
+        e.update(dt);
+      }
+    }
     this.enemies = this.enemies.filter(e => e.alive);
 
-    // separate enemies to avoid overlap (simple separation)
+    // separate enemies to avoid overlap (only on-screen ones — O(n²) optimized)
     this.separateEnemies();
 
     // update projectiles
@@ -409,9 +430,12 @@ const Game = {
 
   separateEnemies() {
     const enemies = this.enemies;
-    for (let i = 0; i < enemies.length; i++) {
-      for (let j = i + 1; j < enemies.length; j++) {
-        const a = enemies[i], b = enemies[j];
+    const cm = this.CULL_MARGIN;
+    // Pre-filter to on-screen enemies only — avoids O(n²) on the full pool
+    const nearby = enemies.filter(e => this.isOnScreen(e.x, e.y, cm));
+    for (let i = 0; i < nearby.length; i++) {
+      for (let j = i + 1; j < nearby.length; j++) {
+        const a = nearby[i], b = nearby[j];
         const dx = b.x - a.x, dy = b.y - a.y;
         const d = Math.sqrt(dx*dx + dy*dy);
         const minD = a.radius + b.radius;
@@ -1353,17 +1377,19 @@ const Game = {
     for (const p of this.pickups) p.draw(ctx);
 
     // draw enemies
-    for (const e of this.enemies) e.draw(ctx);
+    for (const e of this.enemies) {
+      if (this.isOnScreen(e.x, e.y, 80)) e.draw(ctx);
+    }
 
     // draw player
     if (this.player) this.player.draw(ctx);
 
     // draw projectiles
-    for (const p of this.projectiles) p.draw(ctx);
-    for (const p of this.enemyProjectiles) p.draw(ctx);
+    for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
+    for (const p of this.enemyProjectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
 
     // draw particles
-    for (const p of this.particles) p.draw(ctx);
+    for (const p of this.particles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
 
     // draw damage numbers
     for (const d of this.damageNumbers) d.draw(ctx);

@@ -136,4 +136,15 @@ for (const [theme, level] of Object.entries(config.LEVELS)) {
 }
 assert.ok(config.STORY.mimicEncounter && config.STORY.mimicEncounter.length > 0, 'STORY.mimicEncounter should exist');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation.`);
+// Verify off-screen culling helpers
+assert.ok(typeof game.isOnScreen === 'function', 'Game should have isOnScreen method');
+assert.ok(typeof game.CULL_MARGIN === 'number' && game.CULL_MARGIN > 0, 'CULL_MARGIN should be a positive number');
+// Camera defaults to (0,0); a point inside the canvas should be on-screen
+game.camera = { x: 0, y: 0 };
+assert.ok(game.isOnScreen(config.CANVAS_W / 2, config.CANVAS_H / 2, 0), 'canvas center should be on-screen');
+// A point far outside the canvas + margin should be off-screen
+assert.ok(!game.isOnScreen(config.CANVAS_W + 5000, config.CANVAS_H + 5000, game.CULL_MARGIN), 'far point should be off-screen');
+// With margin, a point just outside the canvas edge should be on-screen
+assert.ok(game.isOnScreen(config.CANVAS_W + 10, config.CANVAS_H / 2, game.CULL_MARGIN), 'point just outside edge should be on-screen with margin');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling.`);
