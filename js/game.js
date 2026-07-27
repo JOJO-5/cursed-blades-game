@@ -515,10 +515,16 @@ const Game = {
   },
 
   generateUpgradeChoices() {
-    // Filter out maxed upgrades
+    // Filter out maxed upgrades and unmet prerequisites
     const available = CONFIG.UPGRADES.filter(u => {
       const currentLevel = this.player.upgradeLevels[u.id] || 0;
-      return currentLevel < u.maxLevel;
+      if (currentLevel >= u.maxLevel) return false;
+      // check prerequisite: player must have at least 1 level in the prerequisite upgrade
+      if (u.prerequisite) {
+        const prereqLevel = this.player.upgradeLevels[u.prerequisite] || 0;
+        if (prereqLevel < 1) return false;
+      }
+      return true;
     });
 
     const pool = available;

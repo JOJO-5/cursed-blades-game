@@ -162,7 +162,7 @@ const CONFIG = {
       rarity:'rare', weight:35, maxLevel:5,
       apply:(p)=>{ p.stats.regenBonus += 1; } },
     { id:'critdamage', name:'暴击伤害提升', icon:'ui/upgrade_critdamage', desc:'暴击伤害倍率 +0.3',
-      rarity:'rare', weight:40, maxLevel:5,
+      rarity:'rare', weight:40, maxLevel:5, prerequisite:'crit',
       apply:(p)=>{ p.stats.critMultBonus += 0.3; } },
     { id:'cooldown', name:'冷却降低', icon:'ui/upgrade_cooldown', desc:'武器冷却 -15%',
       rarity:'rare', weight:40, maxLevel:5,
@@ -178,7 +178,7 @@ const CONFIG = {
       rarity:'epic', weight:18, maxLevel:3,
       apply:(p)=>{ p.stats.luck += 1; } },
     { id:'lifesteal', name:'生命偷取', icon:'ui/upgrade_lifesteal', desc:'造成伤害时回血 +2%',
-      rarity:'epic', weight:18, maxLevel:3,
+      rarity:'epic', weight:18, maxLevel:3, prerequisite:'armor',
       apply:(p)=>{ p.stats.lifesteal += 0.02; } },
   ],
 

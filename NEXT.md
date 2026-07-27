@@ -56,7 +56,7 @@
 - [x] 升级界面显示稀有度颜色
 - [x] 升级界面显示当前等级和升级后变化
 - [x] 加权随机选择系统（luck属性影响稀有度权重）
-- [ ] 添加 `prerequisite` 前置条件
+- [x] 添加 `prerequisite` 前置条件（critdamage 需 crit，lifesteal 需 armor）
 
 ### 2.4 武器进化系统
 - [ ] 定义进化配方数据结构
