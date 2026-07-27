@@ -218,12 +218,8 @@ class Player {
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    // animated sprite: idle (2 frames) or move (2 frames)
-    const frameRate = this.isMoving ? 0.2 : 0.4;
-    const frameIdx = Math.floor(this.animTime / frameRate) % 2;
-    const spriteKey = this.isMoving
-      ? ('player/hero_move_0' + (frameIdx + 1))
-      : ('player/hero_idle_0' + (frameIdx + 1));
+    // use main sprite (animation frames are placeholder color blocks)
+    const spriteKey = 'player/hero';
     Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
 
     // hit flash overlay (red tint on sprite)
@@ -1660,24 +1656,8 @@ class Enemy {
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'source-over';
     }
-    // Animated sprite: check for idle frames, fallback to single sprite
-    let spriteKey = this.def.sprite;
-    if (this.isBoss) {
-      // Boss states: idle vs attack
-      const bossStateSuffix = (this.bossState === 'windup' || this.bossState === 'attack')
-        ? '_attack_01'
-        : '_idle_01';
-      const bossAnimKey = this.def.sprite + bossStateSuffix;
-      if (Assets.images[bossAnimKey] && Assets.images[bossAnimKey].complete) {
-        spriteKey = bossAnimKey;
-      }
-    } else {
-      const frameIdx = Math.floor(this.animTime / 0.4) % 2;
-      const animKey = this.def.sprite + '_idle_0' + (frameIdx + 1);
-      if (Assets.images[animKey] && Assets.images[animKey].complete) {
-        spriteKey = animKey;
-      }
-    }
+    // use main sprite (animation frames are placeholder color blocks)
+    const spriteKey = this.def.sprite;
     Assets.drawCentered(ctx, spriteKey, this.x, this.y + bob, scale, 0, 1);
 
     // hit flash overlay - use collision radius so it matches enemy size
