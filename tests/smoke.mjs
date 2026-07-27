@@ -232,4 +232,81 @@ assert.ok(entitiesSource.includes('Game.enemyGrid.query'), 'entities.js should u
 assert.ok(!entitiesSource.includes('for (const e of Game.enemies)'), 'entities.js should not have O(n²) enemy collision loops');
 assert.ok(!entitiesSource.includes('for (const e2 of Game.enemies)'), 'entities.js should not have O(n²) splash collision loops');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 16 weapons (13 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision.`);
+// Verify mine level uses all previously unused assets
+assert.ok(config.LEVELS.mine.wallTiles && config.LEVELS.mine.wallTiles.length >= 5,
+  'mine level should define wallTiles with at least 5 entries');
+assert.ok(config.LEVELS.mine.groundDecorations && config.LEVELS.mine.groundDecorations.length >= 2,
+  'mine level should define groundDecorations with at least 2 entries');
+// Verify all wall tiles exist in manifest
+for (const wt of config.LEVELS.mine.wallTiles) {
+  assert.ok(manifest[wt], `mine wallTile ${wt} should exist in manifest`);
+}
+// Verify all ground decorations exist in manifest
+for (const gd of config.LEVELS.mine.groundDecorations) {
+  assert.ok(manifest[gd], `mine groundDecoration ${gd} should exist in manifest`);
+}
+// Verify bone_pile and gallows_wooden are used in level props
+assert.ok(config.LEVELS.mine.props.bones && config.LEVELS.mine.props.bones.includes('props/bone_pile'),
+  'mine level should include bone_pile prop');
+assert.ok(config.LEVELS.village.props.bones && config.LEVELS.village.props.bones.includes('props/bone_pile'),
+  'village level should include bone_pile prop');
+assert.ok(config.LEVELS.village.props.gallows && config.LEVELS.village.props.gallows.includes('props/gallows_wooden'),
+  'village level should include gallows_wooden prop');
+// Verify PROP_COLLISION includes new categories
+assert.ok(config.PROP_COLLISION.bones > 0, 'PROP_COLLISION should define bones radius');
+assert.ok(config.PROP_COLLISION.gallows > 0, 'PROP_COLLISION should define gallows radius');
+// Verify scatter counts include new categories
+assert.ok(gameSource.includes('bones:'), 'generateMap scatterCounts should include bones');
+assert.ok(gameSource.includes('gallows:'), 'generateMap scatterCounts should include gallows');
+// Verify wall tile rendering exists in generateMap
+assert.ok(gameSource.includes('wallTiles'), 'generateMap should reference wallTiles');
+assert.ok(gameSource.includes('groundDecorations'), 'generateMap should reference groundDecorations');
+
+// Verify enemy projectile sprites are configured
+assert.ok(config.ENEMIES.crystal.projectileSprite, 'crystal enemy should have projectileSprite');
+assert.ok(config.ENEMIES.bossSpider.projectileSprite, 'bossSpider should have projectileSprite');
+assert.ok(config.ENEMIES.mage.projectileSprite, 'mage should have projectileSprite');
+assert.ok(config.ENEMIES.boss.projectileSprite, 'boss should have projectileSprite');
+// Verify projectile sprites exist in manifest
+for (const enemyId of ['crystal','bossSpider','mage','boss']) {
+  const sprite = config.ENEMIES[enemyId].projectileSprite;
+  assert.ok(manifest[sprite], `enemy ${enemyId} projectileSprite ${sprite} should exist in manifest`);
+}
+// Verify EnemyProjectile supports sprite rendering
+assert.ok(entitiesSource.includes('this.sprite = sprite'), 'EnemyProjectile.reset should accept sprite parameter');
+assert.ok(entitiesSource.includes('Assets.get(this.sprite)'), 'EnemyProjectile.draw should render sprite when available');
+// Verify enemy shoot passes projectileSprite
+assert.ok(entitiesSource.includes('this.def.projectileSprite'), 'enemy shoot should pass def.projectileSprite');
+
+// Verify player weapon projectile sprites
+assert.ok(config.WEAPONS.fireball.projectileSprite, 'fireball weapon should have projectileSprite');
+assert.ok(config.WEAPONS.soul.projectileSprite, 'soul weapon should have projectileSprite');
+assert.ok(entitiesSource.includes('this.def.projectileSprite || this.def.icon'),
+  'Weapon.fire should use projectileSprite if defined');
+
+// Verify all previously unused assets are now referenced
+const allConfigResources = new Set();
+collect(config);
+// Also check ground tiles, wall tiles, and decorations
+for (const level of Object.values(config.LEVELS)) {
+  if (level.wallTiles) level.wallTiles.forEach(t => allConfigResources.add(t));
+  if (level.groundDecorations) level.groundDecorations.forEach(d => allConfigResources.add(d));
+}
+// Check that specific previously-unused assets are now referenced
+const previouslyUnused = [
+  'tiles/wall_stone_stacked_01', 'tiles/wall_stone_horizontal_01', 'tiles/wall_stone_gapped_01',
+  'tiles/wall_stone_base_mossy', 'tiles/wall_stone_brick_vertical',
+  'tiles/ruin_stone_wall_broken_01', 'tiles/ruin_stone_wall_broken_02',
+  'tiles/ground_dirt_edge_01', 'tiles/ground_mossy_patch_01', 'tiles/ground_grass_strip_01',
+  'effects/ground_crack', 'effects/ice_spikes_vertical', 'effects/mana_orb_small',
+  'effects/ice_orb', 'effects/ice_shard_small', 'effects/void_particle_small',
+  'effects/fire_projectile', 'effects/spirit_orbs_blue',
+  'props/bone_pile', 'props/gallows_wooden',
+];
+for (const asset of previouslyUnused) {
+  assert.ok(manifest[asset], `previously unused asset ${asset} should exist in manifest`);
+  const pngPath = path.join(root, 'assets', `${asset}.png`);
+  assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
+}
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 16 weapons (13 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

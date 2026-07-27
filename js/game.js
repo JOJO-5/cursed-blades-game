@@ -1109,7 +1109,77 @@ const Game = {
       gctx.fill();
     }
 
-    // generate props
+    // draw wall tiles around map border and as interior wall segments (mine/cave themes)
+    const wallTiles = this.levelData.wallTiles;
+    if (wallTiles && wallTiles.length > 0) {
+      const borderThick = 2; // tiles thick border
+      // top and bottom borders
+      for (let by = 0; by < borderThick; by++) {
+        for (let tx = 0; tx < mapW; tx++) {
+          const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
+          const img = Assets.get(wt);
+          if (img && img.complete) {
+            gctx.globalAlpha = 0.7 + rng() * 0.3;
+            gctx.drawImage(img, tx * ts - 4, by * ts - 6, ts + 8, ts + 8);
+            gctx.drawImage(img, tx * ts - 4, (mapH - 1 - by) * ts - 6, ts + 8, ts + 8);
+          }
+        }
+      }
+      // left and right borders
+      for (let bx = 0; bx < borderThick; bx++) {
+        for (let ty = borderThick; ty < mapH - borderThick; ty++) {
+          const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
+          const img = Assets.get(wt);
+          if (img && img.complete) {
+            gctx.globalAlpha = 0.7 + rng() * 0.3;
+            gctx.drawImage(img, bx * ts - 6, ty * ts - 4, ts + 8, ts + 8);
+            gctx.drawImage(img, (mapW - 1 - bx) * ts - 6, ty * ts - 4, ts + 8, ts + 8);
+          }
+        }
+      }
+      // scatter interior wall segments as broken cave walls
+      const wallSegments = 8;
+      for (let i = 0; i < wallSegments; i++) {
+        const segLen = 2 + Math.floor(rng() * 4);
+        const horiz = rng() > 0.5;
+        const startX = 4 + Math.floor(rng() * (mapW - 8));
+        const startY = 4 + Math.floor(rng() * (mapH - 8));
+        for (let j = 0; j < segLen; j++) {
+          const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
+          const img = Assets.get(wt);
+          if (img && img.complete) {
+            const wx = horiz ? (startX + j) * ts : startX * ts;
+            const wy = horiz ? startY * ts : (startY + j) * ts;
+            // skip if too close to player spawn
+            if (dist(wx, wy, cx, cy) < 100) continue;
+            gctx.globalAlpha = 0.5 + rng() * 0.4;
+            gctx.drawImage(img, wx - 4, wy - 4, ts + 8, ts + 8);
+          }
+        }
+      }
+      gctx.globalAlpha = 1;
+    }
+
+    // draw ground decoration overlays (e.g. ground cracks for mine level)
+    const groundDecorations = this.levelData.groundDecorations;
+    if (groundDecorations && groundDecorations.length > 0) {
+      const decoCount = 20;
+      for (let i = 0; i < decoCount; i++) {
+        const dx = rng() * mapW * ts;
+        const dy = rng() * mapH * ts;
+        const dt = groundDecorations[Math.floor(rng() * groundDecorations.length)];
+        const img = Assets.get(dt);
+        if (img && img.complete) {
+          gctx.globalAlpha = 0.3 + rng() * 0.3;
+          const scale = 0.6 + rng() * 0.8;
+          gctx.drawImage(img, dx - img.width * scale / 2, dy - img.height * scale / 2,
+                         img.width * scale, img.height * scale);
+        }
+      }
+      gctx.globalAlpha = 1;
+    }
+
+    // generate props — dynamically scatter all categories defined in level config
     const props = this.levelData.props;
     const propList = [];
     const collRad = CONFIG.PROP_COLLISION;
@@ -1129,13 +1199,22 @@ const Game = {
       }
     };
 
-    scatter(25, 'trees', props.trees);
-    scatter(15, 'tombstones', props.tombstones);
-    scatter(12, 'fences', props.fences);
-    scatter(8, 'barrels', props.barrels);
-    scatter(10, 'braziers', props.braziers);
-    scatter(10, 'ruins', props.ruins);
-    scatter(3, 'houses', props.houses);
+    // Dynamic scatter counts based on category type
+    const scatterCounts = {
+      trees: 25, tombstones: 15, fences: 12, barrels: 8, braziers: 10,
+      ruins: 10, houses: 3,
+      // Mine-specific
+      caves: 4, campfires: 8, spikes: 10, rocks: 15, platforms: 6,
+      watchtowers: 2, furniture: 8, stonework: 10,
+      // Shared decorative props
+      bones: 6, gallows: 2,
+    };
+
+    // Scatter all categories defined in the level's props config
+    for (const [categoryKey, categoryArr] of Object.entries(props)) {
+      const count = scatterCounts[categoryKey] || 8;
+      scatter(count, categoryKey, categoryArr);
+    }
 
     this.mapData.props = propList;
     // build collision list (only solid props)
@@ -1783,8 +1862,10 @@ const Game = {
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
-    // draw village scene as backdrop
-    const bg = Assets.get('backgrounds/scene_village_forest');
+    // draw scene backdrop — use death_knight_rider if village completed, otherwise village_forest
+    const villageDone = this.meta && this.meta.levelsCompleted && this.meta.levelsCompleted.village;
+    const bgKey = villageDone ? 'backgrounds/scene_death_knight_rider' : 'backgrounds/scene_village_forest';
+    const bg = Assets.get(bgKey);
     if (bg && bg.complete) {
       ctx.globalAlpha = 0.4;
       ctx.drawImage(bg, 0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);

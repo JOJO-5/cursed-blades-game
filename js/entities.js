@@ -444,7 +444,7 @@ class Weapon {
         Math.sin(ang) * projSpeed,
         dmg, this.def.range, pierce, crit, critMult,
         this.id === 'fireball' ? '#ff8030' : this.def.color,
-        this.def.icon, this.def.size, this.id
+        this.def.projectileSprite || this.def.icon, this.def.size, this.id
       );
       proj.homing = this.def.type === 'homing';
       proj.homingStrength = this.def.homingStrength || 0;
@@ -1526,7 +1526,8 @@ class Enemy {
         this.x, this.y,
         Math.cos(a) * this.def.projectileSpeed,
         Math.sin(a) * this.def.projectileSpeed,
-        this.damage * 0.6, this.def.projectileColor, 400
+        this.damage * 0.6, this.def.projectileColor, 400,
+        this.def.projectileSprite || null
       ));
     }
     Audio2.play('sawtooth', 120, 0.1, 0.08);
@@ -1619,7 +1620,8 @@ class Enemy {
       this.x, this.y,
       Math.cos(ang) * this.def.projectileSpeed,
       Math.sin(ang) * this.def.projectileSpeed,
-      this.damage, this.def.projectileColor, 300
+      this.damage, this.def.projectileColor, 300,
+      this.def.projectileSprite || null
     ));
     Audio2.play('sawtooth', 200, 0.05, 0.04);
   }
@@ -1955,12 +1957,12 @@ class Projectile {
 
 // ==================== ENEMY PROJECTILE ====================
 class EnemyProjectile {
-  constructor(x, y, vx, vy, damage, color, range) {
-    this.reset(x, y, vx, vy, damage, color, range);
+  constructor(x, y, vx, vy, damage, color, range, sprite) {
+    this.reset(x, y, vx, vy, damage, color, range, sprite);
   }
 
   // Reinitialize all fields for pool reuse
-  reset(x, y, vx, vy, damage, color, range) {
+  reset(x, y, vx, vy, damage, color, range, sprite) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
     this.damage = damage;
@@ -1970,6 +1972,8 @@ class EnemyProjectile {
     this.alive = true;
     this.radius = 6;
     this.life = 4.0;
+    this.sprite = sprite || null;
+    this.angle = Math.atan2(vy, vx);
   }
 
   update(dt) {
@@ -2013,6 +2017,25 @@ class EnemyProjectile {
   }
 
   draw(ctx) {
+    // try sprite first, fall back to colored circle
+    if (this.sprite) {
+      const img = Assets.get(this.sprite);
+      if (img && img.complete) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.imageSmoothingEnabled = false;
+        const sz = this.radius * 3;
+        ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
+        ctx.restore();
+        // glow halo
+        ctx.fillStyle = this.color + '40';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 1.5, 0, TAU);
+        ctx.fill();
+        return;
+      }
+    }
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, TAU);
@@ -2195,6 +2218,15 @@ class Pickup {
       ctx.beginPath();
       ctx.arc(this.x, this.y + bobY, 12, 0, TAU);
       ctx.fill();
+      // large gems get a mana orb aura
+      if (this.sprite === 'xp_gem_large') {
+        const orb = Assets.get('effects/mana_orb_small');
+        if (orb && orb.complete) {
+          ctx.globalAlpha = 0.6;
+          ctx.drawImage(orb, this.x - 21, this.y + bobY - 18, 42, 37);
+          ctx.globalAlpha = 1;
+        }
+      }
       Assets.drawCentered(ctx, 'items/' + this.sprite, this.x, this.y + bobY, 1, 0, 1);
     } else if (this.type === 'heart') {
       Assets.drawCentered(ctx, 'items/heart', this.x, this.y + bobY, 1.2, 0, 1);

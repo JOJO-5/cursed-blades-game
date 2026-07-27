@@ -56,6 +56,7 @@ const CONFIG = {
       damage: 18, range: 280, cooldown: 1.4, projectileSpeed: 220,
       pierce: 0, critChance: 0.05, critMult: 2.0, splash: 40,
       color: '#ff8030', size: 22,
+      projectileSprite: 'effects/fire_projectile',
       desc: '远程发射·范围爆炸',
     },
     knife: {
@@ -70,6 +71,7 @@ const CONFIG = {
       damage: 14, range: 300, cooldown: 1.2, projectileSpeed: 180,
       pierce: 0, critChance: 0.08, critMult: 2.0, homingStrength: 8,
       color: '#78dcff', size: 20,
+      projectileSprite: 'effects/spirit_orbs_blue',
       desc: '自动追踪·灵能制导',
     },
     shield: {
@@ -163,6 +165,17 @@ const CONFIG = {
     braziers: 10,    // braziers - small obstacle
     ruins: 20,       // stone ruins - large obstacle
     houses: 24,      // shrines - large obstacle
+    // Mine-specific props
+    caves: 28,       // cave entrances - large obstacle
+    campfires: 12,   // campfires - small obstacle
+    spikes: 8,       // wooden spikes - small obstacle
+    rocks: 14,       // rock piles - medium obstacle
+    platforms: 16,   // wooden platforms - medium obstacle
+    watchtowers: 24, // watchtowers - large obstacle
+    furniture: 10,   // benches/shelves/workbenches - small obstacle
+    stonework: 20,   // stone tables/foundations/monoliths - large obstacle
+    bones: 14,       // bone piles - medium obstacle
+    gallows: 18,     // wooden gallows - large obstacle
   },
 
   // ---- Upgrade pool (20 upgrades with rarity/weight/maxLevel) ----
@@ -349,6 +362,7 @@ const CONFIG = {
       hp: 30, speed: 35, damage: 14, xp: 7, radius: 15,
       color: '#4a6aaa', behavior: 'ranged', shootRange: 220, shootCooldown: 2.5,
       projectileSpeed: 160, projectileColor: '#78dcff',
+      projectileSprite: 'effects/ice_shard_small',
     },
     // elites
     golem: {
@@ -407,6 +421,7 @@ const CONFIG = {
       phases: 2, enrageHpPct: 0.5,
       shootRange: 320, shootCooldown: 1.8,
       projectileSpeed: 200, projectileColor: '#ff4030',
+      projectileSprite: 'effects/fire_projectile',
       summonCooldown: 9, summonCount: 3,
       // phase-1 abilities (melee cleave / fan shot / charge)
       cleaveRange: 110, cleaveDamage: 1.1, cleaveCooldown: 4.0, cleaveWindup: 0.7, cleaveArc: 1.4,
@@ -441,6 +456,7 @@ const CONFIG = {
       hp: 35, speed: 30, damage: 16, xp: 8, radius: 15,
       color: '#4a8aaa', behavior: 'ranged', shootRange: 240, shootCooldown: 2.0,
       projectileSpeed: 180, projectileColor: '#80e0ff',
+      projectileSprite: 'effects/ice_orb',
     },
     // level 2 elite
     crusher: {
@@ -456,6 +472,7 @@ const CONFIG = {
       phases: 3, enrageHpPct: 0.4,
       shootRange: 350, shootCooldown: 1.2,
       projectileSpeed: 220, projectileColor: '#c040c0',
+      projectileSprite: 'effects/void_particle_small',
       summonCooldown: 6, summonCount: 4,
     },
   },
@@ -493,8 +510,10 @@ const CONFIG = {
         braziers: ['props/brazier_single_lit','props/brazier_double_lit','props/brazier_single_tall_lit'],
         ruins: ['props/stone_arch_broken','props/stone_pillars_01','props/stone_well_broken'],
         houses: ['props/shrine_stone_lit'],
+        bones: ['props/bone_pile'],
+        gallows: ['props/gallows_wooden'],
       },
-      groundTiles: ['tiles/ground_dirt_grass_01','tiles/ground_dirt_stones_01','tiles/ground_dirt_path_01','tiles/ground_mossy_stone_01'],
+      groundTiles: ['tiles/ground_dirt_grass_01','tiles/ground_dirt_stones_01','tiles/ground_dirt_path_01','tiles/ground_mossy_stone_01','tiles/ground_grass_strip_01'],
     },
     mine: {
       name: '地下矿洞',
@@ -520,15 +539,27 @@ const CONFIG = {
         { time: 420, name: 'Boss降临',   enemyPool: [],                                         rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
-        trees: ['props/stone_pillars_01'],
-        tombstones: ['props/stone_pillars_01'],
-        fences: ['props/fence_wooden_broken_01'],
+        // Mine-themed props using previously unused assets
+        caves: ['props/cave_entrance_lit'],
+        campfires: ['props/campfire_burnt','props/brazier_small_lit'],
+        spikes: ['props/wooden_spikes_01'],
+        rocks: ['props/rocks_small_pile','props/rock_mossy_01','props/stone_fragment_01'],
+        platforms: ['props/wooden_platform_01'],
+        watchtowers: ['props/watchtower_wooden_lit'],
+        furniture: ['props/wooden_bench_broken','props/wooden_shelf_rack','props/wooden_workbench'],
+        stonework: ['props/stone_table_01','props/stone_foundation_01','props/stone_monolith_01','props/stone_fireplace','props/stone_wall_doorway','props/ruin_tree_stone_base'],
+        bones: ['props/bone_pile'],
+        // Reuse some shared props
         barrels: ['props/barrel_wooden_single','props/barrels_wooden_group'],
-        braziers: ['props/brazier_single_lit','props/brazier_double_lit'],
-        ruins: ['props/stone_arch_broken','props/stone_pillars_01','props/stone_well_broken'],
+        braziers: ['props/brazier_single_lit','props/brazier_double_lit','props/brazier_single_tall_lit'],
+        ruins: ['props/stone_arch_broken','props/stone_pillars_01','props/stone_pillars_02','props/stone_well_broken'],
         houses: ['props/shrine_stone_lit'],
       },
-      groundTiles: ['tiles/ground_dirt_stones_01','tiles/ground_mossy_stone_01','tiles/ground_dirt_path_01'],
+      groundTiles: ['tiles/ground_dirt_stones_01','tiles/ground_mossy_stone_01','tiles/ground_dirt_path_01','tiles/ground_dirt_large_01','tiles/ground_dirt_patch_01','tiles/ground_dirt_edge_01','tiles/ground_mossy_patch_01'],
+      // Mine-specific wall tiles for cave border and interior wall segments
+      wallTiles: ['tiles/wall_stone_stacked_01','tiles/wall_stone_horizontal_01','tiles/wall_stone_gapped_01','tiles/wall_stone_base_mossy','tiles/wall_stone_brick_vertical','tiles/ruin_stone_wall_broken_01','tiles/ruin_stone_wall_broken_02'],
+      // Ground decoration overlays (drawn on top of ground tiles)
+      groundDecorations: ['effects/ground_crack','effects/ice_spikes_vertical'],
     },
   },
 
