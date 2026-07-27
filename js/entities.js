@@ -317,27 +317,30 @@ class Weapon {
               const hitX = wx;
               const hitY = wy;
 
-              Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, this.def.color, 0.8, sz * 0.6));
-              Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, '#ffffff', 0.6, sz * 0.3));
+              // 粒子数量上限守卫，防止性能爆炸
+              if (Game.particles.length < 800) {
+                Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, this.def.color, 0.8, sz * 0.6));
+                Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, '#ffffff', 0.6, sz * 0.3));
 
-              const sparkCount = isCrit ? 12 : 6;
-              for (let s = 0; s < sparkCount; s++) {
-                const sa = Math.random() * TAU;
-                const ss = rand(80, 200);
-                const sc = isCrit ? '#ffd040' : this.def.color;
-                Game.particles.push(Game.particlePool.obtain(
-                  hitX, hitY, Math.cos(sa) * ss, Math.sin(sa) * ss,
-                  sc, rand(0.4, 0.8), rand(2, 5)
-                ));
-              }
+                const sparkCount = isCrit ? 12 : 6;
+                for (let s = 0; s < sparkCount; s++) {
+                  const sa = Math.random() * TAU;
+                  const ss = rand(80, 200);
+                  const sc = isCrit ? '#ffd040' : this.def.color;
+                  Game.particles.push(Game.particlePool.obtain(
+                    hitX, hitY, Math.cos(sa) * ss, Math.sin(sa) * ss,
+                    sc, rand(0.4, 0.8), rand(2, 5)
+                  ));
+                }
 
-              for (let r = 0; r < 8; r++) {
-                const ra = (r / 8) * TAU;
-                const rs = 120;
-                Game.particles.push(Game.particlePool.obtain(
-                  hitX, hitY, Math.cos(ra) * rs, Math.sin(ra) * rs,
-                  this.def.color + '80', 0.3, 4
-                ));
+                for (let r = 0; r < 8; r++) {
+                  const ra = (r / 8) * TAU;
+                  const rs = 120;
+                  Game.particles.push(Game.particlePool.obtain(
+                    hitX, hitY, Math.cos(ra) * rs, Math.sin(ra) * rs,
+                    this.def.color + '80', 0.3, 4
+                  ));
+                }
               }
 
               if (isCrit || damage > 30) {
@@ -354,13 +357,15 @@ class Weapon {
                     e2.takeDamage(splashDmg, false, kb * 0.5, e.x, e.y);
                   }
                 }
-                for (let p = 0; p < 12; p++) {
-                  const pa = Math.random() * TAU;
-                  const ps = rand(60, 150);
-                  Game.particles.push(Game.particlePool.obtain(
-                    e.x, e.y, Math.cos(pa) * ps, Math.sin(pa) * ps,
-                    this.def.color, rand(0.4, 0.7), rand(3, 6)
-                  ));
+                if (Game.particles.length < 800) {
+                  for (let p = 0; p < 12; p++) {
+                    const pa = Math.random() * TAU;
+                    const ps = rand(60, 150);
+                    Game.particles.push(Game.particlePool.obtain(
+                      e.x, e.y, Math.cos(pa) * ps, Math.sin(pa) * ps,
+                      this.def.color, rand(0.4, 0.7), rand(3, 6)
+                    ));
+                  }
                 }
               }
             }
@@ -506,6 +511,7 @@ class Weapon {
   }
 
   draw(ctx) {
+    const player = Game.player;
     if (this.def.type === 'aura') {
       const range = this.getRange();
       const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
@@ -524,8 +530,7 @@ class Weapon {
     }
     if (this.def.type !== 'orbit') return;
     const range = this.getRange();
-    const count = 1 + Game.player.stats.weaponCountBonus;
-    const player = Game.player;
+    const count = 1 + player.stats.weaponCountBonus;
     const levelScale = 1 + (this.level - 1) * 0.15;
     const sz = this.def.size * levelScale;
 
