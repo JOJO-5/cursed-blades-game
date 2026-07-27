@@ -110,7 +110,7 @@ class Player {
     for (let i = 0; i < 6; i++) {
       const ang = Math.random() * TAU;
       const spd = rand(40, 100);
-      Game.particles.push(new Particle(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#ff4040', rand(0.3, 0.6), rand(2, 4)));
+      Game.particles.push(Game.particlePool.obtain(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#ff4040', rand(0.3, 0.6), rand(2, 4)));
     }
     if (this.hp <= 0) {
       this.hp = 0;
@@ -343,7 +343,7 @@ class Weapon {
     const critMult = this.getCritMult();
     const projSpeed = this.def.projectileSpeed * player.stats.projectileSpeedMult;
 
-    const proj = new Projectile(
+    const proj = Game.projectilePool.obtain(
       player.x, player.y,
       Math.cos(ang) * projSpeed,
       Math.sin(ang) * projSpeed,
@@ -566,7 +566,7 @@ class SummonBehavior {
     for (let i = 0; i < count * 3; i++) {
       const ang = Math.random() * TAU;
       const spd = rand(30, 80);
-      Game.particles.push(new Particle(
+      Game.particles.push(Game.particlePool.obtain(
         summoner.x, summoner.y,
         Math.cos(ang) * spd, Math.sin(ang) * spd,
         '#c060e0', rand(0.3, 0.6), rand(2, 4)
@@ -590,7 +590,7 @@ class DeathBehavior {
     for (let i = 0; i < gemCount; i++) {
       const ang = Math.random() * TAU;
       const r = Math.random() * 20;
-      Game.pickups.push(new Pickup(enemy.x + Math.cos(ang) * r, enemy.y + Math.sin(ang) * r, 'xp', gemType, enemy.xp / gemCount));
+      Game.pickups.push(Game.pickupPool.obtain(enemy.x + Math.cos(ang) * r, enemy.y + Math.sin(ang) * r, 'xp', gemType, enemy.xp / gemCount));
     }
 
     // death particles (boss bursts more)
@@ -598,7 +598,7 @@ class DeathBehavior {
     for (let i = 0; i < pCount; i++) {
       const ang = Math.random() * TAU;
       const spd = rand(50, 150);
-      Game.particles.push(new Particle(enemy.x, enemy.y, Math.cos(ang) * spd, Math.sin(ang) * spd, enemy.def.color, rand(0.3, 0.8), rand(2, 5)));
+      Game.particles.push(Game.particlePool.obtain(enemy.x, enemy.y, Math.cos(ang) * spd, Math.sin(ang) * spd, enemy.def.color, rand(0.3, 0.8), rand(2, 5)));
     }
 
     // tier-based rewards
@@ -707,7 +707,7 @@ class Enemy {
       const spd = rand(60, 140);
       const px = this.x + Math.cos(ang) * this.radius * 0.5;
       const py = this.y + Math.sin(ang) * this.radius * 0.5;
-      Game.particles.push(new Particle(px, py, Math.cos(ang) * spd, Math.sin(ang) * spd, isCrit ? '#ffd040' : '#ffcc60', rand(0.2, 0.4), particleSize));
+      Game.particles.push(Game.particlePool.obtain(px, py, Math.cos(ang) * spd, Math.sin(ang) * spd, isCrit ? '#ffd040' : '#ffcc60', rand(0.2, 0.4), particleSize));
     }
 
     if (knockback && fromX !== undefined) {
@@ -771,7 +771,7 @@ class Enemy {
       const ang = Math.random() * TAU;
       const spd = rand(80, 200);
       const r = Math.random() * exp.radius * 0.4;
-      Game.particles.push(new Particle(
+      Game.particles.push(Game.particlePool.obtain(
         this.x + Math.cos(ang) * r, this.y + Math.sin(ang) * r,
         Math.cos(ang) * spd, Math.sin(ang) * spd,
         pick(['#ff8030', '#ffaa30', '#ffd040']),
@@ -782,7 +782,7 @@ class Enemy {
     for (let i = 0; i < 14; i++) {
       const ang = (i / 14) * TAU;
       const spd = 160;
-      Game.particles.push(new Particle(
+      Game.particles.push(Game.particlePool.obtain(
         this.x, this.y,
         Math.cos(ang) * spd, Math.sin(ang) * spd,
         '#ff6020', 0.3, 5
@@ -1006,7 +1006,7 @@ class Enemy {
       const r = range * (0.5 + Math.random() * 0.5);
       const px = this.x + Math.cos(a) * r;
       const py = this.y + Math.sin(a) * r;
-      Game.particles.push(new Particle(px, py, Math.cos(a)*30, Math.sin(a)*30, '#c04040', rand(0.2,0.4), rand(2,4)));
+      Game.particles.push(Game.particlePool.obtain(px, py, Math.cos(a)*30, Math.sin(a)*30, '#c04040', rand(0.2,0.4), rand(2,4)));
     }
   }
 
@@ -1015,7 +1015,7 @@ class Enemy {
     const shots = this.def.fanShotCount;
     for (let i = 0; i < shots; i++) {
       const a = baseAng + (i - (shots-1)/2) * 0.2;
-      Game.enemyProjectiles.push(new EnemyProjectile(
+      Game.enemyProjectiles.push(Game.enemyProjectilePool.obtain(
         this.x, this.y,
         Math.cos(a) * this.def.projectileSpeed,
         Math.sin(a) * this.def.projectileSpeed,
@@ -1043,7 +1043,7 @@ class Enemy {
     // throw a giant sword projectile toward player
     const ang = angleTo(this.x, this.y, player.x, player.y);
     const dmg = this.damage * this.def.swordThrowDamage;
-    const proj = new EnemyProjectile(
+    const proj = Game.enemyProjectilePool.obtain(
       this.x, this.y,
       Math.cos(ang) * this.def.projectileSpeed * 0.8,
       Math.sin(ang) * this.def.projectileSpeed * 0.8,
@@ -1108,7 +1108,7 @@ class Enemy {
 
   shoot(player) {
     const ang = angleTo(this.x, this.y, player.x, player.y);
-    Game.enemyProjectiles.push(new EnemyProjectile(
+    Game.enemyProjectiles.push(Game.enemyProjectilePool.obtain(
       this.x, this.y,
       Math.cos(ang) * this.def.projectileSpeed,
       Math.sin(ang) * this.def.projectileSpeed,
@@ -1292,6 +1292,12 @@ class Enemy {
 // ==================== PROJECTILE ====================
 class Projectile {
   constructor(x, y, vx, vy, damage, range, pierce, critChance, critMult, color, sprite, size, weaponId) {
+    this.hitEnemies = new Set();
+    this.reset(x, y, vx, vy, damage, range, pierce, critChance, critMult, color, sprite, size, weaponId);
+  }
+
+  // Reinitialize all fields for pool reuse (avoids GC from new allocations)
+  reset(x, y, vx, vy, damage, range, pierce, critChance, critMult, color, sprite, size, weaponId) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
     this.damage = damage;
@@ -1308,7 +1314,7 @@ class Projectile {
     this.homing = false;
     this.homingStrength = 0;
     this.splash = 0;
-    this.hitEnemies = new Set();
+    if (this.hitEnemies) this.hitEnemies.clear(); else this.hitEnemies = new Set();
     this.angle = Math.atan2(vy, vx);
     this.life = 3.0;
   }
@@ -1375,7 +1381,7 @@ class Projectile {
           for (let i = 0; i < 8; i++) {
             const a = Math.random() * TAU;
             const s = rand(50, 120);
-            Game.particles.push(new Particle(this.x, this.y, Math.cos(a)*s, Math.sin(a)*s, this.color, 0.3, 3));
+            Game.particles.push(Game.particlePool.obtain(this.x, this.y, Math.cos(a)*s, Math.sin(a)*s, this.color, 0.3, 3));
           }
         }
 
@@ -1414,6 +1420,11 @@ class Projectile {
 // ==================== ENEMY PROJECTILE ====================
 class EnemyProjectile {
   constructor(x, y, vx, vy, damage, color, range) {
+    this.reset(x, y, vx, vy, damage, color, range);
+  }
+
+  // Reinitialize all fields for pool reuse
+  reset(x, y, vx, vy, damage, color, range) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
     this.damage = damage;
@@ -1450,7 +1461,7 @@ class EnemyProjectile {
           for (let j = 0; j < 5; j++) {
             const ang = Math.random() * TAU;
             const spd = rand(40, 100);
-            Game.particles.push(new Particle(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#7896c8', rand(0.2, 0.4), rand(2, 3)));
+            Game.particles.push(Game.particlePool.obtain(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#7896c8', rand(0.2, 0.4), rand(2, 3)));
           }
           Audio2.play('sine', 600, 0.05, 0.04);
           return;
@@ -1480,6 +1491,11 @@ class EnemyProjectile {
 // ==================== PICKUP ====================
 class Pickup {
   constructor(x, y, type, sprite, value) {
+    this.reset(x, y, type, sprite, value);
+  }
+
+  // Reinitialize all fields for pool reuse
+  reset(x, y, type, sprite, value) {
     this.x = x; this.y = y;
     this.type = type; // 'xp', 'heart', 'chest'
     this.sprite = sprite;
@@ -1488,11 +1504,11 @@ class Pickup {
     this.bob = Math.random() * TAU;
     this.life = 30;
     this.magnetized = false;
-    this.vx = 0; this.vy = 0;
     // initial scatter
     const ang = Math.random() * TAU;
     this.vx = Math.cos(ang) * 40;
     this.vy = Math.sin(ang) * 40;
+    this.tremble = 0;
   }
 
   update(dt) {
@@ -1541,7 +1557,7 @@ class Pickup {
       for (let i = 0; i < 4; i++) {
         const ang = Math.random() * TAU;
         const spd = rand(40, 90);
-        Game.particles.push(new Particle(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, '#80ff80', rand(0.2, 0.4), rand(1.5, 3)));
+        Game.particles.push(Game.particlePool.obtain(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, '#80ff80', rand(0.2, 0.4), rand(1.5, 3)));
       }
       if (leveled) {
         Game.onLevelUp();
@@ -1616,6 +1632,11 @@ class Pickup {
 // ==================== PARTICLE ====================
 class Particle {
   constructor(x, y, vx, vy, color, life, size) {
+    this.reset(x, y, vx, vy, color, life, size);
+  }
+
+  // Reinitialize all fields for pool reuse (avoids GC from new allocations)
+  reset(x, y, vx, vy, color, life, size) {
     this.x = x; this.y = y;
     this.vx = vx; this.vy = vy;
     this.color = color;
@@ -1647,6 +1668,11 @@ class Particle {
 // ==================== DAMAGE NUMBER ====================
 class DamageNumber {
   constructor(x, y, value, color, isCrit) {
+    this.reset(x, y, value, color, isCrit);
+  }
+
+  // Reinitialize all fields for pool reuse
+  reset(x, y, value, color, isCrit) {
     this.x = x + rand(-10, 10);
     this.y = y;
     this.vy = -50;

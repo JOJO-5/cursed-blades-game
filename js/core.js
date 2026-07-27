@@ -478,3 +478,54 @@ function makeRNG(seed) {
     return s / 0x7fffffff;
   };
 }
+
+// ---- Object Pool ----
+// Generic pool that pre-allocates and reuses objects to reduce GC pressure.
+// Each pooled class must have a reset(...args) method that reinitializes its state.
+class ObjectPool {
+  constructor(cls, preallocate) {
+    this._cls = cls;
+    this._free = [];
+    this._maxSize = 0; // track high-water mark for debugging
+    if (preallocate) {
+      for (let i = 0; i < preallocate; i++) {
+        this._free.push(new cls());
+      }
+    }
+  }
+
+  // Obtain an object from the pool, calling reset(...args) on it.
+  // If the pool is empty, a new object is created.
+  obtain(...args) {
+    const obj = this._free.pop() || new this._cls();
+    obj.reset(...args);
+    return obj;
+  }
+
+  // Release a dead object back to the pool for reuse.
+  // Does nothing if obj is null/undefined.
+  release(obj) {
+    if (!obj) return;
+    obj.alive = false;
+    this._free.push(obj);
+    if (this._free.length > this._maxSize) this._maxSize = this._free.length;
+  }
+
+  // Filter dead objects from an array, releasing them back to the pool.
+  // Returns the filtered array (only alive objects remain).
+  recycle(array) {
+    let writeIdx = 0;
+    for (let i = 0; i < array.length; i++) {
+      if (array[i].alive) {
+        array[writeIdx++] = array[i];
+      } else {
+        this.release(array[i]);
+      }
+    }
+    array.length = writeIdx;
+    return array;
+  }
+
+  // Number of objects currently in the free list.
+  get freeCount() { return this._free.length; }
+}

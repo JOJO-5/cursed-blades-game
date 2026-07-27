@@ -49,11 +49,25 @@ const Game = {
   metaKey: 'cursed_blades_meta',
   saveSchemaVersion: 3,
 
+  // Object pools (initialized in init() — reduce GC by reusing entities)
+  particlePool: null,
+  projectilePool: null,
+  enemyProjectilePool: null,
+  damageNumberPool: null,
+  pickupPool: null,
+
   // ---- Initialization ----
   init() {
     this.canvas = document.getElementById('game-canvas');
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
+
+    // Initialize object pools (pre-allocate to reduce GC during gameplay)
+    this.particlePool = new ObjectPool(Particle, 200);
+    this.projectilePool = new ObjectPool(Projectile, 50);
+    this.enemyProjectilePool = new ObjectPool(EnemyProjectile, 30);
+    this.damageNumberPool = new ObjectPool(DamageNumber, 100);
+    this.pickupPool = new ObjectPool(Pickup, 50);
 
     // Responsive canvas scaling - fill screen while maintaining 16:9 aspect ratio
     this.resizeCanvas();
@@ -242,9 +256,9 @@ const Game = {
       for (const p of this.particles) {
         if (this.isOnScreen(p.x, p.y, 60)) p.update(dt);
       }
-      this.particles = this.particles.filter(p => p.alive);
+      this.particlePool.recycle(this.particles);
       for (const d of this.damageNumbers) d.update(dt);
-      this.damageNumbers = this.damageNumbers.filter(d => d.alive);
+      this.damageNumberPool.recycle(this.damageNumbers);
       for (const m of this.messages) m.life -= dt;
       this.messages = this.messages.filter(m => m.life > 0);
     }
@@ -295,13 +309,13 @@ const Game = {
 
     // update projectiles
     for (const p of this.projectiles) p.update(dt);
-    this.projectiles = this.projectiles.filter(p => p.alive);
+    this.projectilePool.recycle(this.projectiles);
 
     for (const p of this.enemyProjectiles) p.update(dt);
-    this.enemyProjectiles = this.enemyProjectiles.filter(p => p.alive);
+    this.enemyProjectilePool.recycle(this.enemyProjectiles);
 
     for (const p of this.pickups) p.update(dt);
-    this.pickups = this.pickups.filter(p => p.alive);
+    this.pickupPool.recycle(this.pickups);
 
     // If a level-up or chest reward was triggered mid-frame, stop further updates
     if (this.state !== 'playing') return;
@@ -536,7 +550,7 @@ const Game = {
 
   spawnChest(x, y, isRare) {
     // isRare: 0=normal, 1=rare, 2=suspicious
-    this.pickups.push(new Pickup(x, y, 'chest', 'chest', isRare ? isRare : 0));
+    this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', isRare ? isRare : 0));
   },
 
   // ---- Level up ----
@@ -965,7 +979,7 @@ const Game = {
     for (let i = 0; i < this.levelData.chestCount; i++) {
       const x = rand(200, this.levelData.mapW * CONFIG.TILE_SIZE - 200);
       const y = rand(200, this.levelData.mapH * CONFIG.TILE_SIZE - 200);
-      this.pickups.push(new Pickup(x, y, 'chest', 'chest', 0));
+      this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', 0));
     }
 
     // start gameplay BGM (resumes from menu/victory)
@@ -1244,7 +1258,7 @@ const Game = {
   },
 
   spawnDamageNumber(x, y, value, color, isCrit) {
-    this.damageNumbers.push(new DamageNumber(x, y, value, color, isCrit));
+    this.damageNumbers.push(this.damageNumberPool.obtain(x, y, value, color, isCrit));
   },
 
   addMessage(text, color) {

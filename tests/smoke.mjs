@@ -151,4 +151,12 @@ assert.ok(!game.isOnScreen(config.CANVAS_W + 5000, config.CANVAS_H + 5000, game.
 // With margin, a point just outside the canvas edge should be on-screen
 assert.ok(game.isOnScreen(config.CANVAS_W + 10, config.CANVAS_H / 2, game.CULL_MARGIN), 'point just outside edge should be on-screen with margin');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks.`);
+// Verify ObjectPool class exists and Game has pool instances
+assert.ok(coreSource.includes('class ObjectPool'), 'core.js should define ObjectPool class');
+assert.ok(coreSource.includes('obtain') && coreSource.includes('recycle'), 'ObjectPool should have obtain and recycle methods');
+assert.ok(gameSource.includes('particlePool') && gameSource.includes('projectilePool'), 'Game should have particle and projectile pools');
+assert.ok(gameSource.includes('enemyProjectilePool') && gameSource.includes('damageNumberPool'), 'Game should have enemyProjectile and damageNumber pools');
+// Verify entities have reset methods for pool reuse
+assert.ok(entitiesSource.includes('reset('), 'entity classes should have reset methods for pool reuse');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools.`);
