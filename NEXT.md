@@ -155,7 +155,7 @@
 - [x] 开场剧情（已实现）
 - [x] Boss出现剧情（已实现）
 - [x] 通关剧情（已实现）
-- [ ] 首次遇见宝箱怪剧情
+- [x] 首次遇见宝箱怪剧情（mimicEncounter 剧情，首次生成宝箱怪时触发，meta.seenStories 记录）
 - [~] 剧情数据与UI分离（数据已在 CONFIG.STORY 分离；renderStory 渲染仍耦合在 game.js）
 
 ### 6.2 HUD完善

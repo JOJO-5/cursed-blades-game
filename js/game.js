@@ -249,6 +249,13 @@ const Game = {
       return;
     }
 
+    // trigger pending mimic encounter story
+    if (this.pendingMimicStory) {
+      this.pendingMimicStory = false;
+      this.startStory(CONFIG.STORY.mimicEncounter, () => { this.state = 'playing'; });
+      return;
+    }
+
     this.player.update(dt);
 
     // update enemies
@@ -600,6 +607,12 @@ const Game = {
       this.enemies.push(new Enemy('mimic', x, y));
       this.addMessage('宝箱怪! 它是活的!', '#ff6030');
       Audio2.boss();
+      // first mimic encounter triggers story
+      if (!this.meta.seenStories.includes('mimicEncounter')) {
+        this.meta.seenStories.push('mimicEncounter');
+        this.saveMeta();
+        this.pendingMimicStory = true;
+      }
     } else {
       // normal/rare chest: give reward
       this.state = 'chestReward';

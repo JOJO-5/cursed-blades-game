@@ -424,5 +424,12 @@ const CONFIG = {
         { speaker: '旁白', text: '旅者带着环刀，踏上了新的旅途……' },
       ],
     },
+    // Triggered on first mimic encounter (any level)
+    mimicEncounter: [
+      { speaker: '旁白', text: '那个宝箱……似乎有些不对劲。' },
+      { speaker: '旅者', text: '等等，它在动！' },
+      { speaker: '宝箱怪', text: '嗷——！想拿宝物？先成为我的养分吧！' },
+      { speaker: '旅者', text: '是宝箱怪！小心应对！' },
+    ],
   },
 };
