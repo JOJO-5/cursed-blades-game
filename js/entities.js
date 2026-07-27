@@ -584,7 +584,7 @@ class Enemy {
       case 'bat': case 'boar': return 'leather';
       case 'skeleton': case 'spider': case 'beetle': return 'bone';
       case 'archer': case 'mage': case 'crystal': case 'miner': case 'villager': case 'plague_archer': return 'flesh';
-      case 'golem': return 'wood';
+      case 'golem': case 'scarecrow': return 'wood';
       case 'reaper': return 'metal';
       case 'mimic': return 'chest';
       default: return 'flesh';
@@ -648,8 +648,50 @@ class Enemy {
     if (this.isBoss) Game.bossKills++;
     else if (this.isElite) Game.eliteKills++;
     Audio2.death();
+    // death explosion (e.g. scarecrow) — happens before normal death effects
+    if (this.def.deathExplosion) this.explode();
     // delegate death effects (drops, particles, rewards, shake) to DeathBehavior
     ENEMY_DEATH_BEHAVIOR.execute(this);
+  }
+
+  // death explosion: area damage + visual/sound feedback
+  explode() {
+    const exp = this.def.deathExplosion;
+    const player = Game.player;
+
+    // damage player if within explosion radius
+    const d = dist(this.x, this.y, player.x, player.y);
+    if (d < exp.radius + player.radius) {
+      player.takeDamage(exp.damage);
+    }
+
+    // explosion burst particles (fire colors)
+    for (let i = 0; i < 20; i++) {
+      const ang = Math.random() * TAU;
+      const spd = rand(80, 200);
+      const r = Math.random() * exp.radius * 0.4;
+      Game.particles.push(new Particle(
+        this.x + Math.cos(ang) * r, this.y + Math.sin(ang) * r,
+        Math.cos(ang) * spd, Math.sin(ang) * spd,
+        pick(['#ff8030', '#ffaa30', '#ffd040']),
+        rand(0.4, 0.8), rand(3, 6)
+      ));
+    }
+    // shockwave ring
+    for (let i = 0; i < 14; i++) {
+      const ang = (i / 14) * TAU;
+      const spd = 160;
+      Game.particles.push(new Particle(
+        this.x, this.y,
+        Math.cos(ang) * spd, Math.sin(ang) * spd,
+        '#ff6020', 0.3, 5
+      ));
+    }
+
+    // explosion sound + screen shake
+    Audio2.play('sawtooth', 80, 0.3, 0.12);
+    Game.shakeScreen(8, 0.3);
+    Game.spawnDamageNumber(this.x, this.y - 20, '爆炸!', '#ff6020');
   }
 
   update(dt) {

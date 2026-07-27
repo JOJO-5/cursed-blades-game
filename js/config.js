@@ -242,6 +242,13 @@ const CONFIG = {
       color: '#5a7a3a', behavior: 'ranged', shootRange: 240, shootCooldown: 2.2,
       projectileSpeed: 190, projectileColor: '#6acc4a',
     },
+    // scarecrow — slow, high HP, explodes on death dealing area damage
+    scarecrow: {
+      name: '腐化稻草怪', sprite: 'enemies/torchbearer',
+      hp: 60, speed: 25, damage: 8, xp: 8, radius: 20,
+      color: '#8a6a2a', behavior: 'chase',
+      deathExplosion: { radius: 85, damage: 25 },
+    },
     mage: {
       name: '冰霜法师', sprite: 'enemies/dwarf_mage',
       hp: 30, speed: 35, damage: 14, xp: 7, radius: 15,
@@ -335,7 +342,7 @@ const CONFIG = {
       mapW: 40, mapH: 30,
       spawnInterval: 3.0,
       maxEnemies: 25,
-      enemyPool: ['slime','bat','skeleton','spider','boar','villager'],
+      enemyPool: ['slime','bat','skeleton','spider','boar','villager','scarecrow'],
       rangedPool: ['archer','mage','plague_archer'],
       elitePool: ['golem','reaper'],
       eliteInterval: 90, // seconds — first elite at ~1.5min, then every 1.5min
@@ -347,8 +354,8 @@ const CONFIG = {
       phases: [
         { time: 0,   name: '初始骚扰',   enemyPool: ['villager','slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
         { time: 120, name: '远程加入',   enemyPool: ['villager','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
-        { time: 240, name: '精英登场',   enemyPool: ['villager','slime','bat','spider','skeleton'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '腐化加剧',   enemyPool: ['villager','slime','bat','spider','skeleton','boar'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 240, name: '精英登场',   enemyPool: ['villager','slime','bat','spider','skeleton','scarecrow'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '腐化加剧',   enemyPool: ['villager','slime','bat','spider','skeleton','boar','scarecrow'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
         { time: 480, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
