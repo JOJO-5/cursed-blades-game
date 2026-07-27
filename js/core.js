@@ -529,3 +529,62 @@ class ObjectPool {
   // Number of objects currently in the free list.
   get freeCount() { return this._free.length; }
 }
+
+// ============================================================
+// SpatialGrid — uniform grid for broad-phase collision queries.
+// Rebuilds each frame: clear() → insert() per enemy → query(x,y,r).
+// Reduces collision checks from O(n²) to O(n·k) where k = nearby entities.
+// ============================================================
+class SpatialGrid {
+  constructor(cellSize) {
+    this.cellSize = cellSize;
+    this._cells = new Map(); // key "cx,cy" → array of entities
+  }
+
+  // Remove all entities from the grid. Call at the start of each frame.
+  clear() {
+    this._cells.clear();
+  }
+
+  // Insert an entity into the grid based on its (x, y) position.
+  insert(entity) {
+    const cx = Math.floor(entity.x / this.cellSize);
+    const cy = Math.floor(entity.y / this.cellSize);
+    const key = cx + ',' + cy;
+    let cell = this._cells.get(key);
+    if (!cell) {
+      cell = [];
+      this._cells.set(key, cell);
+    }
+    cell.push(entity);
+  }
+
+  // Query all entities that could be within `radius` of (x, y).
+  // Returns an array of entities (caller must still do precise distance checks).
+  query(x, y, radius) {
+    const result = [];
+    const minCx = Math.floor((x - radius) / this.cellSize);
+    const maxCx = Math.floor((x + radius) / this.cellSize);
+    const minCy = Math.floor((y - radius) / this.cellSize);
+    const maxCy = Math.floor((y + radius) / this.cellSize);
+
+    for (let cx = minCx; cx <= maxCx; cx++) {
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        const cell = this._cells.get(cx + ',' + cy);
+        if (cell) {
+          for (let i = 0; i < cell.length; i++) {
+            result.push(cell[i]);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  // Number of entities currently in the grid.
+  get size() {
+    let count = 0;
+    for (const cell of this._cells.values()) count += cell.length;
+    return count;
+  }
+}

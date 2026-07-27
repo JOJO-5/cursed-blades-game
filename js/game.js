@@ -56,6 +56,9 @@ const Game = {
   damageNumberPool: null,
   pickupPool: null,
 
+  // Spatial grid for broad-phase collision (rebuilt each frame)
+  enemyGrid: null,
+
   // ---- Initialization ----
   init() {
     this.canvas = document.getElementById('game-canvas');
@@ -68,6 +71,9 @@ const Game = {
     this.enemyProjectilePool = new ObjectPool(EnemyProjectile, 30);
     this.damageNumberPool = new ObjectPool(DamageNumber, 100);
     this.pickupPool = new ObjectPool(Pickup, 50);
+
+    // Spatial grid for collision optimization (128px cells)
+    this.enemyGrid = new SpatialGrid(128);
 
     // Responsive canvas scaling - fill screen while maintaining 16:9 aspect ratio
     this.resizeCanvas();
@@ -291,6 +297,12 @@ const Game = {
       this.pendingMimicStory = false;
       this.startStory(CONFIG.STORY.mimicEncounter, () => { this.state = 'playing'; });
       return;
+    }
+
+    // Rebuild spatial grid for collision queries (before player/weapons/projectiles use it)
+    this.enemyGrid.clear();
+    for (const e of this.enemies) {
+      if (e.alive) this.enemyGrid.insert(e);
     }
 
     this.player.update(dt);

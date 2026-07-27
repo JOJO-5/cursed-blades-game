@@ -219,4 +219,17 @@ assert.ok(gameSource.includes("'evolution'"), 'Game should handle evolution rewa
 assert.ok(entitiesSource.includes('multiShot'), 'Weapon.fire should support multiShot for evolved weapons');
 assert.ok(entitiesSource.includes('this.def.splash'), 'Orbit weapons should support splash damage for evolved weapons');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 13 weapons (10 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system.`);
+// Verify spatial grid for collision optimization
+assert.ok(coreSource.includes('class SpatialGrid'), 'core.js should define SpatialGrid class');
+assert.ok(coreSource.includes('this._cells'), 'SpatialGrid should use cell-based storage');
+assert.ok(coreSource.includes('query('), 'SpatialGrid should have query method');
+assert.ok(gameSource.includes('enemyGrid'), 'Game should have enemyGrid instance');
+assert.ok(gameSource.includes('new SpatialGrid'), 'Game should instantiate SpatialGrid');
+assert.ok(gameSource.includes('this.enemyGrid.clear()'), 'Game should clear enemyGrid each frame');
+assert.ok(gameSource.includes('this.enemyGrid.insert'), 'Game should insert enemies into grid');
+// Verify entities.js uses grid queries instead of O(n²) enemy iteration
+assert.ok(entitiesSource.includes('Game.enemyGrid.query'), 'entities.js should use enemyGrid.query for collision');
+assert.ok(!entitiesSource.includes('for (const e of Game.enemies)'), 'entities.js should not have O(n²) enemy collision loops');
+assert.ok(!entitiesSource.includes('for (const e2 of Game.enemies)'), 'entities.js should not have O(n²) splash collision loops');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 13 weapons (10 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision.`);

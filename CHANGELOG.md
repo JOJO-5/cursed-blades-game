@@ -1,5 +1,23 @@
 # 修改记录 (CHANGELOG)
 
+## [v0.9.2] - 2026-07-27
+
+### 空间分区碰撞优化（阶段6.5）
+- **新增 `SpatialGrid` 类**：均匀网格空间分区，128px 单元格，clear()/insert()/query() 接口，将 O(n²) 碰撞检测降为 O(n·k)
+  - 影响文件：`js/core.js`
+- **Game 集成**：`enemyGrid` 每帧重建（clear + insert 存活敌人），在 player.update 之前完成
+  - 影响文件：`js/game.js`
+- **6 处碰撞循环替换为网格查询**：
+  - 环绕武器碰撞检测：query(wx, wy, 80)
+  - 环绕武器溅射伤害：query(e.x, e.y, splashR)
+  - 远程武器目标搜索：query(player.x, player.y, range)
+  - 追踪弹目标搜索：query(this.x, this.y, 250)
+  - 弹丸碰撞检测：query(this.x, this.y, 80)
+  - 弹丸溅射伤害：query(this.x, this.y, splash)
+  - 影响文件：`js/entities.js`
+- **Smoke 测试扩展**：验证 SpatialGrid 类定义、Game 集成、entities.js 不再有 O(n²) 敌人遍历
+  - 影响文件：`tests/smoke.mjs`
+
 ## [v0.9.1] - 2026-07-26
 
 ### 死亡行为抽离（阶段3.3）

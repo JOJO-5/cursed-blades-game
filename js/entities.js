@@ -290,7 +290,8 @@ class Weapon {
         const wx = player.x + Math.cos(this.angle + offset) * range;
         const wy = player.y + Math.sin(this.angle + offset) * range;
 
-        for (const e of Game.enemies) {
+        const nearby = Game.enemyGrid.query(wx, wy, 80);
+        for (const e of nearby) {
           if (!e.alive) continue;
           const d = dist(wx, wy, e.x, e.y);
           if (d < (e.radius + 20)) {
@@ -313,7 +314,7 @@ class Weapon {
               // splash damage for evolved orbit weapons (e.g. hammer_meteor)
               if (this.def.splash) {
                 const splashR = this.def.splash;
-                for (const e2 of Game.enemies) {
+                for (const e2 of Game.enemyGrid.query(e.x, e.y, splashR)) {
                   if (!e2.alive || e2.id === e.id) continue;
                   const sd = dist(e.x, e.y, e2.x, e2.y);
                   if (sd < splashR) {
@@ -350,7 +351,7 @@ class Weapon {
     // find nearest enemy
     let target = null;
     let minD = this.def.range;
-    for (const e of Game.enemies) {
+    for (const e of Game.enemyGrid.query(player.x, player.y, this.def.range)) {
       if (!e.alive) continue;
       const d = dist(player.x, player.y, e.x, e.y);
       if (d < minD) { minD = d; target = e; }
@@ -1703,7 +1704,7 @@ class Projectile {
     if (this.homing) {
       let target = null;
       let minD = 250;
-      for (const e of Game.enemies) {
+      for (const e of Game.enemyGrid.query(this.x, this.y, 250)) {
         if (!e.alive || this.hitEnemies.has(e.id)) continue;
         const d = dist(this.x, this.y, e.x, e.y);
         if (d < minD) { minD = d; target = e; }
@@ -1731,7 +1732,7 @@ class Projectile {
     if (this.traveled > this.maxRange) { this.alive = false; return; }
 
     // check collisions
-    for (const e of Game.enemies) {
+    for (const e of Game.enemyGrid.query(this.x, this.y, 80)) {
       if (!e.alive || this.hitEnemies.has(e.id)) continue;
       const d = dist(this.x, this.y, e.x, e.y);
       if (d < e.radius + this.size * 0.5) {
@@ -1747,7 +1748,7 @@ class Projectile {
 
         // splash
         if (this.splash > 0) {
-          for (const e2 of Game.enemies) {
+          for (const e2 of Game.enemyGrid.query(this.x, this.y, this.splash)) {
             if (!e2.alive || e2.id === e.id) continue;
             const sd = dist(this.x, this.y, e2.x, e2.y);
             if (sd < this.splash) {
