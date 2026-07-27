@@ -1,5 +1,21 @@
 # 修改记录 (CHANGELOG)
 
+## [v0.9.1] - 2026-07-26
+
+### 死亡行为抽离（阶段3.3）
+- **新增 `DeathBehavior` 类**：将 `Enemy.die()` 中的死亡效果逻辑（XP 掉落、死亡粒子、Boss/精英/宝箱怪奖励、屏幕震动）抽离为独立策略类
+  - `execute(enemy)` 封装所有死亡特效，按敌人类型（isBoss/isElite/isMimic）分支
+  - 影响文件：`js/entities.js`
+- **`Enemy.die()` 简化**：仅保留击杀计数与音效，死亡效果委托 `ENEMY_DEATH_BEHAVIOR.execute(this)`
+- **NEXT.md 同步更新**：3.3 标记 DeathBehavior 已完成
+
+### 文档校正（阶段6.2/6.4）
+- **NEXT.md 标记已完成项**（实际代码已实现，仅文档未同步）：
+  - 6.2 Boss 顶部生命条（`renderHUD` 顶部血条，含阶段分隔线与阶段标签）
+  - 6.4 Boss 技能预警圈（`drawBossExtras`：cleave 扇形/charge 虚线/fanShot·swordThrow 圆圈/hazard 圆圈，含 pulse 动画）
+  - 6.4 拾取经验闪光（`Pickup.collect` 绿色粒子迸发 + 持续 glow）
+- **更新顶部状态摘要**：反映阶段4基本完成、阶段6.4视觉反馈基本完成
+
 ## [v0.9.0] - 2026-07-26
 
 ### 地图碰撞系统（阶段4.3）

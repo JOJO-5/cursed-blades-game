@@ -36,6 +36,11 @@ const Game = {
   upgradeChoices: [],
   chestRewardChoices: [],
 
+  // run statistics (persist across levels within a run, reset on new game)
+  eliteKills: 0,
+  bossKills: 0,
+  chestsOpened: 0,
+
   saveKey: 'cursed_blades_save',
   saveSchemaVersion: 2,
 
@@ -334,19 +339,14 @@ const Game = {
       if (ev.type === 'chest') {
         const pos = this.getSpawnPosition();
         if (pos) {
-          // rare chest or mimic-or-normal based on level mimicChance and event flags
-          let isRare = !!ev.rare;
-          let isMimic = false;
-          if (ev.mimic && Math.random() < (this.levelData.mimicChance || 0.4)) {
-            isMimic = true;
-          }
-          if (isMimic) {
-            this.enemies.push(new Enemy('mimic', pos.x, pos.y));
-            this.addMessage('可疑的宝箱……', '#ff6060');
-          } else {
-            this.spawnChest(pos.x, pos.y, isRare);
-            this.addMessage(isRare ? '稀有宝箱出现!' : '宝箱出现!', isRare ? '#e080ff' : '#80c0ff');
-          }
+          // rare chest -> value=1, suspicious(mimic) -> value=2, normal -> value=0
+          let chestType = 0;
+          if (ev.rare) chestType = 1;
+          else if (ev.mimic) chestType = 2;  // suspicious: appears as chest, high mimic chance on open
+          this.spawnChest(pos.x, pos.y, chestType);
+          const msg = chestType === 1 ? '稀有宝箱出现!' : (chestType === 2 ? '可疑的宝箱……' : '宝箱出现!');
+          const color = chestType === 1 ? '#e080ff' : (chestType === 2 ? '#ff6060' : '#80c0ff');
+          this.addMessage(msg, color);
         }
       } else if (ev.type === 'elite') {
         this.spawnElite();
@@ -493,7 +493,8 @@ const Game = {
   },
 
   spawnChest(x, y, isRare) {
-    this.pickups.push(new Pickup(x, y, 'chest', 'chest', isRare ? 1 : 0));
+    // isRare: 0=normal, 1=rare, 2=suspicious
+    this.pickups.push(new Pickup(x, y, 'chest', 'chest', isRare ? isRare : 0));
   },
 
   // ---- Level up ----
@@ -569,21 +570,30 @@ const Game = {
   },
 
   // ---- Chest / Mimic ----
-  openChest(x, y) {
-    // 40% chance the chest is a mimic
-    if (Math.random() < this.levelData.mimicChance) {
+  // chestType: 0=normal, 1=rare, 2=suspicious
+  openChest(x, y, chestType) {
+    this.chestsOpened++;
+    const ct = chestType || 0;
+    // suspicious chest: much higher mimic chance
+    // rare chest: never a mimic, better rewards
+    let mimicChance = this.levelData.mimicChance;
+    if (ct === 2) mimicChance = 0.8;       // suspicious: 80% mimic
+    else if (ct === 1) mimicChance = 0;    // rare: always safe
+
+    if (Math.random() < mimicChance) {
       // spawn mimic
       this.enemies.push(new Enemy('mimic', x, y));
       this.addMessage('宝箱怪! 它是活的!', '#ff6030');
       Audio2.boss();
     } else {
-      // normal chest: give reward
+      // normal/rare chest: give reward
       this.state = 'chestReward';
-      this.generateChestReward();
+      this.generateChestReward(ct === 1);
+      if (ct === 1) this.addMessage('稀有宝箱! 收获丰厚!', '#ffd040');
     }
   },
 
-  generateChestReward() {
+  generateChestReward(isRare) {
     const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
     const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
     const rewards = [];
@@ -597,7 +607,23 @@ const Game = {
       return currentLevel < u.maxLevel;
     });
     const upgradePool = availableUpgrades;
-    rewards.push(...pickN(upgradePool, 2));
+    // rare chest: bias toward rare/epic upgrades
+    let picked;
+    if (isRare) {
+      const rarePool = upgradePool.filter(u => u.rarity === 'rare' || u.rarity === 'epic');
+      const normalPool = upgradePool.filter(u => u.rarity === 'common');
+      // 2 from rare/epic pool (if available), 1 from any
+      if (rarePool.length >= 2) {
+        picked = pickN(rarePool, 2);
+        if (normalPool.length > 0) picked.push(pick(normalPool));
+        else if (rarePool.length > 2) picked.push(pick(rarePool));
+      } else {
+        picked = pickN(upgradePool, 2);
+      }
+    } else {
+      picked = pickN(upgradePool, 2);
+    }
+    rewards.push(...picked);
     if (!rewards.length) rewards.push(this.createRecoveryChoice());
     this.chestRewardChoices = rewards.slice(0, 3);
   },
@@ -772,6 +798,9 @@ const Game = {
     this.currentPhase = -1;
     this.triggeredPhases = {};
     this.damageVignette = 0;
+    this.eliteKills = 0;
+    this.bossKills = 0;
+    this.chestsOpened = 0;
     this.camera.x = this.player.x - CONFIG.CANVAS_W/2;
     this.camera.y = this.player.y - CONFIG.CANVAS_H/2;
 
@@ -1274,6 +1303,46 @@ const Game = {
       ctx.globalAlpha = 1;
     }
 
+    // ---- Boss top health bar ----
+    const boss = this.enemies.find(e => e.isBoss && e.alive);
+    if (boss) {
+      const barW = Math.min(400, visible.w - 80);
+      const barH = 14;
+      const bx = visible.x + (visible.w - barW) / 2;
+      const by = visible.y + 56;
+      // bg
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillRect(bx - 2, by - 2, barW + 4, barH + 4);
+      ctx.fillStyle = '#2a0a0a';
+      ctx.fillRect(bx, by, barW, barH);
+      // hp fill
+      const hpPct = clamp(boss.hp / boss.maxHp, 0, 1);
+      // color shifts: green->yellow->red as hp drops
+      let hpColor = '#ff3030';
+      if (hpPct > 0.5) hpColor = '#ff6030';
+      else if (hpPct > 0.25) hpColor = '#ff4040';
+      ctx.fillStyle = hpColor;
+      ctx.fillRect(bx, by, barW * hpPct, barH);
+      // phase divider at 50%
+      const phaseX = bx + barW * (boss.def.enrageHpPct || 0.5);
+      ctx.strokeStyle = '#ffd040';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(phaseX, by);
+      ctx.lineTo(phaseX, by + barH);
+      ctx.stroke();
+      // border
+      ctx.strokeStyle = '#5a2a20';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx, by, barW, barH);
+      // boss name + phase
+      ctx.fillStyle = '#ff6060';
+      ctx.font = 'bold 12px Courier New';
+      ctx.textAlign = 'center';
+      const phaseLabel = boss.phase >= 2 ? ' [阶段2]' : '';
+      ctx.fillText(boss.def.name + phaseLabel, visible.x + visible.w / 2, by - 4);
+    }
+
     // ---- Touch controls overlay ----
     this.renderTouchControls(ctx);
   },
@@ -1681,15 +1750,31 @@ const Game = {
     ctx.fillStyle = '#ff4040';
     ctx.font = 'bold 48px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('你失败了', CONFIG.CANVAS_W/2, 160);
+    ctx.fillText('你失败了', CONFIG.CANVAS_W/2, 120);
 
+    // stats
     ctx.fillStyle = '#c4a87a';
     ctx.font = '16px Courier New';
-    ctx.fillText(`等级: ${this.player.level}  |  击杀: ${this.player.kills}`, CONFIG.CANVAS_W/2, 210);
-    ctx.fillText(`存活时间: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 240);
+    ctx.fillText(`等级: ${this.player.level}  |  击杀: ${this.player.kills}`, CONFIG.CANVAS_W/2, 165);
+    ctx.fillText(`存活时间: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 190);
+    ctx.fillStyle = '#ff8040';
+    ctx.fillText(`精英击杀: ${this.eliteKills}  |  Boss击杀: ${this.bossKills}  |  宝箱开启: ${this.chestsOpened}`, CONFIG.CANVAS_W/2, 215);
 
-    this.drawButton(CONFIG.CANVAS_W/2 - 100, 340, 200, 45, '重新开始', '#c4a87a');
-    this.drawButton(CONFIG.CANVAS_W/2 - 100, 400, 200, 45, '返回主菜单', '#aa6a4a');
+    // weapon list
+    ctx.fillStyle = '#80c0ff';
+    ctx.font = 'bold 14px Courier New';
+    ctx.fillText('获得武器:', CONFIG.CANVAS_W/2, 250);
+    ctx.font = '13px Courier New';
+    const weaponNames = this.player.weapons.map(w => `${w.def.name} Lv.${w.level}`);
+    // wrap weapon names into rows of up to 4
+    const perRow = 4;
+    for (let i = 0; i < weaponNames.length; i += perRow) {
+      const row = weaponNames.slice(i, i + perRow).join('  ');
+      ctx.fillText(row, CONFIG.CANVAS_W/2, 275 + Math.floor(i / perRow) * 20);
+    }
+
+    this.drawButton(CONFIG.CANVAS_W/2 - 100, 360, 200, 45, '重新开始', '#c4a87a');
+    this.drawButton(CONFIG.CANVAS_W/2 - 100, 420, 200, 45, '返回主菜单', '#aa6a4a');
   },
 
   renderVictory() {

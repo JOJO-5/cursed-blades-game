@@ -465,6 +465,46 @@ const ENEMY_BEHAVIORS = {
   boss: new BossBehavior(),
 };
 
+// ==================== DEATH BEHAVIOR ====================
+// Encapsulates death effects: XP drops, particles, rewards, screen shake.
+// Stateless singleton — reads enemy flags (isBoss/isElite/isMimic) to branch.
+class DeathBehavior {
+  execute(enemy) {
+    // XP gem drops (size scales with enemy tier)
+    const gemType = enemy.isBoss ? 'xp_gem_large' : (enemy.isElite ? 'xp_gem_medium' : 'xp_gem_small');
+    const gemCount = enemy.isBoss ? 10 : (enemy.isElite ? 3 : 1);
+    for (let i = 0; i < gemCount; i++) {
+      const ang = Math.random() * TAU;
+      const r = Math.random() * 20;
+      Game.pickups.push(new Pickup(enemy.x + Math.cos(ang) * r, enemy.y + Math.sin(ang) * r, 'xp', gemType, enemy.xp / gemCount));
+    }
+
+    // death particles (boss bursts more)
+    const pCount = enemy.isBoss ? 30 : 8;
+    for (let i = 0; i < pCount; i++) {
+      const ang = Math.random() * TAU;
+      const spd = rand(50, 150);
+      Game.particles.push(new Particle(enemy.x, enemy.y, Math.cos(ang) * spd, Math.sin(ang) * spd, enemy.def.color, rand(0.3, 0.8), rand(2, 5)));
+    }
+
+    // tier-based rewards
+    if (enemy.isBoss) {
+      Game.spawnChest(enemy.x, enemy.y, true);
+      Game.onBossDefeated();
+    } else if (enemy.isMimic) {
+      Game.triggerMimicReward();
+    } else if (enemy.isElite && Math.random() < 0.5) {
+      Game.spawnChest(enemy.x, enemy.y, false);
+    }
+
+    // screen shake (heavier for boss)
+    Game.shakeScreen(enemy.isBoss ? 15 : 3, enemy.isBoss ? 0.5 : 0.1);
+  }
+}
+
+// shared death behavior singleton
+const ENEMY_DEATH_BEHAVIOR = new DeathBehavior();
+
 // ==================== ENEMY ====================
 class Enemy {
   constructor(type, x, y) {
@@ -576,35 +616,12 @@ class Enemy {
   die() {
     this.alive = false;
     Game.player.kills++;
+    // track elite/boss kills for run statistics
+    if (this.isBoss) Game.bossKills++;
+    else if (this.isElite) Game.eliteKills++;
     Audio2.death();
-    // spawn XP gem
-    const gemType = this.isBoss ? 'xp_gem_large' : (this.isElite ? 'xp_gem_medium' : 'xp_gem_small');
-    const gemCount = this.isBoss ? 10 : (this.isElite ? 3 : 1);
-    for (let i = 0; i < gemCount; i++) {
-      const ang = Math.random() * TAU;
-      const r = Math.random() * 20;
-      Game.pickups.push(new Pickup(this.x + Math.cos(ang)*r, this.y + Math.sin(ang)*r, 'xp', gemType, this.xp / gemCount));
-    }
-
-    // death particles
-    for (let i = 0; i < (this.isBoss ? 30 : 8); i++) {
-      const ang = Math.random() * TAU;
-      const spd = rand(50, 150);
-      Game.particles.push(new Particle(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, this.def.color, rand(0.3, 0.8), rand(2, 5)));
-    }
-
-    // boss/elite drops
-    if (this.isBoss) {
-      Game.spawnChest(this.x, this.y, true);
-      Game.onBossDefeated();
-    } else if (this.isMimic) {
-      // mimic drops rare upgrade
-      Game.triggerMimicReward();
-    } else if (this.isElite && Math.random() < 0.5) {
-      Game.spawnChest(this.x, this.y, false);
-    }
-
-    Game.shakeScreen(this.isBoss ? 15 : 3, this.isBoss ? 0.5 : 0.1);
+    // delegate death effects (drops, particles, rewards, shake) to DeathBehavior
+    ENEMY_DEATH_BEHAVIOR.execute(this);
   }
 
   update(dt) {
@@ -1313,8 +1330,8 @@ class Pickup {
     const player = Game.player;
     const d = dist(this.x, this.y, player.x, player.y);
 
-    // magnet
-    if (d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized) {
+    // magnet (chests are not magnetized)
+    if (this.type !== 'chest' && (d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized)) {
       this.magnetized = true;
       const ang = angleTo(this.x, this.y, player.x, player.y);
       // pickupRangeBonus can magnetize gems outside the base radius; never let
@@ -1322,6 +1339,11 @@ class Pickup {
       const speed = Math.max(80, 200 + (CONFIG.PLAYER.pickupRadius - d) * 4);
       this.vx = Math.cos(ang) * speed;
       this.vy = Math.sin(ang) * speed;
+    }
+
+    // suspicious chest: tremble when player is near
+    if (this.type === 'chest' && this.value === 2) {
+      this.tremble = d < 100 ? (100 - d) / 100 : 0;
     }
 
     this.x += this.vx * dt;
@@ -1338,6 +1360,12 @@ class Pickup {
     if (this.type === 'xp') {
       const leveled = Game.player.gainXp(this.value);
       Audio2.pickup();
+      // pickup flash: green sparkles
+      for (let i = 0; i < 4; i++) {
+        const ang = Math.random() * TAU;
+        const spd = rand(40, 90);
+        Game.particles.push(new Particle(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, '#80ff80', rand(0.2, 0.4), rand(1.5, 3)));
+      }
       if (leveled) {
         Game.onLevelUp();
       }
@@ -1346,7 +1374,7 @@ class Pickup {
       Audio2.pickup();
       Game.addMessage('+20 生命', '#40ff40');
     } else if (this.type === 'chest') {
-      Game.openChest(this.x, this.y);
+      Game.openChest(this.x, this.y, this.value);
     }
   }
 
@@ -1365,7 +1393,39 @@ class Pickup {
     } else if (this.type === 'heart') {
       Assets.drawCentered(ctx, 'items/heart', this.x, this.y + bobY, 1.2, 0, 1);
     } else if (this.type === 'chest') {
-      Assets.drawCentered(ctx, 'items/chest', this.x, this.y + bobY, 1, 0, 1);
+      // chest types: 0=normal, 1=rare(golden glow), 2=suspicious(purple, trembles)
+      const isRare = this.value === 1;
+      const isSuspicious = this.value === 2;
+      // glow for rare/suspicious
+      if (isRare) {
+        ctx.fillStyle = 'rgba(255,200,60,0.25)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + bobY, 22, 0, TAU);
+        ctx.fill();
+      } else if (isSuspicious) {
+        ctx.fillStyle = 'rgba(160,60,200,0.2)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + bobY, 20, 0, TAU);
+        ctx.fill();
+      }
+      // tremble offset for suspicious chest when player near
+      let tx = 0, ty = 0;
+      if (isSuspicious && this.tremble > 0) {
+        tx = rand(-2, 2) * this.tremble;
+        ty = rand(-2, 2) * this.tremble;
+      }
+      Assets.drawCentered(ctx, 'items/chest', this.x + tx, this.y + bobY + ty, 1, 0, 1);
+      // rare chest: golden tint overlay
+      if (isRare) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#ffd040';
+        const img = Assets.get('items/chest');
+        const sz = img ? img.width : 32;
+        ctx.fillRect(this.x + tx - sz/2, this.y + bobY + ty - sz/2, sz, sz);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
     }
 
     // blink when about to despawn
