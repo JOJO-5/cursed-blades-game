@@ -228,6 +228,12 @@ const CONFIG = {
       hp: 14, speed: 45, damage: 5, xp: 2, radius: 14,
       color: '#7a6a4a', behavior: 'chase',
     },
+    // wild dog — fast, periodically dashes toward player
+    wild_dog: {
+      name: '腐化猎犬', sprite: 'enemies/bear_armored',
+      hp: 22, speed: 70, damage: 8, xp: 4, radius: 16,
+      color: '#5a4a3a', behavior: 'dash',
+    },
     // ranged
     archer: {
       name: '暗影弓手', sprite: 'enemies/archer',
@@ -342,7 +348,7 @@ const CONFIG = {
       mapW: 40, mapH: 30,
       spawnInterval: 3.0,
       maxEnemies: 25,
-      enemyPool: ['slime','bat','skeleton','spider','boar','villager','scarecrow'],
+      enemyPool: ['slime','bat','skeleton','spider','boar','villager','scarecrow','wild_dog'],
       rangedPool: ['archer','mage','plague_archer'],
       elitePool: ['golem','reaper'],
       eliteInterval: 90, // seconds — first elite at ~1.5min, then every 1.5min
@@ -352,10 +358,10 @@ const CONFIG = {
       mimicChance: 0.4,
       // ---- Phased spawning (data-driven) ----
       phases: [
-        { time: 0,   name: '初始骚扰',   enemyPool: ['villager','slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
-        { time: 120, name: '远程加入',   enemyPool: ['villager','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
-        { time: 240, name: '精英登场',   enemyPool: ['villager','slime','bat','spider','skeleton','scarecrow'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '腐化加剧',   enemyPool: ['villager','slime','bat','spider','skeleton','boar','scarecrow'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 0,   name: '初始骚扰',   enemyPool: ['villager','wild_dog','slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
+        { time: 120, name: '远程加入',   enemyPool: ['villager','wild_dog','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
+        { time: 240, name: '精英登场',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','scarecrow'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '腐化加剧',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','boar','scarecrow'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
         { time: 480, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {

@@ -72,7 +72,7 @@
 ### 3.1 补齐5种普通敌人（按设计文档）
 当前敌人不完全匹配设计文档要求：
 - [x] 腐化村民（普通近战追击，生命低，数量多）— villager: hp14/速度45/伤害5，复用 chase 行为
-- [ ] 野犬（移动速度快，短距离冲刺）— 需新增冲刺AI
+- [x] 野犬（移动速度快，短距离冲刺）— wild_dog: 速度70，DashBehavior 状态机 chase→windup→dash→recover
 - [x] 瘟疫弓手（保持距离，定时发射弹丸）— plague_archer: 复用 ranged 行为，毒绿色弹丸
 - [x] 稻草怪（移动慢，生命高，死亡范围伤害）— scarecrow: hp60/速度25，死亡爆炸半径85/伤害25，火焰粒子+冲击波
 - [x] 蝙蝠（不规则轨迹，快速接近）— BatBehavior 正弦侧向偏移，zig-zag 飞行
@@ -86,7 +86,7 @@
 - [x] ChaseBehavior（追击）— 直线追击玩家
 - [x] RangedBehavior（保持距离 + 远程攻击）— 保持距离、侧移、定时射击
 - [x] BossBehavior（Boss 移动）— 根据状态机调整移速，委托 updateBoss 处理技能
-- [ ] DashBehavior（冲刺）— 预留接口，当前无敌人使用
+- [x] DashBehavior（冲刺）— chase→windup(telegraph)→dash(3.5x速度爆发)→recover 状态机，wild_dog 使用
 - [ ] SummonBehavior（召唤）— 当前在 Boss 状态机内实现，可进一步抽离
 - [x] DeathBehavior（死亡效果）— 已抽离为独立类，Enemy.die() 委托执行（掉落/粒子/奖励/震屏）
 

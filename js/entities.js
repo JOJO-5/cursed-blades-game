@@ -470,12 +470,74 @@ class BatBehavior extends EnemyBehavior {
   }
 }
 
+// Dash: chases player, periodically bursts forward at high speed.
+// State machine: chase → windup (telegraph) → dash (burst) → recover → chase
+class DashBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    // lazy-init per-enemy dash state
+    if (!enemy.dashState) {
+      enemy.dashState = 'chase';
+      enemy.dashTimer = 0;
+      enemy.dashCooldownTimer = 2.0 + Math.random() * 2;
+      enemy.dashDir = { x: 0, y: 0 };
+    }
+
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    enemy.dashTimer -= dt;
+    enemy.dashCooldownTimer -= dt;
+
+    switch (enemy.dashState) {
+      case 'chase':
+        enemy.vx = Math.cos(ang) * enemy.speed;
+        enemy.vy = Math.sin(ang) * enemy.speed;
+        // start windup when in range and cooldown ready
+        if (d < 220 && d > 50 && enemy.dashCooldownTimer <= 0) {
+          enemy.dashState = 'windup';
+          enemy.dashTimer = 0.4;
+        }
+        break;
+      case 'windup':
+        // slow down, telegraph the dash
+        enemy.vx = Math.cos(ang) * enemy.speed * 0.15;
+        enemy.vy = Math.sin(ang) * enemy.speed * 0.15;
+        enemy.hitFlash = Math.max(enemy.hitFlash, 0.1); // visual flash during windup
+        if (enemy.dashTimer <= 0) {
+          enemy.dashState = 'dash';
+          enemy.dashTimer = 0.3;
+          enemy.dashDir = { x: Math.cos(ang), y: Math.sin(ang) };
+          Audio2.play('sawtooth', 300, 0.1, 0.06);
+        }
+        break;
+      case 'dash':
+        // burst toward player at high speed
+        const dashSpeed = enemy.speed * 3.5;
+        enemy.vx = enemy.dashDir.x * dashSpeed;
+        enemy.vy = enemy.dashDir.y * dashSpeed;
+        if (enemy.dashTimer <= 0) {
+          enemy.dashState = 'recover';
+          enemy.dashTimer = 0.4;
+        }
+        break;
+      case 'recover':
+        // slow down after dash
+        enemy.vx = Math.cos(ang) * enemy.speed * 0.4;
+        enemy.vy = Math.sin(ang) * enemy.speed * 0.4;
+        if (enemy.dashTimer <= 0) {
+          enemy.dashState = 'chase';
+          enemy.dashCooldownTimer = 2.5 + Math.random() * 1.5;
+        }
+        break;
+    }
+  }
+}
+
 // behavior registry: map behavior string -> singleton instance
 const ENEMY_BEHAVIORS = {
   chase: new ChaseBehavior(),
   ranged: new RangedBehavior(),
   boss: new BossBehavior(),
   bat: new BatBehavior(),
+  dash: new DashBehavior(),
 };
 
 // ==================== DEATH BEHAVIOR ====================
@@ -581,7 +643,7 @@ class Enemy {
     if (this.isBoss) return 'metal';
     switch (this.type) {
       case 'slime': case 'rat': return 'flesh';
-      case 'bat': case 'boar': return 'leather';
+      case 'bat': case 'boar': case 'wild_dog': return 'leather';
       case 'skeleton': case 'spider': case 'beetle': return 'bone';
       case 'archer': case 'mage': case 'crystal': case 'miner': case 'villager': case 'plague_archer': return 'flesh';
       case 'golem': case 'scarecrow': return 'wood';
