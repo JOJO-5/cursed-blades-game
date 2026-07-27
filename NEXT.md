@@ -198,5 +198,5 @@
 - [ ] 保存：最高生存时间/等级/击杀数
 - [ ] 保存：设置项（音量等）
 - [x] 读取失败时使用默认数据（loadAndContinue try/catch 回退 startNewGame）
-- [~] 存档字段增加后兼容旧版本（有 schemaVersion 字段 + `??`/Object.assign 字段容错；无正式迁移逻辑）
+- [x] 存档字段增加后兼容旧版本（migrateSave 按版本号逐步迁移 v0→v3，字段容错 + 迁移逻辑）
 - [ ] 提供重置存档入口

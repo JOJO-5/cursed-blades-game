@@ -42,7 +42,7 @@ const Game = {
   chestsOpened: 0,
 
   saveKey: 'cursed_blades_save',
-  saveSchemaVersion: 2,
+  saveSchemaVersion: 3,
 
   // ---- Initialization ----
   init() {
@@ -923,6 +923,42 @@ const Game = {
   },
 
   // ---- Save/Load ----
+
+  // Migrate save data forward across schema versions.
+  // Each migration fills in fields introduced in that version.
+  migrateSave(data) {
+    if (!data || typeof data !== 'object') return data;
+    const ver = data.schemaVersion || 0;
+    // v0 → v1: ensure basic run-progress fields exist
+    if (ver < 1) {
+      data.weapons = data.weapons || [];
+      data.upgradeLevels = data.upgradeLevels || {};
+      data.stats = data.stats || {};
+    }
+    // v1 → v2: ensure phased-spawning fields exist
+    if (ver < 2) {
+      data.spawnTimer = data.spawnTimer ?? 1;
+      data.eliteTimer = data.eliteTimer ?? 0;
+      data.bossSpawned = !!data.bossSpawned;
+      data.bossDefeated = !!data.bossDefeated;
+    }
+    // v2 → v3: meta-progression and settings (added in this update)
+    if (ver < 3) {
+      data.meta = data.meta || {
+        bestSurvivalTime: 0,
+        bestLevel: 1,
+        bestKills: 0,
+        levelsCompleted: {},
+        unlockedWeapons: ['sword'],
+        unlockedUpgrades: [],
+        seenStories: [],
+      };
+      data.settings = data.settings || { masterVolume: 0.5, sfxVolume: 0.7, musicVolume: 0.4 };
+    }
+    data.schemaVersion = this.saveSchemaVersion;
+    return data;
+  },
+
   saveProgress() {
     // A death screen must not replace a resumable run with a dead character.
     if (!this.player || !this.player.alive) return;
@@ -958,7 +994,7 @@ const Game = {
     try {
       const raw = localStorage.getItem(this.saveKey);
       if (!raw) { this.startNewGame(); return; }
-      const data = JSON.parse(raw);
+      const data = this.migrateSave(JSON.parse(raw));
       this.startNewGame();
       const levelId = CONFIG.LEVELS[data.levelId] ? data.levelId : 'village';
       this.levelData = CONFIG.LEVELS[levelId];
