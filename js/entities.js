@@ -286,6 +286,8 @@ class Weapon {
       const dmg = this.getDamage();
       const crit = this.getCritChance();
       const pierce = this.getPierce();
+      const levelScale = 1 + (this.level - 1) * 0.15;
+      const sz = this.def.size * levelScale;
 
       for (let i = 0; i < count; i++) {
         const offset = (i / count) * TAU;
@@ -297,7 +299,6 @@ class Weapon {
           if (!e.alive) continue;
           const d = dist(wx, wy, e.x, e.y);
           if (d < (e.radius + 20)) {
-            // hit
             const hitId = e.id + '_' + Math.floor(this.angle / 0.5);
             if (!this.hitSet.has(hitId)) {
               this.hitSet.add(hitId);
@@ -306,14 +307,43 @@ class Weapon {
               if (isCrit) damage *= this.getCritMult();
               const kb = (this.def.knockback || 0) * player.stats.knockbackMult;
               e.takeDamage(damage, isCrit, kb, player.x, player.y);
-              // lifesteal
               if (player.stats.lifesteal > 0) {
                 player.heal(damage * player.stats.lifesteal);
               }
               if (this.def.type === 'orbit' && this.id !== 'shield') {
                 Audio2.hit();
               }
-              // splash damage for evolved orbit weapons (e.g. hammer_meteor)
+
+              const hitX = wx;
+              const hitY = wy;
+
+              Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, this.def.color, 0.8, sz * 0.6));
+              Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, '#ffffff', 0.6, sz * 0.3));
+
+              const sparkCount = isCrit ? 12 : 6;
+              for (let s = 0; s < sparkCount; s++) {
+                const sa = Math.random() * TAU;
+                const ss = rand(80, 200);
+                const sc = isCrit ? '#ffd040' : this.def.color;
+                Game.particles.push(Game.particlePool.obtain(
+                  hitX, hitY, Math.cos(sa) * ss, Math.sin(sa) * ss,
+                  sc, rand(0.4, 0.8), rand(2, 5)
+                ));
+              }
+
+              for (let r = 0; r < 8; r++) {
+                const ra = (r / 8) * TAU;
+                const rs = 120;
+                Game.particles.push(Game.particlePool.obtain(
+                  hitX, hitY, Math.cos(ra) * rs, Math.sin(ra) * rs,
+                  this.def.color + '80', 0.3, 4
+                ));
+              }
+
+              if (isCrit || damage > 30) {
+                Game.shakeScreen(isCrit ? 8 : 4, isCrit ? 0.2 : 0.1);
+              }
+
               if (this.def.splash) {
                 const splashR = this.def.splash;
                 for (const e2 of Game.enemyGrid.query(e.x, e.y, splashR)) {
@@ -324,13 +354,12 @@ class Weapon {
                     e2.takeDamage(splashDmg, false, kb * 0.5, e.x, e.y);
                   }
                 }
-                // splash particles
-                for (let p = 0; p < 6; p++) {
+                for (let p = 0; p < 12; p++) {
                   const pa = Math.random() * TAU;
-                  const ps = rand(40, 100);
+                  const ps = rand(60, 150);
                   Game.particles.push(Game.particlePool.obtain(
                     e.x, e.y, Math.cos(pa) * ps, Math.sin(pa) * ps,
-                    this.def.color, 0.3, 3
+                    this.def.color, rand(0.4, 0.7), rand(3, 6)
                   ));
                 }
               }
@@ -478,7 +507,6 @@ class Weapon {
 
   draw(ctx) {
     if (this.def.type === 'aura') {
-      // draw pulsing aura ring
       const range = this.getRange();
       const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
       ctx.save();
@@ -487,7 +515,6 @@ class Weapon {
       ctx.beginPath();
       ctx.arc(player.x, player.y, range * pulse, 0, TAU);
       ctx.fill();
-      // inner ring
       ctx.globalAlpha = 0.15;
       ctx.beginPath();
       ctx.arc(player.x, player.y, range * pulse * 0.6, 0, TAU);
@@ -499,6 +526,8 @@ class Weapon {
     const range = this.getRange();
     const count = 1 + Game.player.stats.weaponCountBonus;
     const player = Game.player;
+    const levelScale = 1 + (this.level - 1) * 0.15;
+    const sz = this.def.size * levelScale;
 
     for (let i = 0; i < count; i++) {
       const offset = (i / count) * TAU;
@@ -508,26 +537,66 @@ class Weapon {
       ctx.save();
       ctx.translate(wx, wy);
       ctx.rotate(this.angle + offset + Math.PI / 4);
+
+      // glow effect
+      const glowSize = sz * 1.8;
+      const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+      glowGradient.addColorStop(0, this.def.color + '60');
+      glowGradient.addColorStop(0.4, this.def.color + '20');
+      glowGradient.addColorStop(1, this.def.color + '00');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(0, 0, glowSize, 0, TAU);
+      ctx.fill();
+
+      // secondary glow ring
+      ctx.strokeStyle = this.def.color + '40';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, sz * 0.8, 0, TAU);
+      ctx.stroke();
+
+      // weapon sprite
       ctx.imageSmoothingEnabled = false;
       const img = Assets.get(this.def.icon);
       if (img && img.complete) {
-        const sz = this.def.size;
         ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
       } else {
-        // fallback: draw a colored shape
         ctx.fillStyle = this.def.color;
-        ctx.fillRect(-8, -8, 16, 16);
+        ctx.fillRect(-sz/2, -sz/2, sz, sz);
       }
+
+      // animated edge highlight
+      ctx.strokeStyle = this.def.color + '80';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 150 + offset) * 0.4;
+      ctx.strokeRect(-sz/2 - 2, -sz/2 - 2, sz + 4, sz + 4);
+
       ctx.restore();
 
-      // motion trail
-      ctx.strokeStyle = this.def.color + '40';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      const trailAng = this.angle + offset - 0.3;
-      ctx.moveTo(player.x + Math.cos(trailAng) * range, player.y + Math.sin(trailAng) * range);
-      ctx.lineTo(wx, wy);
-      ctx.stroke();
+      // enhanced motion trail - multiple segments with fading
+      const trailLength = 0.5;
+      for (let t = 0; t < 4; t++) {
+        const tOffset = trailLength * ((t + 1) / 4);
+        const tAng = this.angle + offset - tOffset;
+        const tX = player.x + Math.cos(tAng) * range;
+        const tY = player.y + Math.sin(tAng) * range;
+        const alpha = (1 - t / 4) * 0.3;
+        ctx.strokeStyle = this.def.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+        ctx.lineWidth = (3 - t) * 1.5;
+        ctx.beginPath();
+        if (t === 0) {
+          ctx.moveTo(tX, tY);
+          ctx.lineTo(wx, wy);
+        } else {
+          const prevAng = this.angle + offset - trailLength * (t / 4);
+          const prevX = player.x + Math.cos(prevAng) * range;
+          const prevY = player.y + Math.sin(prevAng) * range;
+          ctx.moveTo(tX, tY);
+          ctx.lineTo(prevX, prevY);
+        }
+        ctx.stroke();
+      }
     }
   }
 }
