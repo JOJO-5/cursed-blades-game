@@ -1,20 +1,20 @@
 {
   "_meta": {
     "version": "1.0",
-    "generated": "2026-07-27T01:20:56.299Z",
+    "generated": "2026-07-27T13:44:29.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 138,
+    "totalAssets": 186,
     "categories": {
-      "props": 35,
+      "props": 39,
       "ui": 21,
-      "backgrounds": 2,
-      "enemies": 25,
+      "backgrounds": 5,
+      "enemies": 30,
       "player": 5,
       "bosses": 3,
       "tiles": 16,
       "effects": 8,
       "items": 5,
-      "weapons": 18
+      "weapons": 54
     },
     "namingConvention": {
       "pattern": "{category}/{entity}_{state}_{variant}_{frame}.png",
@@ -36,7 +36,7 @@
         "frameW": "width of each frame in pixels",
         "frameH": "height of each frame in pixels",
         "fps": "frames per second",
-        "loop": "boolean — whether the animation loops"
+        "loop": "boolean \u2014 whether the animation loops"
       }
     }
   },
@@ -573,7 +573,7 @@
     },
     "ui/upgrade_damage": {
       "id": "ui/upgrade_damage",
-      "name": "伤害提升",
+      "name": "\u4f24\u5bb3\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_damage.png",
       "w": 16,
@@ -586,7 +586,7 @@
     },
     "ui/upgrade_regen": {
       "id": "ui/upgrade_regen",
-      "name": "回复效果提升",
+      "name": "\u56de\u590d\u6548\u679c\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_regen.png",
       "w": 16,
@@ -599,7 +599,7 @@
     },
     "ui/upgrade_attackspeed": {
       "id": "ui/upgrade_attackspeed",
-      "name": "攻速提升",
+      "name": "\u653b\u901f\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_attackspeed.png",
       "w": 16,
@@ -612,7 +612,7 @@
     },
     "ui/upgrade_pierce": {
       "id": "ui/upgrade_pierce",
-      "name": "穿透提升",
+      "name": "\u7a7f\u900f\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_pierce.png",
       "w": 16,
@@ -625,7 +625,7 @@
     },
     "ui/upgrade_range": {
       "id": "ui/upgrade_range",
-      "name": "攻击范围提升",
+      "name": "\u653b\u51fb\u8303\u56f4\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_range.png",
       "w": 16,
@@ -638,7 +638,7 @@
     },
     "ui/upgrade_rotatespeed": {
       "id": "ui/upgrade_rotatespeed",
-      "name": "旋转速度提升",
+      "name": "\u65cb\u8f6c\u901f\u5ea6\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_rotatespeed.png",
       "w": 16,
@@ -664,7 +664,7 @@
     },
     "ui/upgrade_maxhp": {
       "id": "ui/upgrade_maxhp",
-      "name": "最大生命提升",
+      "name": "\u6700\u5927\u751f\u547d\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_maxhp.png",
       "w": 16,
@@ -677,7 +677,7 @@
     },
     "ui/upgrade_crit": {
       "id": "ui/upgrade_crit",
-      "name": "暴击提升",
+      "name": "\u66b4\u51fb\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_crit.png",
       "w": 16,
@@ -690,7 +690,7 @@
     },
     "ui/upgrade_weaponcount": {
       "id": "ui/upgrade_weaponcount",
-      "name": "武器数量增加",
+      "name": "\u6b66\u5668\u6570\u91cf\u589e\u52a0",
       "category": "ui",
       "path": "assets/ui/upgrade_weaponcount.png",
       "w": 16,
@@ -703,7 +703,7 @@
     },
     "ui/upgrade_movespeed": {
       "id": "ui/upgrade_movespeed",
-      "name": "移动速度提升",
+      "name": "\u79fb\u52a8\u901f\u5ea6\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_movespeed.png",
       "w": 16,
@@ -716,7 +716,7 @@
     },
     "ui/upgrade_projspeed": {
       "id": "ui/upgrade_projspeed",
-      "name": "弹丸速度提升",
+      "name": "\u5f39\u4e38\u901f\u5ea6\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_projspeed.png",
       "w": 16,
@@ -729,7 +729,7 @@
     },
     "ui/upgrade_knockback": {
       "id": "ui/upgrade_knockback",
-      "name": "击退提升",
+      "name": "\u51fb\u9000\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_knockback.png",
       "w": 16,
@@ -742,7 +742,7 @@
     },
     "ui/upgrade_pickuprange": {
       "id": "ui/upgrade_pickuprange",
-      "name": "拾取范围提升",
+      "name": "\u62fe\u53d6\u8303\u56f4\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_pickuprange.png",
       "w": 16,
@@ -755,7 +755,7 @@
     },
     "ui/upgrade_xpmult": {
       "id": "ui/upgrade_xpmult",
-      "name": "经验加成",
+      "name": "\u7ecf\u9a8c\u52a0\u6210",
       "category": "ui",
       "path": "assets/ui/upgrade_xpmult.png",
       "w": 16,
@@ -768,7 +768,7 @@
     },
     "ui/upgrade_critdamage": {
       "id": "ui/upgrade_critdamage",
-      "name": "暴击伤害提升",
+      "name": "\u66b4\u51fb\u4f24\u5bb3\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_critdamage.png",
       "w": 16,
@@ -781,7 +781,7 @@
     },
     "ui/upgrade_cooldown": {
       "id": "ui/upgrade_cooldown",
-      "name": "冷却降低",
+      "name": "\u51b7\u5374\u964d\u4f4e",
       "category": "ui",
       "path": "assets/ui/upgrade_cooldown.png",
       "w": 16,
@@ -794,7 +794,7 @@
     },
     "ui/upgrade_dashcd": {
       "id": "ui/upgrade_dashcd",
-      "name": "闪避冷却降低",
+      "name": "\u95ea\u907f\u51b7\u5374\u964d\u4f4e",
       "category": "ui",
       "path": "assets/ui/upgrade_dashcd.png",
       "w": 16,
@@ -807,7 +807,7 @@
     },
     "ui/upgrade_armor": {
       "id": "ui/upgrade_armor",
-      "name": "护甲提升",
+      "name": "\u62a4\u7532\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_armor.png",
       "w": 16,
@@ -820,7 +820,7 @@
     },
     "ui/upgrade_luck": {
       "id": "ui/upgrade_luck",
-      "name": "幸运提升",
+      "name": "\u5e78\u8fd0\u63d0\u5347",
       "category": "ui",
       "path": "assets/ui/upgrade_luck.png",
       "w": 16,
@@ -833,7 +833,7 @@
     },
     "ui/upgrade_lifesteal": {
       "id": "ui/upgrade_lifesteal",
-      "name": "生命偷取",
+      "name": "\u751f\u547d\u5077\u53d6",
       "category": "ui",
       "path": "assets/ui/upgrade_lifesteal.png",
       "w": 16,
@@ -872,7 +872,7 @@
     },
     "enemies/grim_reaper": {
       "id": "enemies/grim_reaper",
-      "name": "收割者",
+      "name": "\u6536\u5272\u8005",
       "category": "enemies",
       "path": "assets/enemies/grim_reaper.png",
       "w": 96,
@@ -889,7 +889,7 @@
     },
     "enemies/bear_armored": {
       "id": "enemies/bear_armored",
-      "name": "腐化猎犬",
+      "name": "\u8150\u5316\u730e\u72ac",
       "category": "enemies",
       "path": "assets/enemies/bear_armored.png",
       "w": 96,
@@ -917,7 +917,7 @@
     },
     "enemies/bandit_hooded": {
       "id": "enemies/bandit_hooded",
-      "name": "腐化村民",
+      "name": "\u8150\u5316\u6751\u6c11",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded.png",
       "w": 71,
@@ -932,29 +932,35 @@
     },
     "enemies/bandit_hooded_idle_01": {
       "id": "enemies/bandit_hooded_idle_01",
-      "name": "腐化村民 Idle 01",
+      "name": "\u8150\u5316\u6751\u6c11 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded_idle_01.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "villager"
     },
     "enemies/bandit_hooded_idle_02": {
       "id": "enemies/bandit_hooded_idle_02",
-      "name": "腐化村民 Idle 02",
+      "name": "\u8150\u5316\u6751\u6c11 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded_idle_02.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "villager"
     },
     "enemies/archer": {
       "id": "enemies/archer",
-      "name": "暗影弓手",
+      "name": "\u6697\u5f71\u5f13\u624b",
       "category": "enemies",
       "path": "assets/enemies/archer.png",
       "w": 96,
@@ -969,7 +975,7 @@
     },
     "enemies/hooded_warrior": {
       "id": "enemies/hooded_warrior",
-      "name": "腐化矿工",
+      "name": "\u8150\u5316\u77ff\u5de5",
       "category": "enemies",
       "path": "assets/enemies/hooded_warrior.png",
       "w": 96,
@@ -984,7 +990,7 @@
     },
     "enemies/demon_bat": {
       "id": "enemies/demon_bat",
-      "name": "影翼蝙蝠",
+      "name": "\u5f71\u7ffc\u8759\u8760",
       "category": "enemies",
       "path": "assets/enemies/demon_bat.png",
       "w": 96,
@@ -999,29 +1005,35 @@
     },
     "enemies/demon_bat_idle_01": {
       "id": "enemies/demon_bat_idle_01",
-      "name": "影翼蝙蝠 Idle 01",
+      "name": "\u5f71\u7ffc\u8759\u8760 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/demon_bat_idle_01.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "bat"
     },
     "enemies/demon_bat_idle_02": {
       "id": "enemies/demon_bat_idle_02",
-      "name": "影翼蝙蝠 Idle 02",
+      "name": "\u5f71\u7ffc\u8759\u8760 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/demon_bat_idle_02.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "bat"
     },
     "enemies/toxic_slime": {
       "id": "enemies/toxic_slime",
-      "name": "疫病鼠群",
+      "name": "\u75ab\u75c5\u9f20\u7fa4",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime.png",
       "w": 96,
@@ -1036,23 +1048,29 @@
     },
     "enemies/toxic_slime_idle_01": {
       "id": "enemies/toxic_slime_idle_01",
-      "name": "疫病鼠群 Idle 01",
+      "name": "\u75ab\u75c5\u9f20\u7fa4 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime_idle_01.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "slime"
     },
     "enemies/toxic_slime_idle_02": {
       "id": "enemies/toxic_slime_idle_02",
-      "name": "疫病鼠群 Idle 02",
+      "name": "\u75ab\u75c5\u9f20\u7fa4 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime_idle_02.png",
       "w": 32,
       "h": 32,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle",
       "enemyId": "slime"
     },
@@ -1071,7 +1089,7 @@
     },
     "enemies/spiked_boar": {
       "id": "enemies/spiked_boar",
-      "name": "棘刺野猪",
+      "name": "\u68d8\u523a\u91ce\u732a",
       "category": "enemies",
       "path": "assets/enemies/spiked_boar.png",
       "w": 96,
@@ -1086,7 +1104,7 @@
     },
     "enemies/spearman": {
       "id": "enemies/spearman",
-      "name": "瘟疫弓手",
+      "name": "\u761f\u75ab\u5f13\u624b",
       "category": "enemies",
       "path": "assets/enemies/spearman.png",
       "w": 96,
@@ -1101,7 +1119,7 @@
     },
     "enemies/torchbearer": {
       "id": "enemies/torchbearer",
-      "name": "腐化稻草怪",
+      "name": "\u8150\u5316\u7a3b\u8349\u602a",
       "category": "enemies",
       "path": "assets/enemies/torchbearer.png",
       "w": 78,
@@ -1129,7 +1147,7 @@
     },
     "enemies/fungal_golem": {
       "id": "enemies/fungal_golem",
-      "name": "岩石粉碎者",
+      "name": "\u5ca9\u77f3\u7c89\u788e\u8005",
       "category": "enemies",
       "path": "assets/enemies/fungal_golem.png",
       "w": 96,
@@ -1146,7 +1164,7 @@
     },
     "enemies/bone_spider": {
       "id": "enemies/bone_spider",
-      "name": "腐化巨蛛",
+      "name": "\u8150\u5316\u5de8\u86db",
       "category": "enemies",
       "path": "assets/enemies/bone_spider.png",
       "w": 96,
@@ -1174,7 +1192,7 @@
     },
     "enemies/dwarf_torchbearer": {
       "id": "enemies/dwarf_torchbearer",
-      "name": "腐化稻草人之王",
+      "name": "\u8150\u5316\u7a3b\u8349\u4eba\u4e4b\u738b",
       "category": "enemies",
       "path": "assets/enemies/dwarf_torchbearer.png",
       "w": 80,
@@ -1191,7 +1209,7 @@
     },
     "enemies/mimic_chest_red": {
       "id": "enemies/mimic_chest_red",
-      "name": "宝箱怪",
+      "name": "\u5b9d\u7bb1\u602a",
       "category": "enemies",
       "path": "assets/enemies/mimic_chest_red.png",
       "w": 96,
@@ -1208,7 +1226,7 @@
     },
     "enemies/dwarf_mage": {
       "id": "enemies/dwarf_mage",
-      "name": "水晶法师",
+      "name": "\u6c34\u6676\u6cd5\u5e08",
       "category": "enemies",
       "path": "assets/enemies/dwarf_mage.png",
       "w": 96,
@@ -1241,7 +1259,10 @@
       "path": "assets/player/hero_idle_01.png",
       "w": 48,
       "h": 48,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle"
     },
     "player/hero_idle_02": {
@@ -1251,7 +1272,10 @@
       "path": "assets/player/hero_idle_02.png",
       "w": 48,
       "h": 48,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle"
     },
     "player/hero_move_01": {
@@ -1261,7 +1285,10 @@
       "path": "assets/player/hero_move_01.png",
       "w": 48,
       "h": 48,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "move"
     },
     "player/hero_move_02": {
@@ -1271,12 +1298,15 @@
       "path": "assets/player/hero_move_02.png",
       "w": 48,
       "h": 48,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "move"
     },
     "bosses/dark_knight_flame": {
       "id": "bosses/dark_knight_flame",
-      "name": "无头骑士",
+      "name": "\u65e0\u5934\u9a91\u58eb",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame.png",
       "w": 116,
@@ -1289,22 +1319,28 @@
     },
     "bosses/dark_knight_flame_idle_01": {
       "id": "bosses/dark_knight_flame_idle_01",
-      "name": "无头骑士 Idle",
+      "name": "\u65e0\u5934\u9a91\u58eb Idle",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame_idle_01.png",
       "w": 64,
       "h": 64,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "idle"
     },
     "bosses/dark_knight_flame_attack_01": {
       "id": "bosses/dark_knight_flame_attack_01",
-      "name": "无头骑士 Attack",
+      "name": "\u65e0\u5934\u9a91\u58eb Attack",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame_attack_01.png",
       "w": 64,
       "h": 64,
-      "anchor": { "x": 0.5, "y": 0.5 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": "attack"
     },
     "tiles/wall_stone_horizontal_01": {
@@ -1699,7 +1735,7 @@
     },
     "weapons/soul": {
       "id": "weapons/soul",
-      "name": "获得武器: 灵魂弹",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u7075\u9b42\u5f39",
       "category": "weapons",
       "path": "assets/weapons/soul.png",
       "w": 24,
@@ -1714,7 +1750,7 @@
     },
     "weapons/knife": {
       "id": "weapons/knife",
-      "name": "获得武器: 飞刀",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u98de\u5200",
       "category": "weapons",
       "path": "assets/weapons/knife.png",
       "w": 24,
@@ -1729,7 +1765,7 @@
     },
     "weapons/bow": {
       "id": "weapons/bow",
-      "name": "获得武器: 弓箭",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u5f13\u7bad",
       "category": "weapons",
       "path": "assets/weapons/bow.png",
       "w": 24,
@@ -1783,7 +1819,7 @@
     },
     "weapons/shield": {
       "id": "weapons/shield",
-      "name": "获得武器: 盾牌",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u76fe\u724c",
       "category": "weapons",
       "path": "assets/weapons/shield.png",
       "w": 24,
@@ -1798,7 +1834,7 @@
     },
     "weapons/fireball": {
       "id": "weapons/fireball",
-      "name": "获得武器: 火球",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u706b\u7403",
       "category": "weapons",
       "path": "assets/weapons/fireball.png",
       "w": 24,
@@ -1813,7 +1849,7 @@
     },
     "weapons/ring_void": {
       "id": "weapons/ring_void",
-      "name": "获得武器: 虚空环刃",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u865a\u7a7a\u73af\u5203",
       "category": "weapons",
       "path": "assets/weapons/ring_void.png",
       "w": 64,
@@ -1828,7 +1864,7 @@
     },
     "weapons/sword": {
       "id": "weapons/sword",
-      "name": "铁剑",
+      "name": "\u94c1\u5251",
       "category": "weapons",
       "path": "assets/weapons/sword.png",
       "w": 24,
@@ -1843,7 +1879,7 @@
     },
     "weapons/scythe": {
       "id": "weapons/scythe",
-      "name": "获得武器: 镰刀",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u9570\u5200",
       "category": "weapons",
       "path": "assets/weapons/scythe.png",
       "w": 24,
@@ -1858,7 +1894,7 @@
     },
     "weapons/hammer": {
       "id": "weapons/hammer",
-      "name": "获得武器: 战锤",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u6218\u9524",
       "category": "weapons",
       "path": "assets/weapons/hammer.png",
       "w": 24,
@@ -1873,7 +1909,7 @@
     },
     "weapons/ring_fire": {
       "id": "weapons/ring_fire",
-      "name": "获得武器: 炎之环刃",
+      "name": "\u83b7\u5f97\u6b66\u5668: \u708e\u4e4b\u73af\u5203",
       "category": "weapons",
       "path": "assets/weapons/ring_fire.png",
       "w": 64,
@@ -1937,6 +1973,582 @@
         "y": 0.5
       },
       "animation": null
+    },
+    "weapons/torch_skull_fire": {
+      "id": "weapons/torch_skull_fire",
+      "name": "Torch Skull Fire",
+      "category": "weapons",
+      "path": "assets/weapons/torch_skull_fire.png",
+      "w": 64,
+      "h": 42,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/wand_ice_crystal": {
+      "id": "weapons/wand_ice_crystal",
+      "name": "Wand Ice Crystal",
+      "category": "weapons",
+      "path": "assets/weapons/wand_ice_crystal.png",
+      "w": 64,
+      "h": 39,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/torch_classic": {
+      "id": "weapons/torch_classic",
+      "name": "Torch Classic",
+      "category": "weapons",
+      "path": "assets/weapons/torch_classic.png",
+      "w": 64,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/wand_arcane_blue": {
+      "id": "weapons/wand_arcane_blue",
+      "name": "Wand Arcane Blue",
+      "category": "weapons",
+      "path": "assets/weapons/wand_arcane_blue.png",
+      "w": 64,
+      "h": 58,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/crossbow_compact": {
+      "id": "weapons/crossbow_compact",
+      "name": "Crossbow Compact",
+      "category": "weapons",
+      "path": "assets/weapons/crossbow_compact.png",
+      "w": 64,
+      "h": 58,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/ballista_heavy": {
+      "id": "weapons/ballista_heavy",
+      "name": "Ballista Heavy",
+      "category": "weapons",
+      "path": "assets/weapons/ballista_heavy.png",
+      "w": 64,
+      "h": 55,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/throwing_knives_triple": {
+      "id": "weapons/throwing_knives_triple",
+      "name": "Throwing Knives Triple",
+      "category": "weapons",
+      "path": "assets/weapons/throwing_knives_triple.png",
+      "w": 64,
+      "h": 54,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/spellbook_burning": {
+      "id": "weapons/spellbook_burning",
+      "name": "Spellbook Burning",
+      "category": "weapons",
+      "path": "assets/weapons/spellbook_burning.png",
+      "w": 64,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/orb_arcane_focus": {
+      "id": "weapons/orb_arcane_focus",
+      "name": "Orb Arcane Focus",
+      "category": "weapons",
+      "path": "assets/weapons/orb_arcane_focus.png",
+      "w": 64,
+      "h": 52,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/poison_sprayer": {
+      "id": "weapons/poison_sprayer",
+      "name": "Poison Sprayer",
+      "category": "weapons",
+      "path": "assets/weapons/poison_sprayer.png",
+      "w": 64,
+      "h": 60,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/flamethrower_skull": {
+      "id": "weapons/flamethrower_skull",
+      "name": "Flamethrower Skull",
+      "category": "weapons",
+      "path": "assets/weapons/flamethrower_skull.png",
+      "w": 64,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/poison_cannon": {
+      "id": "weapons/poison_cannon",
+      "name": "Poison Cannon",
+      "category": "weapons",
+      "path": "assets/weapons/poison_cannon.png",
+      "w": 64,
+      "h": 52,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/crystal_weapon": {
+      "id": "weapons/crystal_weapon",
+      "name": "Crystal Weapon",
+      "category": "weapons",
+      "path": "assets/weapons/crystal_weapon.png",
+      "w": 64,
+      "h": 63,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/poison_gun_skull": {
+      "id": "weapons/poison_gun_skull",
+      "name": "Poison Gun Skull",
+      "category": "weapons",
+      "path": "assets/weapons/poison_gun_skull.png",
+      "w": 64,
+      "h": 61,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/fire_cannon": {
+      "id": "weapons/fire_cannon",
+      "name": "Fire Cannon",
+      "category": "weapons",
+      "path": "assets/weapons/fire_cannon.png",
+      "w": 54,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/void_weapon": {
+      "id": "weapons/void_weapon",
+      "name": "Void Weapon",
+      "category": "weapons",
+      "path": "assets/weapons/void_weapon.png",
+      "w": 64,
+      "h": 33,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/skull_wing_weapon": {
+      "id": "weapons/skull_wing_weapon",
+      "name": "Skull Wing Weapon",
+      "category": "weapons",
+      "path": "assets/weapons/skull_wing_weapon.png",
+      "w": 63,
+      "h": 21,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/energy_twin_barrel": {
+      "id": "weapons/energy_twin_barrel",
+      "name": "Energy Twin Barrel",
+      "category": "weapons",
+      "path": "assets/weapons/energy_twin_barrel.png",
+      "w": 64,
+      "h": 29,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/dagger_fire_ring": {
+      "id": "weapons/dagger_fire_ring",
+      "name": "Dagger Fire Ring",
+      "category": "weapons",
+      "path": "assets/weapons/dagger_fire_ring.png",
+      "w": 64,
+      "h": 59,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/dagger_paired_fire": {
+      "id": "weapons/dagger_paired_fire",
+      "name": "Dagger Paired Fire",
+      "category": "weapons",
+      "path": "assets/weapons/dagger_paired_fire.png",
+      "w": 64,
+      "h": 41,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/scythe_blood_large": {
+      "id": "weapons/scythe_blood_large",
+      "name": "Scythe Blood Large",
+      "category": "weapons",
+      "path": "assets/weapons/scythe_blood_large.png",
+      "w": 64,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/war_hammer_double": {
+      "id": "weapons/war_hammer_double",
+      "name": "War Hammer Double",
+      "category": "weapons",
+      "path": "assets/weapons/war_hammer_double.png",
+      "w": 59,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/axe_single_left": {
+      "id": "weapons/axe_single_left",
+      "name": "Axe Single Left",
+      "category": "weapons",
+      "path": "assets/weapons/axe_single_left.png",
+      "w": 64,
+      "h": 37,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/axe_single_right": {
+      "id": "weapons/axe_single_right",
+      "name": "Axe Single Right",
+      "category": "weapons",
+      "path": "assets/weapons/axe_single_right.png",
+      "w": 64,
+      "h": 56,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/scythe_blood_mirror": {
+      "id": "weapons/scythe_blood_mirror",
+      "name": "Scythe Blood Mirror",
+      "category": "weapons",
+      "path": "assets/weapons/scythe_blood_mirror.png",
+      "w": 64,
+      "h": 56,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/crown_thorns": {
+      "id": "weapons/crown_thorns",
+      "name": "Crown Thorns",
+      "category": "weapons",
+      "path": "assets/weapons/crown_thorns.png",
+      "w": 64,
+      "h": 56,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/ring_golden_flame": {
+      "id": "weapons/ring_golden_flame",
+      "name": "Ring Golden Flame",
+      "category": "weapons",
+      "path": "assets/weapons/ring_golden_flame.png",
+      "w": 64,
+      "h": 60,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/flail_spiked_pair": {
+      "id": "weapons/flail_spiked_pair",
+      "name": "Flail Spiked Pair",
+      "category": "weapons",
+      "path": "assets/weapons/flail_spiked_pair.png",
+      "w": 48,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/mace_spiked_fire": {
+      "id": "weapons/mace_spiked_fire",
+      "name": "Mace Spiked Fire",
+      "category": "weapons",
+      "path": "assets/weapons/mace_spiked_fire.png",
+      "w": 64,
+      "h": 52,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/shield_round_buckler": {
+      "id": "weapons/shield_round_buckler",
+      "name": "Shield Round Buckler",
+      "category": "weapons",
+      "path": "assets/weapons/shield_round_buckler.png",
+      "w": 64,
+      "h": 57,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/flail_spiked_single": {
+      "id": "weapons/flail_spiked_single",
+      "name": "Flail Spiked Single",
+      "category": "weapons",
+      "path": "assets/weapons/flail_spiked_single.png",
+      "w": 64,
+      "h": 58,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/shield_oval_dome": {
+      "id": "weapons/shield_oval_dome",
+      "name": "Shield Oval Dome",
+      "category": "weapons",
+      "path": "assets/weapons/shield_oval_dome.png",
+      "w": 64,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/shield_tower_rect": {
+      "id": "weapons/shield_tower_rect",
+      "name": "Shield Tower Rect",
+      "category": "weapons",
+      "path": "assets/weapons/shield_tower_rect.png",
+      "w": 64,
+      "h": 58,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/spear_triple_energy": {
+      "id": "weapons/spear_triple_energy",
+      "name": "Spear Triple Energy",
+      "category": "weapons",
+      "path": "assets/weapons/spear_triple_energy.png",
+      "w": 64,
+      "h": 34,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/blade_dual_energy": {
+      "id": "weapons/blade_dual_energy",
+      "name": "Blade Dual Energy",
+      "category": "weapons",
+      "path": "assets/weapons/blade_dual_energy.png",
+      "w": 64,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "weapons/mace_glowing_core": {
+      "id": "weapons/mace_glowing_core",
+      "name": "Mace Glowing Core",
+      "category": "weapons",
+      "path": "assets/weapons/mace_glowing_core.png",
+      "w": 64,
+      "h": 50,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/art_new_00": {
+      "id": "backgrounds/art_new_00",
+      "name": "Art New 00",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/art_new_00.png",
+      "w": 400,
+      "h": 113,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/art_new_01": {
+      "id": "backgrounds/art_new_01",
+      "name": "Art New 01",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/art_new_01.png",
+      "w": 122,
+      "h": 400,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/art_new_02": {
+      "id": "backgrounds/art_new_02",
+      "name": "Art New 02",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/art_new_02.png",
+      "w": 173,
+      "h": 400,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "enemies/enemy_new_00": {
+      "id": "enemies/enemy_new_00",
+      "name": "Enemy New 00",
+      "category": "enemies",
+      "path": "assets/enemies/enemy_new_00.png",
+      "w": 96,
+      "h": 75,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "enemies/enemy_new_01": {
+      "id": "enemies/enemy_new_01",
+      "name": "Enemy New 01",
+      "category": "enemies",
+      "path": "assets/enemies/enemy_new_01.png",
+      "w": 96,
+      "h": 76,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "enemies/enemy_new_02": {
+      "id": "enemies/enemy_new_02",
+      "name": "Enemy New 02",
+      "category": "enemies",
+      "path": "assets/enemies/enemy_new_02.png",
+      "w": 76,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "enemies/enemy_new_03": {
+      "id": "enemies/enemy_new_03",
+      "name": "Enemy New 03",
+      "category": "enemies",
+      "path": "assets/enemies/enemy_new_03.png",
+      "w": 96,
+      "h": 67,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "enemies/enemy_new_04": {
+      "id": "enemies/enemy_new_04",
+      "name": "Enemy New 04",
+      "category": "enemies",
+      "path": "assets/enemies/enemy_new_04.png",
+      "w": 96,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "props/env_new_00": {
+      "id": "props/env_new_00",
+      "name": "Env New 00",
+      "category": "props",
+      "path": "assets/props/env_new_00.png",
+      "w": 160,
+      "h": 71,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "props/env_new_01": {
+      "id": "props/env_new_01",
+      "name": "Env New 01",
+      "category": "props",
+      "path": "assets/props/env_new_01.png",
+      "w": 160,
+      "h": 102,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "props/env_new_02": {
+      "id": "props/env_new_02",
+      "name": "Env New 02",
+      "category": "props",
+      "path": "assets/props/env_new_02.png",
+      "w": 160,
+      "h": 114,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "props/env_new_03": {
+      "id": "props/env_new_03",
+      "name": "Env New 03",
+      "category": "props",
+      "path": "assets/props/env_new_03.png",
+      "w": 160,
+      "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
     }
   }
 }

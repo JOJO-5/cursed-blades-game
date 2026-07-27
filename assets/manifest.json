@@ -550,5 +550,197 @@
   "weapons/shadow_imp": {
     "w": 32,
     "h": 32
+  },
+  "weapons/torch_skull_fire": {
+    "w": 64,
+    "h": 42
+  },
+  "weapons/wand_ice_crystal": {
+    "w": 64,
+    "h": 39
+  },
+  "weapons/torch_classic": {
+    "w": 64,
+    "h": 45
+  },
+  "weapons/wand_arcane_blue": {
+    "w": 64,
+    "h": 58
+  },
+  "weapons/crossbow_compact": {
+    "w": 64,
+    "h": 58
+  },
+  "weapons/ballista_heavy": {
+    "w": 64,
+    "h": 55
+  },
+  "weapons/throwing_knives_triple": {
+    "w": 64,
+    "h": 54
+  },
+  "weapons/spellbook_burning": {
+    "w": 64,
+    "h": 48
+  },
+  "weapons/orb_arcane_focus": {
+    "w": 64,
+    "h": 52
+  },
+  "weapons/poison_sprayer": {
+    "w": 64,
+    "h": 60
+  },
+  "weapons/flamethrower_skull": {
+    "w": 64,
+    "h": 48
+  },
+  "weapons/poison_cannon": {
+    "w": 64,
+    "h": 52
+  },
+  "weapons/crystal_weapon": {
+    "w": 64,
+    "h": 63
+  },
+  "weapons/poison_gun_skull": {
+    "w": 64,
+    "h": 61
+  },
+  "weapons/fire_cannon": {
+    "w": 54,
+    "h": 64
+  },
+  "weapons/void_weapon": {
+    "w": 64,
+    "h": 33
+  },
+  "weapons/skull_wing_weapon": {
+    "w": 63,
+    "h": 21
+  },
+  "weapons/energy_twin_barrel": {
+    "w": 64,
+    "h": 29
+  },
+  "weapons/dagger_fire_ring": {
+    "w": 64,
+    "h": 59
+  },
+  "weapons/dagger_paired_fire": {
+    "w": 64,
+    "h": 41
+  },
+  "weapons/scythe_blood_large": {
+    "w": 64,
+    "h": 45
+  },
+  "weapons/war_hammer_double": {
+    "w": 59,
+    "h": 64
+  },
+  "weapons/axe_single_left": {
+    "w": 64,
+    "h": 37
+  },
+  "weapons/axe_single_right": {
+    "w": 64,
+    "h": 56
+  },
+  "weapons/scythe_blood_mirror": {
+    "w": 64,
+    "h": 56
+  },
+  "weapons/crown_thorns": {
+    "w": 64,
+    "h": 56
+  },
+  "weapons/ring_golden_flame": {
+    "w": 64,
+    "h": 60
+  },
+  "weapons/flail_spiked_pair": {
+    "w": 48,
+    "h": 64
+  },
+  "weapons/mace_spiked_fire": {
+    "w": 64,
+    "h": 52
+  },
+  "weapons/shield_round_buckler": {
+    "w": 64,
+    "h": 57
+  },
+  "weapons/flail_spiked_single": {
+    "w": 64,
+    "h": 58
+  },
+  "weapons/shield_oval_dome": {
+    "w": 64,
+    "h": 48
+  },
+  "weapons/shield_tower_rect": {
+    "w": 64,
+    "h": 58
+  },
+  "weapons/spear_triple_energy": {
+    "w": 64,
+    "h": 34
+  },
+  "weapons/blade_dual_energy": {
+    "w": 64,
+    "h": 45
+  },
+  "weapons/mace_glowing_core": {
+    "w": 64,
+    "h": 50
+  },
+  "backgrounds/art_new_00": {
+    "w": 400,
+    "h": 113
+  },
+  "backgrounds/art_new_01": {
+    "w": 122,
+    "h": 400
+  },
+  "backgrounds/art_new_02": {
+    "w": 173,
+    "h": 400
+  },
+  "enemies/enemy_new_00": {
+    "w": 96,
+    "h": 75
+  },
+  "enemies/enemy_new_01": {
+    "w": 96,
+    "h": 76
+  },
+  "enemies/enemy_new_02": {
+    "w": 76,
+    "h": 96
+  },
+  "enemies/enemy_new_03": {
+    "w": 96,
+    "h": 67
+  },
+  "enemies/enemy_new_04": {
+    "w": 96,
+    "h": 45
+  },
+  "props/env_new_00": {
+    "w": 160,
+    "h": 71
+  },
+  "props/env_new_01": {
+    "w": 160,
+    "h": 102
+  },
+  "props/env_new_02": {
+    "w": 160,
+    "h": 114
+  },
+  "props/env_new_03": {
+    "w": 160,
+    "h": 95
   }
 }

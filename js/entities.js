@@ -526,6 +526,17 @@ class Weapon {
       ctx.arc(player.x, player.y, range * pulse * 0.6, 0, TAU);
       ctx.fill();
       ctx.restore();
+      // draw weapon icon floating above player
+      const img = Assets.get(this.def.icon);
+      if (img && img.complete) {
+        const sz = this.def.size || 24;
+        const bob = Math.sin(Date.now() / 300) * 3;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(img, player.x - sz/2, player.y - sz - 8 + bob, sz, sz);
+        ctx.restore();
+      }
       return;
     }
     if (this.def.type !== 'orbit') return;

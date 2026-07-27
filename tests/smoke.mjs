@@ -18,7 +18,7 @@ const context = {};
 vm.runInNewContext(`${configSource}\nglobalThis.__CONFIG__ = CONFIG;`, context, { filename: 'js/config.js' });
 const config = context.__CONFIG__;
 
-assert.equal(Object.keys(config.WEAPONS).length, 16, 'expected 16 weapons (13 base + 3 evolved)');
+assert.equal(Object.keys(config.WEAPONS).length, 28, 'expected 28 weapons (13 original + 12 new + 3 evolved)');
 assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
 assert.equal(Object.keys(config.ENEMIES).length, 23, 'expected 23 enemies');
 assert.ok(config.LEVELS.village && config.LEVELS.mine, 'expected village and mine levels');
@@ -309,4 +309,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 16 weapons (13 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 28 weapons (13 original + 12 new + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
