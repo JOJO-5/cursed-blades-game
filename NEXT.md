@@ -87,7 +87,7 @@
 - [x] RangedBehavior（保持距离 + 远程攻击）— 保持距离、侧移、定时射击
 - [x] BossBehavior（Boss 移动）— 根据状态机调整移速，委托 updateBoss 处理技能
 - [x] DashBehavior（冲刺）— chase→windup(telegraph)→dash(3.5x速度爆发)→recover 状态机，wild_dog 使用
-- [ ] SummonBehavior（召唤）— 当前在 Boss 状态机内实现，可进一步抽离
+- [x] SummonBehavior（召唤）— 抽离为独立类，均匀分布+抖动生成仆从，summon/soldierSummon 委托执行
 - [x] DeathBehavior（死亡效果）— 已抽离为独立类，Enemy.die() 委托执行（掉落/粒子/奖励/震屏）
 
 ### 3.4 宝箱怪状态机

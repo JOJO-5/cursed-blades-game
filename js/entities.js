@@ -540,6 +540,45 @@ const ENEMY_BEHAVIORS = {
   dash: new DashBehavior(),
 };
 
+// ==================== SUMMON BEHAVIOR ====================
+// Encapsulates boss summoning logic: spawns minions in a circle around the summoner.
+// Used by both 'summon' (random trash) and 'soldierSummon' (skeletons) abilities.
+class SummonBehavior {
+  // @param summoner  The enemy doing the summoning (provides x, y, def)
+  // @param count     Number of minions to spawn
+  // @param radius    Spawn radius around summoner
+  // @param types     Array of enemy type strings to pick from (or a single string)
+  // @param message   Optional message to display
+  execute(summoner, count, radius, types, message) {
+    const typeArr = Array.isArray(types) ? types : [types];
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * TAU + Math.random() * 0.5; // evenly distributed + jitter
+      const r = radius + Math.random() * 20;
+      const ex = summoner.x + Math.cos(ang) * r;
+      const ey = summoner.y + Math.sin(ang) * r;
+      const type = pick(typeArr);
+      Game.enemies.push(new Enemy(type, ex, ey));
+    }
+    if (message) {
+      Game.addMessage((summoner.def.name || 'Boss') + message, '#ff6040');
+    }
+    // summon particles
+    for (let i = 0; i < count * 3; i++) {
+      const ang = Math.random() * TAU;
+      const spd = rand(30, 80);
+      Game.particles.push(new Particle(
+        summoner.x, summoner.y,
+        Math.cos(ang) * spd, Math.sin(ang) * spd,
+        '#c060e0', rand(0.3, 0.6), rand(2, 4)
+      ));
+    }
+    Audio2.boss();
+  }
+}
+
+// shared summon behavior singleton
+const ENEMY_SUMMON_BEHAVIOR = new SummonBehavior();
+
 // ==================== DEATH BEHAVIOR ====================
 // Encapsulates death effects: XP drops, particles, rewards, screen shake.
 // Stateless singleton — reads enemy flags (isBoss/isElite/isMimic) to branch.
@@ -1016,16 +1055,7 @@ class Enemy {
   }
 
   doSoldierSummon() {
-    const count = this.def.soldierSummonCount;
-    for (let i = 0; i < count; i++) {
-      const ang = Math.random() * TAU;
-      const r = 80;
-      const ex = this.x + Math.cos(ang) * r;
-      const ey = this.y + Math.sin(ang) * r;
-      Game.enemies.push(new Enemy('skeleton', ex, ey));
-    }
-    Game.addMessage((this.def.name || 'Boss') + '召唤了腐化士兵!', '#ff6040');
-    Audio2.boss();
+    ENEMY_SUMMON_BEHAVIOR.execute(this, this.def.soldierSummonCount, 80, 'skeleton', '召唤了腐化士兵!');
   }
 
   doHazard(player) {
@@ -1088,17 +1118,7 @@ class Enemy {
   }
 
   summon() {
-    const count = this.def.summonCount;
-    for (let i = 0; i < count; i++) {
-      const ang = Math.random() * TAU;
-      const r = 60;
-      const ex = this.x + Math.cos(ang) * r;
-      const ey = this.y + Math.sin(ang) * r;
-      const type = pick(['slime', 'bat', 'spider']);
-      Game.enemies.push(new Enemy(type, ex, ey));
-    }
-    Game.addMessage((this.def.name || 'Boss') + '召唤了仆从!', '#ff6040');
-    Audio2.boss();
+    ENEMY_SUMMON_BEHAVIOR.execute(this, this.def.summonCount, 60, ['slime', 'bat', 'spider'], '召唤了仆从!');
   }
 
   draw(ctx) {
