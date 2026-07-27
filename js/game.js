@@ -1109,6 +1109,9 @@ const Game = {
       gctx.fill();
     }
 
+    // map center (player spawn) — must be defined before wall/decoration code uses it
+    const cx = mapW * ts / 2, cy = mapH * ts / 2;
+
     // draw wall tiles around map border and as interior wall segments (mine/cave themes)
     const wallTiles = this.levelData.wallTiles;
     if (wallTiles && wallTiles.length > 0) {
@@ -1183,7 +1186,6 @@ const Game = {
     const props = this.levelData.props;
     const propList = [];
     const collRad = CONFIG.PROP_COLLISION;
-    const cx = mapW * ts / 2, cy = mapH * ts / 2; // map center (player spawn)
 
     // helper: scatter a prop category, avoid spawning on top of player spawn
     const scatter = (count, categoryKey, categoryArr) => {
