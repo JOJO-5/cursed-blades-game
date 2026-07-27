@@ -1,13 +1,13 @@
 {
   "_meta": {
     "version": "1.0",
-    "generated": "2026-07-27T13:44:29.000Z",
+    "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 186,
+    "totalAssets": 211,
     "categories": {
       "props": 39,
       "ui": 21,
-      "backgrounds": 5,
+      "backgrounds": 30,
       "enemies": 30,
       "player": 5,
       "bosses": 3,
@@ -2545,6 +2545,306 @@
       "path": "assets/props/env_new_03.png",
       "w": 160,
       "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_crypt_entrance": {
+      "id": "backgrounds/scene_crypt_crypt_entrance",
+      "name": "Scene Crypt Crypt Entrance",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_crypt_entrance.png",
+      "w": 300,
+      "h": 221,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_graveyard_upper": {
+      "id": "backgrounds/scene_crypt_graveyard_upper",
+      "name": "Scene Crypt Graveyard Upper",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_graveyard_upper.png",
+      "w": 300,
+      "h": 230,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_mausoleum": {
+      "id": "backgrounds/scene_crypt_mausoleum",
+      "name": "Scene Crypt Mausoleum",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_mausoleum.png",
+      "w": 300,
+      "h": 244,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_scene_catacombs": {
+      "id": "backgrounds/scene_crypt_scene_catacombs",
+      "name": "Scene Crypt Scene Catacombs",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_scene_catacombs.png",
+      "w": 300,
+      "h": 105,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_scene_crypt": {
+      "id": "backgrounds/scene_crypt_scene_crypt",
+      "name": "Scene Crypt Scene Crypt",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_scene_crypt.png",
+      "w": 300,
+      "h": 342,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_scene_graveyard": {
+      "id": "backgrounds/scene_crypt_scene_graveyard",
+      "name": "Scene Crypt Scene Graveyard",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_scene_graveyard.png",
+      "w": 300,
+      "h": 375,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_scene_ruins": {
+      "id": "backgrounds/scene_crypt_scene_ruins",
+      "name": "Scene Crypt Scene Ruins",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_scene_ruins.png",
+      "w": 290,
+      "h": 400,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crypt_tomb_area": {
+      "id": "backgrounds/scene_crypt_tomb_area",
+      "name": "Scene Crypt Tomb Area",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crypt_tomb_area.png",
+      "w": 300,
+      "h": 255,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_cart_station": {
+      "id": "backgrounds/scene_crystal_cart_station",
+      "name": "Scene Crystal Cart Station",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_cart_station.png",
+      "w": 300,
+      "h": 214,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_cave_chamber": {
+      "id": "backgrounds/scene_crystal_cave_chamber",
+      "name": "Scene Crystal Cave Chamber",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_cave_chamber.png",
+      "w": 300,
+      "h": 191,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_crystal_cavern": {
+      "id": "backgrounds/scene_crystal_crystal_cavern",
+      "name": "Scene Crystal Crystal Cavern",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_crystal_cavern.png",
+      "w": 300,
+      "h": 244,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_crystal_deposits": {
+      "id": "backgrounds/scene_crystal_crystal_deposits",
+      "name": "Scene Crystal Crystal Deposits",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_crystal_deposits.png",
+      "w": 300,
+      "h": 190,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_deep_mine": {
+      "id": "backgrounds/scene_crystal_deep_mine",
+      "name": "Scene Crystal Deep Mine",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_deep_mine.png",
+      "w": 300,
+      "h": 136,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_mine_entrance": {
+      "id": "backgrounds/scene_crystal_mine_entrance",
+      "name": "Scene Crystal Mine Entrance",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_mine_entrance.png",
+      "w": 300,
+      "h": 262,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_crystal_track_section": {
+      "id": "backgrounds/scene_crystal_track_section",
+      "name": "Scene Crystal Track Section",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_crystal_track_section.png",
+      "w": 300,
+      "h": 223,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_graveyard_crypt": {
+      "id": "backgrounds/scene_graveyard_crypt",
+      "name": "Scene Graveyard Crypt",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_graveyard_crypt.png",
+      "w": 600,
+      "h": 900,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_boss_arena": {
+      "id": "backgrounds/scene_hell_boss_arena",
+      "name": "Scene Hell Boss Arena",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_boss_arena.png",
+      "w": 300,
+      "h": 286,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_column_hall": {
+      "id": "backgrounds/scene_hell_column_hall",
+      "name": "Scene Hell Column Hall",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_column_hall.png",
+      "w": 300,
+      "h": 223,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_dragon_skeleton": {
+      "id": "backgrounds/scene_hell_dragon_skeleton",
+      "name": "Scene Hell Dragon Skeleton",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_dragon_skeleton.png",
+      "w": 300,
+      "h": 198,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_dungeon_depths": {
+      "id": "backgrounds/scene_hell_dungeon_depths",
+      "name": "Scene Hell Dungeon Depths",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_dungeon_depths.png",
+      "w": 300,
+      "h": 298,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_fence_area": {
+      "id": "backgrounds/scene_hell_fence_area",
+      "name": "Scene Hell Fence Area",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_fence_area.png",
+      "w": 300,
+      "h": 127,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_forge_area": {
+      "id": "backgrounds/scene_hell_forge_area",
+      "name": "Scene Hell Forge Area",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_forge_area.png",
+      "w": 300,
+      "h": 153,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_lava_pool": {
+      "id": "backgrounds/scene_hell_lava_pool",
+      "name": "Scene Hell Lava Pool",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_lava_pool.png",
+      "w": 300,
+      "h": 251,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_hell_volcano": {
+      "id": "backgrounds/scene_hell_volcano",
+      "name": "Scene Hell Volcano",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_hell_volcano.png",
+      "w": 600,
+      "h": 900,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "backgrounds/scene_mine_crystal": {
+      "id": "backgrounds/scene_mine_crystal",
+      "name": "Scene Mine Crystal",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_mine_crystal.png",
+      "w": 600,
+      "h": 900,
       "anchor": {
         "x": 0.5,
         "y": 0.5

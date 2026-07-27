@@ -742,5 +742,105 @@
   "props/env_new_03": {
     "w": 160,
     "h": 95
+  },
+  "backgrounds/scene_crypt_crypt_entrance": {
+    "w": 300,
+    "h": 221
+  },
+  "backgrounds/scene_crypt_graveyard_upper": {
+    "w": 300,
+    "h": 230
+  },
+  "backgrounds/scene_crypt_mausoleum": {
+    "w": 300,
+    "h": 244
+  },
+  "backgrounds/scene_crypt_scene_catacombs": {
+    "w": 300,
+    "h": 105
+  },
+  "backgrounds/scene_crypt_scene_crypt": {
+    "w": 300,
+    "h": 342
+  },
+  "backgrounds/scene_crypt_scene_graveyard": {
+    "w": 300,
+    "h": 375
+  },
+  "backgrounds/scene_crypt_scene_ruins": {
+    "w": 290,
+    "h": 400
+  },
+  "backgrounds/scene_crypt_tomb_area": {
+    "w": 300,
+    "h": 255
+  },
+  "backgrounds/scene_crystal_cart_station": {
+    "w": 300,
+    "h": 214
+  },
+  "backgrounds/scene_crystal_cave_chamber": {
+    "w": 300,
+    "h": 191
+  },
+  "backgrounds/scene_crystal_crystal_cavern": {
+    "w": 300,
+    "h": 244
+  },
+  "backgrounds/scene_crystal_crystal_deposits": {
+    "w": 300,
+    "h": 190
+  },
+  "backgrounds/scene_crystal_deep_mine": {
+    "w": 300,
+    "h": 136
+  },
+  "backgrounds/scene_crystal_mine_entrance": {
+    "w": 300,
+    "h": 262
+  },
+  "backgrounds/scene_crystal_track_section": {
+    "w": 300,
+    "h": 223
+  },
+  "backgrounds/scene_graveyard_crypt": {
+    "w": 600,
+    "h": 900
+  },
+  "backgrounds/scene_hell_boss_arena": {
+    "w": 300,
+    "h": 286
+  },
+  "backgrounds/scene_hell_column_hall": {
+    "w": 300,
+    "h": 223
+  },
+  "backgrounds/scene_hell_dragon_skeleton": {
+    "w": 300,
+    "h": 198
+  },
+  "backgrounds/scene_hell_dungeon_depths": {
+    "w": 300,
+    "h": 298
+  },
+  "backgrounds/scene_hell_fence_area": {
+    "w": 300,
+    "h": 127
+  },
+  "backgrounds/scene_hell_forge_area": {
+    "w": 300,
+    "h": 153
+  },
+  "backgrounds/scene_hell_lava_pool": {
+    "w": 300,
+    "h": 251
+  },
+  "backgrounds/scene_hell_volcano": {
+    "w": 600,
+    "h": 900
+  },
+  "backgrounds/scene_mine_crystal": {
+    "w": 600,
+    "h": 900
   }
 }
