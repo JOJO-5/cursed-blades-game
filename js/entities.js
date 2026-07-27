@@ -576,12 +576,27 @@ class Enemy {
 
   static nextId = 0;
 
+  // Map enemy type to sound material category
+  getMaterial() {
+    if (this.isBoss) return 'metal';
+    switch (this.type) {
+      case 'slime': case 'rat': return 'flesh';
+      case 'bat': case 'boar': return 'leather';
+      case 'skeleton': case 'spider': case 'beetle': return 'bone';
+      case 'archer': case 'mage': case 'crystal': case 'miner': return 'flesh';
+      case 'golem': return 'wood';
+      case 'reaper': return 'metal';
+      case 'mimic': return 'chest';
+      default: return 'flesh';
+    }
+  }
+
   takeDamage(amount, isCrit, knockback, fromX, fromY) {
     if (!this.alive) return;
     this.hp -= amount;
     this.hitFlash = 0.15;
     Game.spawnDamageNumber(this.x, this.y - this.radius - 5, Math.floor(amount), isCrit ? '#ffd040' : '#ffffff', isCrit);
-    Audio2.hit();
+    Audio2.hitMaterial(this.getMaterial());
 
     // spawn hit particles scaled to enemy size
     const particleCount = isCrit ? 8 : 4;

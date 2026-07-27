@@ -168,7 +168,7 @@
 
 ### 6.3 音效
 - [x] 基础音效已接入（hit/hurt/pickup/levelup/death/boss/click/victory）
-- [ ] 武器命中不同材质音效
+- [x] 武器命中不同材质音效（hitMaterial: flesh/bone/leather/metal/wood/chest 六种音色）
 - [x] Boss阶段转换音效（复用 Audio2.boss，HP<50% 狂暴时触发）
 - [ ] 背景音乐
 

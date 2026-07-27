@@ -333,6 +333,18 @@ const Audio2 = {
   },
 
   hit()    { this.play('square', 200, 0.05, 0.06); },
+  // material-specific hit sounds: different waveform/frequency per enemy category
+  hitMaterial(material) {
+    switch (material) {
+      case 'flesh':    this.play('square', 180, 0.05, 0.06); break;  // slime/villager — soft thud
+      case 'bone':     this.play('square', 320, 0.04, 0.05); break;  // skeleton — sharp click
+      case 'leather':  this.play('sawtooth', 220, 0.05, 0.05); break; // bat/dog — leathery flap
+      case 'metal':    this.play('square', 400, 0.04, 0.06); break;  // knight/boss — metallic clang
+      case 'wood':     this.play('triangle', 260, 0.05, 0.05); break; // scarecrow — woody thump
+      case 'chest':    this.play('square', 150, 0.08, 0.07); break;  // mimic — hollow boom
+      default:         this.hit(); break;
+    }
+  },
   hurt()   { this.play('sawtooth', 150, 0.15, 0.1); },
   pickup() { this.play('sine', 800, 0.08, 0.08); this.play('sine', 1200, 0.06, 0.05); },
   levelup(){ this.play('sine', 523, 0.1, 0.1); setTimeout(()=>this.play('sine',659,0.1,0.1),80); setTimeout(()=>this.play('sine',784,0.15,0.1),160); },
