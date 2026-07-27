@@ -226,3 +226,49 @@
 - [x] 引入 4x4 区块有机 patches，相邻区域倾向使用相似地面纹理，减少突兀切换
 - [x] 20% 概率从邻近 patch 取纹理，形成自然过渡
 
+## 阶段8：第三关「地狱熔渊」+ 武器扩展
+
+### 8.1 第三关 — 地狱熔渊
+全新关卡，接在 mine 通关之后，使用 scene_hell_* 系列背景素材。
+- [x] 新增 hell 关卡配置（38x38地图，6阶段刷怪，9分钟Boss战）
+- [x] 地狱主题基础色 #201010，独立随机种子
+- [x] 独特 groundTiles（碎石/泥土/废墟）和 wallTiles（石砌/砖墙）
+- [x] 地面装饰（ground_crack + fire_projectile 营造熔岩氛围）
+- [x] 场景背景使用 scene_hell_forge_area / scene_hell_column_hall / scene_hell_lava_pool
+
+### 8.2 地狱主题新敌人（8种）
+利用未使用的 enemy_new_00~04、flame_turtle、corrupted_slime、reaper_with_minion 素材。
+- [x] 地狱小鬼 imp（高速低血近战，chase）
+- [x] 地狱犬 hellhound（火焰龟形象，冲刺型，dash）
+- [x] 恶魔士兵 demon_soldier（中等血量近战，chase）
+- [x] 熔岩射手 lava_archer（远程火焰弹，ranged）
+- [x] 魅魔 succubus（远程追踪弹，ranged）
+- [x] 地狱守卫 hell_guard（精英坦克，护甲4，chase）
+- [x] 炎魔 flame_mage（精英远程，发射火球，ranged）
+
+### 8.3 地狱Boss — 地狱炎龙
+- [x] bossDragon（HP 1800，3阶段，enrageHpPct 0.33）
+- [x] 阶段1：cleave + fanShot(7发) + charge
+- [x] 阶段2（HP<33%）：orbit(4环绕武器) + swordThrow + soldierSummon + hazard
+- [x] 阶段3继承Boss通用行为，数值为全游戏最高
+
+### 8.4 关卡流程扩展
+- [x] village → mine → hell 三关完整链路
+- [x] hell 通关后触发最终胜利（victory状态）
+- [x] mine 通关剧情改写（暗示通往地狱，不再说"诅咒根除"）
+- [x] hell 关完整剧情（intro + bossIntro + victory）
+- [x] 存档迁移 v3→v4（bossDefeatedGraceTimer 字段兼容）
+
+### 8.5 武器池扩展（10种新武器）
+利用未使用的武器 sprite，丰富宝箱奖励多样性。
+- [x] 经典火把 torch_classic（aura 光环）
+- [x] 火焰炮 fire_cannon（ranged 大范围爆炸）
+- [x] 奥术之杖 wand_arcane（homing 追踪穿透）
+- [x] 重型弩炮 ballista（ranged 远程穿透）
+- [x] 荆棘链锤 flail（orbit 高击退）
+- [x] 烈焰钉锤 mace_fire（orbit 穿透溅射）
+- [x] 巨斧 axe（orbit 超高击退暴击）
+- [x] 双能刃 blade_dual（projectile 双弹发射）
+- [x] 毒液炮 poison_cannon（ranged 范围毒伤爆炸）
+- [x] 虚空之刃 void_blade（orbit 超远多穿）
+

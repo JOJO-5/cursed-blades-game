@@ -48,7 +48,7 @@ const Game = {
 
   saveKey: 'cursed_blades_save',
   metaKey: 'cursed_blades_meta',
-  saveSchemaVersion: 3,
+  saveSchemaVersion: 4,
 
   // Object pools (initialized in init() — reduce GC by reusing entities)
   particlePool: null,
@@ -858,11 +858,12 @@ const Game = {
   startVictorySequence() {
     setTimeout(() => {
       this.startStory(CONFIG.STORY[this.levelData.theme].victory, () => {
-        // After village victory, proceed to mine level
         if (this.levelData.theme === 'village') {
           this.loadLevel('mine');
+        } else if (this.levelData.theme === 'mine') {
+          this.loadLevel('hell');
         } else {
-          // Final victory after mine
+          // Final victory after hell
           this.state = 'victory';
           Audio2.playMusic('victory');
         }
@@ -1118,7 +1119,7 @@ const Game = {
     gctx.imageSmoothingEnabled = false;
 
     // fill ground with theme-specific base colour
-    const baseColors = { village: '#2a2218', mine: '#1a1520' };
+    const baseColors = { village: '#2a2218', mine: '#1a1520', hell: '#201010' };
     gctx.fillStyle = baseColors[theme] || '#2a2218';
     gctx.fillRect(0, 0, mapW * ts, mapH * ts);
 
@@ -1338,6 +1339,11 @@ const Game = {
         seenStories: [],
       };
       data.settings = data.settings || { masterVolume: 0.5, sfxVolume: 0.7, musicVolume: 0.4 };
+    }
+    // v3 → v4: hell level support
+    if (ver < 4) {
+      // ensure level state fields for third boss
+      data.bossDefeatedGraceTimer = data.bossDefeatedGraceTimer ?? 0;
     }
     data.schemaVersion = this.saveSchemaVersion;
     return data;
