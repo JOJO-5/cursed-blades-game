@@ -808,6 +808,8 @@ class MimicBehavior extends EnemyBehavior {
         enemy.vy = Math.sin(ang) * enemy.speed * 0.6;
         // bite contact damage
         if (d < enemy.radius + 18 && enemy.contactCooldown <= 0) {
+          // Future: 20% chance to consume a weapon instead of dealing damage
+          // if (Math.random() < 0.2) { this.consumeWeapon(enemy, player); break; }
           player.takeDamage(enemy.damage * enemy.def.attackDamage);
           enemy.contactCooldown = 0.8;
           Game.shakeScreen(4, 0.15);
@@ -889,6 +891,34 @@ class MimicBehavior extends EnemyBehavior {
     }
     Audio2.play('sawtooth', 150, 0.2, 0.08);
     Game.shakeScreen(3, 0.15);
+  }
+
+  // ============================================================
+  // Consume — future feature: mimic swallows a player's weapon.
+  // Reserved interface: when implemented, the mimic will steal one
+  // of the player's active weapons during a successful attack,
+  // temporarily disabling it or permanently removing it.
+  //
+  // Planned signature:
+  //   consumeWeapon(enemy, player)
+  //     → picks a random weapon from player.weapons
+  //     → sets weapon.consumed = true + weapon.consumeTimer = 5.0s
+  //     → weapon.update() skips logic while consumed
+  //     → weapon.restore() reactivates after timer expires
+  //     → visual: weapon icon dims + "eaten" particle effect
+  //     → if weapon has no backup, permanently lost (hardcore mode)
+  //
+  // Trigger condition: on 'attack' state hit, 20% chance to consume
+  // instead of dealing damage. Plays a distinct "chomp" sound.
+  // ============================================================
+  consumeWeapon(enemy, player) {
+    // TODO: implement weapon consumption logic
+    // 1. Filter player.weapons to non-consumed, non-evolved weapons
+    // 2. Pick one at random
+    // 3. Set weapon.consumed = true, weapon.consumeTimer = 5.0
+    // 4. Spawn "eaten" particles (weapon color + brown splash)
+    // 5. Play Audio2.play('sawtooth', 100, 0.3, 0.1)
+    // 6. Game.addMessage('宝箱怪吞噬了你的' + weapon.def.name + '！', '#cc4444')
   }
 }
 
