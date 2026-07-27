@@ -32,7 +32,7 @@
 - [x] Orbit类型：铁剑、战锤、镰刀、盾牌、炎之环刃、虚空环刃
 - [x] Ranged类型：弓箭、火球、飞刀
 - [x] Homing类型：灵魂弹
-- [ ] Projectile类型：定时向敌人发射弹丸（与Ranged类似但需区分行为）
+- [x] Projectile类型：定时向敌人发射弹丸（旋转固定方向十字弹幕，无追踪）— 圣光十字(holy_cross): 4方向旋转发射, triangle音效
 - [x] Shield类型：环绕角色并**阻挡攻击**（EnemyProjectile.update 检查盾牌轨道位置，拦截弹丸+火花粒子+音效）
 - [ ] Aura类型：持续影响范围内敌人或玩家
 - [ ] Summon类型：生成自动作战单位

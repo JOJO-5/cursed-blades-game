@@ -344,6 +344,14 @@ class Weapon {
         this.cooldown = this.getCooldown();
         this.fire(player);
       }
+    } else if (this.def.type === 'projectile') {
+      // Projectile type: fires in a rotating fixed-direction pattern (no target tracking)
+      this.angle += this.getRotateSpeed() * 0.5 * dt;
+      this.cooldown -= dt;
+      if (this.cooldown <= 0) {
+        this.cooldown = this.getCooldown();
+        this.firePattern(player);
+      }
     }
   }
 
@@ -386,6 +394,32 @@ class Weapon {
       Game.projectiles.push(proj);
     }
     Audio2.play('square', 300, 0.04, 0.04);
+  }
+
+  // Projectile type: fires in a rotating cross (or other fixed pattern)
+  firePattern(player) {
+    const dmg = this.getDamage();
+    const crit = this.getCritChance();
+    const pierce = this.getPierce();
+    const critMult = this.getCritMult();
+    const projSpeed = this.def.projectileSpeed * player.stats.projectileSpeedMult;
+    const count = this.def.projectileCount || 4;
+
+    for (let i = 0; i < count; i++) {
+      const ang = this.angle + (i / count) * TAU;
+      const proj = Game.projectilePool.obtain(
+        player.x, player.y,
+        Math.cos(ang) * projSpeed,
+        Math.sin(ang) * projSpeed,
+        dmg, this.def.range, pierce, crit, critMult,
+        this.def.color,
+        this.def.icon, this.def.size, this.id
+      );
+      proj.homing = false;
+      proj.splash = this.def.splash || 0;
+      Game.projectiles.push(proj);
+    }
+    Audio2.play('triangle', 350, 0.06, 0.05);
   }
 
   draw(ctx) {

@@ -94,6 +94,14 @@ const CONFIG = {
       color: '#a040c0', size: 34,
       desc: '诅咒环刃·虚空多穿',
     },
+    holy_cross: {
+      name: '圣光十字', type: 'projectile', icon: 'weapons/holy_cross',
+      damage: 12, range: 280, cooldown: 0.8, projectileSpeed: 280,
+      pierce: 1, critChance: 0.08, critMult: 2.0,
+      color: '#ffe8a0', size: 18,
+      projectileCount: 4, // fires in cross pattern (4 directions)
+      desc: '旋转弹幕·十字方向发射',
+    },
     // ---- Evolved weapons (replaced via evolution system) ----
     sword_wind: {
       name: '疾风双刃', type: 'orbit', icon: 'weapons/sword_slash_wind',

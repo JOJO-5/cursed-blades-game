@@ -3,7 +3,7 @@
     "version": "1.0",
     "generated": "2026-07-27T01:20:56.299Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 123,
+    "totalAssets": 124,
     "categories": {
       "props": 35,
       "ui": 21,
@@ -14,7 +14,7 @@
       "tiles": 16,
       "effects": 8,
       "items": 5,
-      "weapons": 15
+      "weapons": 16
     },
     "namingConvention": {
       "pattern": "{category}/{entity}_{state}_{variant}_{frame}.png",
@@ -1767,6 +1767,19 @@
       "path": "assets/weapons/sword_slash_wind.png",
       "w": 64,
       "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/holy_cross": {
+      "id": "weapons/holy_cross",
+      "name": "Holy Cross",
+      "category": "weapons",
+      "path": "assets/weapons/holy_cross.png",
+      "w": 32,
+      "h": 32,
       "anchor": {
         "x": 0.5,
         "y": 0.5

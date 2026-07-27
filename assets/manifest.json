@@ -490,5 +490,9 @@
   "weapons/sword_slash_wind": {
     "w": 64,
     "h": 48
+  },
+  "weapons/holy_cross": {
+    "w": 32,
+    "h": 32
   }
 }
