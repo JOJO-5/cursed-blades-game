@@ -458,11 +458,24 @@ class BossBehavior extends EnemyBehavior {
   }
 }
 
+// Bat: zig-zag flight pattern — chases player but weaves sideways sinusoidally
+class BatBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    // lateral sine offset based on enemy animTime for irregular trajectory
+    const lateral = Math.sin(enemy.animTime * 8) * 0.7;
+    const finalAng = ang + lateral;
+    enemy.vx = Math.cos(finalAng) * enemy.speed;
+    enemy.vy = Math.sin(finalAng) * enemy.speed;
+  }
+}
+
 // behavior registry: map behavior string -> singleton instance
 const ENEMY_BEHAVIORS = {
   chase: new ChaseBehavior(),
   ranged: new RangedBehavior(),
   boss: new BossBehavior(),
+  bat: new BatBehavior(),
 };
 
 // ==================== DEATH BEHAVIOR ====================

@@ -205,7 +205,7 @@ const CONFIG = {
     bat: {
       name: '影翼蝙蝠', sprite: 'enemies/demon_bat',
       hp: 10, speed: 80, damage: 5, xp: 2, radius: 14,
-      color: '#6a4a8a', behavior: 'chase',
+      color: '#6a4a8a', behavior: 'bat',
     },
     skeleton: {
       name: '骸骨战士', sprite: 'enemies/hooded_warrior',
