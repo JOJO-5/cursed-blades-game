@@ -583,7 +583,7 @@ class Enemy {
       case 'slime': case 'rat': return 'flesh';
       case 'bat': case 'boar': return 'leather';
       case 'skeleton': case 'spider': case 'beetle': return 'bone';
-      case 'archer': case 'mage': case 'crystal': case 'miner': return 'flesh';
+      case 'archer': case 'mage': case 'crystal': case 'miner': case 'villager': case 'plague_archer': return 'flesh';
       case 'golem': return 'wood';
       case 'reaper': return 'metal';
       case 'mimic': return 'chest';

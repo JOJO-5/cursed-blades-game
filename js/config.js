@@ -222,12 +222,25 @@ const CONFIG = {
       hp: 45, speed: 55, damage: 12, xp: 6, radius: 20,
       color: '#7a5a3a', behavior: 'chase',
     },
+    // corrupted villager — low HP, spawns in groups, basic chase
+    villager: {
+      name: '腐化村民', sprite: 'enemies/bandit_hooded',
+      hp: 14, speed: 45, damage: 5, xp: 2, radius: 14,
+      color: '#7a6a4a', behavior: 'chase',
+    },
     // ranged
     archer: {
       name: '暗影弓手', sprite: 'enemies/archer',
       hp: 25, speed: 40, damage: 10, xp: 5, radius: 15,
       color: '#4a6a3a', behavior: 'ranged', shootRange: 250, shootCooldown: 2.0,
       projectileSpeed: 200, projectileColor: '#8acc4a',
+    },
+    // plague archer — ranged, poison projectiles, keeps distance
+    plague_archer: {
+      name: '瘟疫弓手', sprite: 'enemies/spearman',
+      hp: 28, speed: 38, damage: 12, xp: 6, radius: 15,
+      color: '#5a7a3a', behavior: 'ranged', shootRange: 240, shootCooldown: 2.2,
+      projectileSpeed: 190, projectileColor: '#6acc4a',
     },
     mage: {
       name: '冰霜法师', sprite: 'enemies/dwarf_mage',
@@ -322,8 +335,8 @@ const CONFIG = {
       mapW: 40, mapH: 30,
       spawnInterval: 3.0,
       maxEnemies: 25,
-      enemyPool: ['slime','bat','skeleton','spider','boar'],
-      rangedPool: ['archer','mage'],
+      enemyPool: ['slime','bat','skeleton','spider','boar','villager'],
+      rangedPool: ['archer','mage','plague_archer'],
       elitePool: ['golem','reaper'],
       eliteInterval: 90, // seconds — first elite at ~1.5min, then every 1.5min
       bossSpawnTime: 480,  // boss appears at 8 minutes
@@ -332,10 +345,10 @@ const CONFIG = {
       mimicChance: 0.4,
       // ---- Phased spawning (data-driven) ----
       phases: [
-        { time: 0,   name: '初始骚扰',   enemyPool: ['slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
-        { time: 120, name: '远程加入',   enemyPool: ['slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
-        { time: 240, name: '精英登场',   enemyPool: ['slime','bat','spider','skeleton'],      rangedPool: ['archer'],     maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '腐化加剧',   enemyPool: ['slime','bat','spider','skeleton','boar'], rangedPool: ['archer','mage'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 0,   name: '初始骚扰',   enemyPool: ['villager','slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
+        { time: 120, name: '远程加入',   enemyPool: ['villager','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
+        { time: 240, name: '精英登场',   enemyPool: ['villager','slime','bat','spider','skeleton'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '腐化加剧',   enemyPool: ['villager','slime','bat','spider','skeleton','boar'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
         { time: 480, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {

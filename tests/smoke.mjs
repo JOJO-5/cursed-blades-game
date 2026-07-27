@@ -20,7 +20,7 @@ const config = context.__CONFIG__;
 
 assert.equal(Object.keys(config.WEAPONS).length, 10, 'expected 10 weapons');
 assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
-assert.equal(Object.keys(config.ENEMIES).length, 17, 'expected 17 enemies');
+assert.equal(Object.keys(config.ENEMIES).length, 19, 'expected 19 enemies');
 assert.ok(config.LEVELS.village && config.LEVELS.mine, 'expected village and mine levels');
 
 // Verify phased spawning config for each level
@@ -136,4 +136,4 @@ for (const [theme, level] of Object.entries(config.LEVELS)) {
 }
 assert.ok(config.STORY.mimicEncounter && config.STORY.mimicEncounter.length > 0, 'STORY.mimicEncounter should exist');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation.`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 19 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation.`);
