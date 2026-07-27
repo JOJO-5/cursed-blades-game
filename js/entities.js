@@ -1658,7 +1658,25 @@ class Enemy {
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'source-over';
     }
-    Assets.drawCentered(ctx, this.def.sprite, this.x, this.y + bob, scale, 0, 1);
+    // Animated sprite: check for idle frames, fallback to single sprite
+    let spriteKey = this.def.sprite;
+    if (this.isBoss) {
+      // Boss states: idle vs attack
+      const bossStateSuffix = (this.bossState === 'windup' || this.bossState === 'attack')
+        ? '_attack_01'
+        : '_idle_01';
+      const bossAnimKey = this.def.sprite + bossStateSuffix;
+      if (Assets.images[bossAnimKey] && Assets.images[bossAnimKey].complete) {
+        spriteKey = bossAnimKey;
+      }
+    } else {
+      const frameIdx = Math.floor(this.animTime / 0.4) % 2;
+      const animKey = this.def.sprite + '_idle_0' + (frameIdx + 1);
+      if (Assets.images[animKey] && Assets.images[animKey].complete) {
+        spriteKey = animKey;
+      }
+    }
+    Assets.drawCentered(ctx, spriteKey, this.x, this.y + bob, scale, 0, 1);
 
     // hit flash overlay - use collision radius so it matches enemy size
     if (this.hitFlash > 0) {

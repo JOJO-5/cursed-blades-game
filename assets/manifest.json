@@ -247,6 +247,14 @@
     "w": 71,
     "h": 95
   },
+  "enemies/bandit_hooded_idle_01": {
+    "w": 32,
+    "h": 32
+  },
+  "enemies/bandit_hooded_idle_02": {
+    "w": 32,
+    "h": 32
+  },
   "enemies/archer": {
     "w": 96,
     "h": 76
@@ -259,9 +267,25 @@
     "w": 96,
     "h": 49
   },
+  "enemies/demon_bat_idle_01": {
+    "w": 32,
+    "h": 32
+  },
+  "enemies/demon_bat_idle_02": {
+    "w": 32,
+    "h": 32
+  },
   "enemies/toxic_slime": {
     "w": 96,
     "h": 45
+  },
+  "enemies/toxic_slime_idle_01": {
+    "w": 32,
+    "h": 32
+  },
+  "enemies/toxic_slime_idle_02": {
+    "w": 32,
+    "h": 32
   },
   "enemies/flame_turtle": {
     "w": 92,
@@ -330,6 +354,14 @@
   "bosses/dark_knight_flame": {
     "w": 116,
     "h": 160
+  },
+  "bosses/dark_knight_idle_01": {
+    "w": 64,
+    "h": 64
+  },
+  "bosses/dark_knight_attack_01": {
+    "w": 64,
+    "h": 64
   },
   "tiles/wall_stone_horizontal_01": {
     "w": 128,

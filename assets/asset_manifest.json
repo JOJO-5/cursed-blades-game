@@ -3,14 +3,14 @@
     "version": "1.0",
     "generated": "2026-07-27T01:20:56.299Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 130,
+    "totalAssets": 138,
     "categories": {
       "props": 35,
       "ui": 21,
       "backgrounds": 2,
-      "enemies": 19,
+      "enemies": 25,
       "player": 5,
-      "bosses": 1,
+      "bosses": 3,
       "tiles": 16,
       "effects": 8,
       "items": 5,
@@ -930,6 +930,28 @@
       "enemyId": "villager",
       "tags": []
     },
+    "enemies/bandit_hooded_idle_01": {
+      "id": "enemies/bandit_hooded_idle_01",
+      "name": "腐化村民 Idle 01",
+      "category": "enemies",
+      "path": "assets/enemies/bandit_hooded_idle_01.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "villager"
+    },
+    "enemies/bandit_hooded_idle_02": {
+      "id": "enemies/bandit_hooded_idle_02",
+      "name": "腐化村民 Idle 02",
+      "category": "enemies",
+      "path": "assets/enemies/bandit_hooded_idle_02.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "villager"
+    },
     "enemies/archer": {
       "id": "enemies/archer",
       "name": "暗影弓手",
@@ -975,6 +997,28 @@
       "enemyId": "bat",
       "tags": []
     },
+    "enemies/demon_bat_idle_01": {
+      "id": "enemies/demon_bat_idle_01",
+      "name": "影翼蝙蝠 Idle 01",
+      "category": "enemies",
+      "path": "assets/enemies/demon_bat_idle_01.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "bat"
+    },
+    "enemies/demon_bat_idle_02": {
+      "id": "enemies/demon_bat_idle_02",
+      "name": "影翼蝙蝠 Idle 02",
+      "category": "enemies",
+      "path": "assets/enemies/demon_bat_idle_02.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "bat"
+    },
     "enemies/toxic_slime": {
       "id": "enemies/toxic_slime",
       "name": "疫病鼠群",
@@ -989,6 +1033,28 @@
       "animation": null,
       "enemyId": "slime",
       "tags": []
+    },
+    "enemies/toxic_slime_idle_01": {
+      "id": "enemies/toxic_slime_idle_01",
+      "name": "疫病鼠群 Idle 01",
+      "category": "enemies",
+      "path": "assets/enemies/toxic_slime_idle_01.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "slime"
+    },
+    "enemies/toxic_slime_idle_02": {
+      "id": "enemies/toxic_slime_idle_02",
+      "name": "疫病鼠群 Idle 02",
+      "category": "enemies",
+      "path": "assets/enemies/toxic_slime_idle_02.png",
+      "w": 32,
+      "h": 32,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle",
+      "enemyId": "slime"
     },
     "enemies/flame_turtle": {
       "id": "enemies/flame_turtle",
@@ -1220,6 +1286,26 @@
         "y": 0.5
       },
       "animation": null
+    },
+    "bosses/dark_knight_idle_01": {
+      "id": "bosses/dark_knight_idle_01",
+      "name": "无头骑士 Idle",
+      "category": "bosses",
+      "path": "assets/bosses/dark_knight_idle_01.png",
+      "w": 64,
+      "h": 64,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle"
+    },
+    "bosses/dark_knight_attack_01": {
+      "id": "bosses/dark_knight_attack_01",
+      "name": "无头骑士 Attack",
+      "category": "bosses",
+      "path": "assets/bosses/dark_knight_attack_01.png",
+      "w": 64,
+      "h": 64,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "attack"
     },
     "tiles/wall_stone_horizontal_01": {
       "id": "tiles/wall_stone_horizontal_01",
