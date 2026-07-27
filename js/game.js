@@ -42,6 +42,7 @@ const Game = {
   chestsOpened: 0,
 
   saveKey: 'cursed_blades_save',
+  metaKey: 'cursed_blades_meta',
   saveSchemaVersion: 3,
 
   // ---- Initialization ----
@@ -69,6 +70,7 @@ const Game = {
       .then(manifest => Assets.loadList(manifest))
       .then(() => {
         Audio2.init();
+        this.loadMeta();
         this.state = 'menu';
         document.getElementById('loading-screen').style.display = 'none';
         this.loop();
@@ -242,6 +244,7 @@ const Game = {
   updatePlaying(dt) {
     if (!this.player.alive) {
       this.state = 'gameover';
+      this.updateMeta();
       this.saveProgress();
       return;
     }
@@ -1006,8 +1009,54 @@ const Game = {
   resetSave() {
     try {
       localStorage.removeItem(this.saveKey);
+      localStorage.removeItem(this.metaKey);
     } catch(e) { console.warn('Reset save failed', e); }
     this.resetConfirmTimer = 0;
+    this.meta = {
+      bestSurvivalTime: 0, bestLevel: 1, bestKills: 0,
+      levelsCompleted: {}, unlockedWeapons: ['sword'],
+      unlockedUpgrades: [], seenStories: [],
+    };
+  },
+
+  // ---- Meta progression (persists across runs, survives death) ----
+  meta: {
+    bestSurvivalTime: 0,
+    bestLevel: 1,
+    bestKills: 0,
+    levelsCompleted: {},
+    unlockedWeapons: ['sword'],
+    unlockedUpgrades: [],
+    seenStories: [],
+  },
+
+  loadMeta() {
+    try {
+      const raw = localStorage.getItem(this.metaKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      this.meta.bestSurvivalTime = data.bestSurvivalTime ?? 0;
+      this.meta.bestLevel = data.bestLevel ?? 1;
+      this.meta.bestKills = data.bestKills ?? 0;
+      this.meta.levelsCompleted = data.levelsCompleted || {};
+      this.meta.unlockedWeapons = data.unlockedWeapons || ['sword'];
+      this.meta.unlockedUpgrades = data.unlockedUpgrades || [];
+      this.meta.seenStories = data.seenStories || [];
+    } catch(e) { console.warn('Load meta failed', e); }
+  },
+
+  saveMeta() {
+    try {
+      localStorage.setItem(this.metaKey, JSON.stringify(this.meta));
+    } catch(e) { console.warn('Save meta failed', e); }
+  },
+
+  updateMeta() {
+    // update best records from current run
+    if (this.levelTime > this.meta.bestSurvivalTime) this.meta.bestSurvivalTime = this.levelTime;
+    if (this.player.level > this.meta.bestLevel) this.meta.bestLevel = this.player.level;
+    if (this.player.kills > this.meta.bestKills) this.meta.bestKills = this.player.kills;
+    this.saveMeta();
   },
 
   loadAndContinue() {
@@ -1833,6 +1882,12 @@ const Game = {
       const row = weaponNames.slice(i, i + perRow).join('  ');
       ctx.fillText(row, CONFIG.CANVAS_W/2, 275 + Math.floor(i / perRow) * 20);
     }
+
+    // best records
+    ctx.fillStyle = '#5a8a5a';
+    ctx.font = '12px Courier New';
+    const bestTime = Math.floor(this.meta.bestSurvivalTime/60) + '分' + Math.floor(this.meta.bestSurvivalTime%60) + '秒';
+    ctx.fillText(`最高记录: 等级${this.meta.bestLevel}  |  击杀${this.meta.bestKills}  |  存活${bestTime}`, CONFIG.CANVAS_W/2, 320);
 
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 360, 200, 45, '重新开始', '#c4a87a');
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 420, 200, 45, '返回主菜单', '#aa6a4a');
