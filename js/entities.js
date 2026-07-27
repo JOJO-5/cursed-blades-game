@@ -1281,9 +1281,34 @@ class EnemyProjectile {
     this.traveled += Math.sqrt(mx*mx + my*my);
     if (this.traveled > this.maxRange) { this.alive = false; return; }
 
-    const d = dist(this.x, this.y, Game.player.x, Game.player.y);
+    const player = Game.player;
+
+    // Shield block: check if any shield weapon orbit position intercepts the projectile
+    const shieldWeapons = player.weapons.filter(w => w.id === 'shield');
+    for (const sw of shieldWeapons) {
+      const range = sw.getRange();
+      const count = 1 + player.stats.weaponCountBonus;
+      for (let i = 0; i < count; i++) {
+        const offset = (i / count) * TAU;
+        const wx = player.x + Math.cos(sw.angle + offset) * range;
+        const wy = player.y + Math.sin(sw.angle + offset) * range;
+        if (dist(this.x, this.y, wx, wy) < 22 + this.radius) {
+          // blocked! destroy projectile, spawn spark particles
+          this.alive = false;
+          for (let j = 0; j < 5; j++) {
+            const ang = Math.random() * TAU;
+            const spd = rand(40, 100);
+            Game.particles.push(new Particle(this.x, this.y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#7896c8', rand(0.2, 0.4), rand(2, 3)));
+          }
+          Audio2.play('sine', 600, 0.05, 0.04);
+          return;
+        }
+      }
+    }
+
+    const d = dist(this.x, this.y, player.x, player.y);
     if (d < this.radius + 14) {
-      Game.player.takeDamage(this.damage);
+      player.takeDamage(this.damage);
       this.alive = false;
     }
   }
