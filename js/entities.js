@@ -377,6 +377,33 @@ class Weapon {
         // periodic aura sound (subtle, low volume)
         Audio2.play('sine', 200, 0.06, 0.03);
       }
+    } else if (this.def.type === 'summon') {
+      // Summon type: periodically spawn minions that fight for the player
+      this.cooldown -= dt;
+      if (this.cooldown <= 0) {
+        this.cooldown = this.getCooldown();
+        const maxMinions = (this.def.summonCount || 1) + Game.player.stats.weaponCountBonus;
+        // Only spawn if below max concurrent minions
+        const current = Game.minions.filter(m => m.alive && m.color === this.def.color).length;
+        const spawnCount = Math.min(maxMinions - current, this.def.summonCount || 1);
+        for (let i = 0; i < spawnCount; i++) {
+          const ang = Math.random() * TAU;
+          const r = 20 + Math.random() * 20;
+          const minion = new Minion(
+            player.x + Math.cos(ang) * r,
+            player.y + Math.sin(ang) * r,
+            this.getDamage(),
+            this.def.projectileSpeed * player.stats.projectileSpeedMult,
+            this.def.summonLifetime || 8,
+            this.def.color,
+            this.def.size
+          );
+          Game.minions.push(minion);
+        }
+        if (spawnCount > 0) {
+          Audio2.play('sawtooth', 180, 0.1, 0.04);
+        }
+      }
     }
   }
 
@@ -1970,6 +1997,83 @@ class EnemyProjectile {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius * 1.8, 0, TAU);
     ctx.fill();
+  }
+}
+
+// ==================== MINION ====================
+class Minion {
+  constructor(x, y, damage, speed, lifetime, color, size) {
+    this.x = x;
+    this.y = y;
+    this.damage = damage;
+    this.speed = speed;
+    this.lifetime = lifetime;
+    this.maxLifetime = lifetime;
+    this.color = color;
+    this.size = size || 10;
+    this.radius = this.size * 0.5;
+    this.alive = true;
+    this.vx = 0;
+    this.vy = 0;
+    this.contactCooldown = 0;
+  }
+
+  update(dt) {
+    this.lifetime -= dt;
+    if (this.lifetime <= 0) { this.alive = false; return; }
+    this.contactCooldown -= dt;
+
+    // Find nearest enemy
+    let target = null;
+    let minD = 300;
+    for (const e of Game.enemyGrid.query(this.x, this.y, 300)) {
+      if (!e.alive) continue;
+      const d = dist(this.x, this.y, e.x, e.y);
+      if (d < minD) { minD = d; target = e; }
+    }
+
+    if (target) {
+      const ang = angleTo(this.x, this.y, target.x, target.y);
+      this.vx = Math.cos(ang) * this.speed;
+      this.vy = Math.sin(ang) * this.speed;
+    } else {
+      // Idle: orbit slowly around player
+      const player = Game.player;
+      const ang = angleTo(this.x, this.y, player.x, player.y) + 0.02;
+      this.vx = Math.cos(ang) * this.speed * 0.3;
+      this.vy = Math.sin(ang) * this.speed * 0.3;
+    }
+
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    // Contact damage to enemies
+    if (this.contactCooldown <= 0) {
+      for (const e of Game.enemyGrid.query(this.x, this.y, this.radius + 20)) {
+        if (!e.alive) continue;
+        const d = dist(this.x, this.y, e.x, e.y);
+        if (d < e.radius + this.radius) {
+          e.takeDamage(this.damage, false, 20, this.x, this.y);
+          this.contactCooldown = 0.4;
+          break; // only hit one enemy per tick
+        }
+      }
+    }
+  }
+
+  draw(ctx) {
+    const alpha = Math.min(1, this.lifetime / 0.5); // fade out near death
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, TAU);
+    ctx.fill();
+    // inner glow
+    ctx.fillStyle = this.color + '80';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius * 0.5, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 }
 

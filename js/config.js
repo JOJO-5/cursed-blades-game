@@ -109,6 +109,15 @@ const CONFIG = {
       color: '#60c040', size: 20,
       desc: '持续光环·范围毒伤',
     },
+    shadow_imp: {
+      name: '暗影小鬼', type: 'summon', icon: 'weapons/shadow_imp',
+      damage: 8, range: 300, cooldown: 3.0, projectileSpeed: 100,
+      pierce: 0, critChance: 0.0, critMult: 1.5,
+      color: '#8040a0', size: 12,
+      summonCount: 1, // minions spawned per cooldown
+      summonLifetime: 8, // seconds
+      desc: '召唤小鬼·自动追击敌人',
+    },
     // ---- Evolved weapons (replaced via evolution system) ----
     sword_wind: {
       name: '疾风双刃', type: 'orbit', icon: 'weapons/sword_slash_wind',

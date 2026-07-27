@@ -15,6 +15,7 @@ const Game = {
   particles: [],
   damageNumbers: [],
   messages: [],
+  minions: [], // summoned allies that fight for the player
 
   camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeTime: 0, shakeMag: 0 },
   damageVignette: 0,
@@ -325,6 +326,10 @@ const Game = {
 
     for (const p of this.enemyProjectiles) p.update(dt);
     this.enemyProjectilePool.recycle(this.enemyProjectiles);
+
+    // update summoned minions
+    for (const m of this.minions) m.update(dt);
+    this.minions = this.minions.filter(m => m.alive);
 
     for (const p of this.pickups) p.update(dt);
     this.pickupPool.recycle(this.pickups);
@@ -1002,6 +1007,7 @@ const Game = {
     this.particles = [];
     this.damageNumbers = [];
     this.messages = [];
+    this.minions = [];
     this.levelTime = 0;
     this.spawnTimer = 1;
     this.eliteTimer = 0;
@@ -1035,6 +1041,7 @@ const Game = {
     this.particles = [];
     this.damageNumbers = [];
     this.messages = [];
+    this.minions = [];
     // place player at map center
     this.player.x = this.levelData.mapW * CONFIG.TILE_SIZE / 2;
     this.player.y = this.levelData.mapH * CONFIG.TILE_SIZE / 2;
@@ -1478,6 +1485,9 @@ const Game = {
 
     // draw player
     if (this.player) this.player.draw(ctx);
+
+    // draw summoned minions
+    for (const m of this.minions) { if (this.isOnScreen(m.x, m.y, 40)) m.draw(ctx); }
 
     // draw projectiles
     for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }

@@ -498,5 +498,9 @@
   "weapons/poison_aura": {
     "w": 32,
     "h": 32
+  },
+  "weapons/shadow_imp": {
+    "w": 32,
+    "h": 32
   }
 }
