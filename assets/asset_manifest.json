@@ -1,0 +1,1777 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "generated": "2026-07-27T01:20:56.299Z",
+    "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
+    "totalAssets": 123,
+    "categories": {
+      "props": 35,
+      "ui": 21,
+      "backgrounds": 2,
+      "enemies": 19,
+      "player": 1,
+      "bosses": 1,
+      "tiles": 16,
+      "effects": 8,
+      "items": 5,
+      "weapons": 15
+    },
+    "namingConvention": {
+      "pattern": "{category}/{entity}_{state}_{variant}_{frame}.png",
+      "examples": [
+        "player/hero_idle_01.png",
+        "enemies/toxic_slime_move_01.png",
+        "bosses/dark_knight_attack_02.png",
+        "weapons/sword.png (static, no animation)"
+      ],
+      "rules": [
+        "category: directory name (enemies, weapons, props, tiles, ui, items, effects, player, bosses, backgrounds)",
+        "entity: snake_case entity name (toxic_slime, dark_knight)",
+        "state: idle | move | attack | hit | death (omit for static sprites)",
+        "variant: optional variant suffix (01, 02, red, dark)",
+        "frame: zero-padded frame number for animation sequences (01, 02, 03)"
+      ],
+      "animationFormat": {
+        "frames": "number of frames in the sprite sheet",
+        "frameW": "width of each frame in pixels",
+        "frameH": "height of each frame in pixels",
+        "fps": "frames per second",
+        "loop": "boolean — whether the animation loops"
+      }
+    }
+  },
+  "assets": {
+    "props/stone_wall_doorway": {
+      "id": "props/stone_wall_doorway",
+      "name": "Stone Wall Doorway",
+      "category": "props",
+      "path": "assets/props/stone_wall_doorway.png",
+      "w": 160,
+      "h": 102,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/brazier_double_lit": {
+      "id": "props/brazier_double_lit",
+      "name": "Brazier Double Lit",
+      "category": "props",
+      "path": "assets/props/brazier_double_lit.png",
+      "w": 115,
+      "h": 111,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "braziers"
+      }
+    },
+    "props/tombstone_single_rounded": {
+      "id": "props/tombstone_single_rounded",
+      "name": "Tombstone Single Rounded",
+      "category": "props",
+      "path": "assets/props/tombstone_single_rounded.png",
+      "w": 77,
+      "h": 79,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 12,
+        "category": "tombstones"
+      }
+    },
+    "props/gallows_wooden": {
+      "id": "props/gallows_wooden",
+      "name": "Gallows Wooden",
+      "category": "props",
+      "path": "assets/props/gallows_wooden.png",
+      "w": 160,
+      "h": 93,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/cave_entrance_lit": {
+      "id": "props/cave_entrance_lit",
+      "name": "Cave Entrance Lit",
+      "category": "props",
+      "path": "assets/props/cave_entrance_lit.png",
+      "w": 160,
+      "h": 115,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/wooden_bench_broken": {
+      "id": "props/wooden_bench_broken",
+      "name": "Wooden Bench Broken",
+      "category": "props",
+      "path": "assets/props/wooden_bench_broken.png",
+      "w": 150,
+      "h": 59,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/wooden_shelf_rack": {
+      "id": "props/wooden_shelf_rack",
+      "name": "Wooden Shelf Rack",
+      "category": "props",
+      "path": "assets/props/wooden_shelf_rack.png",
+      "w": 116,
+      "h": 122,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/stone_fireplace": {
+      "id": "props/stone_fireplace",
+      "name": "Stone Fireplace",
+      "category": "props",
+      "path": "assets/props/stone_fireplace.png",
+      "w": 160,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/stone_arch_broken": {
+      "id": "props/stone_arch_broken",
+      "name": "Stone Arch Broken",
+      "category": "props",
+      "path": "assets/props/stone_arch_broken.png",
+      "w": 156,
+      "h": 110,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 20,
+        "category": "ruins"
+      }
+    },
+    "props/campfire_burnt": {
+      "id": "props/campfire_burnt",
+      "name": "Campfire Burnt",
+      "category": "props",
+      "path": "assets/props/campfire_burnt.png",
+      "w": 160,
+      "h": 73,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/wooden_spikes_01": {
+      "id": "props/wooden_spikes_01",
+      "name": "Wooden Spikes 01",
+      "category": "props",
+      "path": "assets/props/wooden_spikes_01.png",
+      "w": 95,
+      "h": 66,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/wooden_platform_01": {
+      "id": "props/wooden_platform_01",
+      "name": "Wooden Platform 01",
+      "category": "props",
+      "path": "assets/props/wooden_platform_01.png",
+      "w": 113,
+      "h": 66,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/tombstone_double_rounded": {
+      "id": "props/tombstone_double_rounded",
+      "name": "Tombstone Double Rounded",
+      "category": "props",
+      "path": "assets/props/tombstone_double_rounded.png",
+      "w": 160,
+      "h": 88,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 12,
+        "category": "tombstones"
+      }
+    },
+    "props/stone_fragment_01": {
+      "id": "props/stone_fragment_01",
+      "name": "Stone Fragment 01",
+      "category": "props",
+      "path": "assets/props/stone_fragment_01.png",
+      "w": 160,
+      "h": 62,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 20,
+        "category": "ruins"
+      }
+    },
+    "props/tree_dead_gnarled_01": {
+      "id": "props/tree_dead_gnarled_01",
+      "name": "Tree Dead Gnarled 01",
+      "category": "props",
+      "path": "assets/props/tree_dead_gnarled_01.png",
+      "w": 144,
+      "h": 158,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 16,
+        "category": "trees"
+      }
+    },
+    "props/rocks_small_pile": {
+      "id": "props/rocks_small_pile",
+      "name": "Rocks Small Pile",
+      "category": "props",
+      "path": "assets/props/rocks_small_pile.png",
+      "w": 74,
+      "h": 52,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/rock_mossy_01": {
+      "id": "props/rock_mossy_01",
+      "name": "Rock Mossy 01",
+      "category": "props",
+      "path": "assets/props/rock_mossy_01.png",
+      "w": 101,
+      "h": 75,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/brazier_small_lit": {
+      "id": "props/brazier_small_lit",
+      "name": "Brazier Small Lit",
+      "category": "props",
+      "path": "assets/props/brazier_small_lit.png",
+      "w": 54,
+      "h": 98,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "braziers"
+      }
+    },
+    "props/stone_well_broken": {
+      "id": "props/stone_well_broken",
+      "name": "Stone Well Broken",
+      "category": "props",
+      "path": "assets/props/stone_well_broken.png",
+      "w": 158,
+      "h": 100,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/bone_pile": {
+      "id": "props/bone_pile",
+      "name": "Bone Pile",
+      "category": "props",
+      "path": "assets/props/bone_pile.png",
+      "w": 160,
+      "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/barrels_wooden_group": {
+      "id": "props/barrels_wooden_group",
+      "name": "Barrels Wooden Group",
+      "category": "props",
+      "path": "assets/props/barrels_wooden_group.png",
+      "w": 153,
+      "h": 107,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "barrels"
+      }
+    },
+    "props/shrine_stone_lit": {
+      "id": "props/shrine_stone_lit",
+      "name": "Shrine Stone Lit",
+      "category": "props",
+      "path": "assets/props/shrine_stone_lit.png",
+      "w": 160,
+      "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/tombstone_single_tall_ornate": {
+      "id": "props/tombstone_single_tall_ornate",
+      "name": "Tombstone Single Tall Ornate",
+      "category": "props",
+      "path": "assets/props/tombstone_single_tall_ornate.png",
+      "w": 75,
+      "h": 90,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 12,
+        "category": "tombstones"
+      }
+    },
+    "props/watchtower_wooden_lit": {
+      "id": "props/watchtower_wooden_lit",
+      "name": "Watchtower Wooden Lit",
+      "category": "props",
+      "path": "assets/props/watchtower_wooden_lit.png",
+      "w": 108,
+      "h": 119,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/wooden_workbench": {
+      "id": "props/wooden_workbench",
+      "name": "Wooden Workbench",
+      "category": "props",
+      "path": "assets/props/wooden_workbench.png",
+      "w": 114,
+      "h": 62,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/stone_table_01": {
+      "id": "props/stone_table_01",
+      "name": "Stone Table 01",
+      "category": "props",
+      "path": "assets/props/stone_table_01.png",
+      "w": 104,
+      "h": 58,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/stone_pillars_01": {
+      "id": "props/stone_pillars_01",
+      "name": "Stone Pillars 01",
+      "category": "props",
+      "path": "assets/props/stone_pillars_01.png",
+      "w": 141,
+      "h": 56,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/brazier_single_lit": {
+      "id": "props/brazier_single_lit",
+      "name": "Brazier Single Lit",
+      "category": "props",
+      "path": "assets/props/brazier_single_lit.png",
+      "w": 63,
+      "h": 111,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "braziers"
+      }
+    },
+    "props/brazier_single_tall_lit": {
+      "id": "props/brazier_single_tall_lit",
+      "name": "Brazier Single Tall Lit",
+      "category": "props",
+      "path": "assets/props/brazier_single_tall_lit.png",
+      "w": 73,
+      "h": 111,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "braziers"
+      }
+    },
+    "props/stone_foundation_01": {
+      "id": "props/stone_foundation_01",
+      "name": "Stone Foundation 01",
+      "category": "props",
+      "path": "assets/props/stone_foundation_01.png",
+      "w": 160,
+      "h": 72,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/stone_monolith_01": {
+      "id": "props/stone_monolith_01",
+      "name": "Stone Monolith 01",
+      "category": "props",
+      "path": "assets/props/stone_monolith_01.png",
+      "w": 119,
+      "h": 88,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 20,
+        "category": "ruins"
+      }
+    },
+    "props/stone_pillars_02": {
+      "id": "props/stone_pillars_02",
+      "name": "Stone Pillars 02",
+      "category": "props",
+      "path": "assets/props/stone_pillars_02.png",
+      "w": 160,
+      "h": 65,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/fence_wooden_broken_01": {
+      "id": "props/fence_wooden_broken_01",
+      "name": "Fence Wooden Broken 01",
+      "category": "props",
+      "path": "assets/props/fence_wooden_broken_01.png",
+      "w": 160,
+      "h": 73,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "fences"
+      }
+    },
+    "props/barrel_wooden_single": {
+      "id": "props/barrel_wooden_single",
+      "name": "Barrel Wooden Single",
+      "category": "props",
+      "path": "assets/props/barrel_wooden_single.png",
+      "w": 72,
+      "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 10,
+        "category": "barrels"
+      }
+    },
+    "props/ruin_tree_stone_base": {
+      "id": "props/ruin_tree_stone_base",
+      "name": "Ruin Tree Stone Base",
+      "category": "props",
+      "path": "assets/props/ruin_tree_stone_base.png",
+      "w": 159,
+      "h": 90,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null,
+      "collision": {
+        "type": "circle",
+        "radius": 16,
+        "category": "trees"
+      }
+    },
+    "ui/upgrade_damage": {
+      "id": "ui/upgrade_damage",
+      "name": "伤害提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_damage.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_regen": {
+      "id": "ui/upgrade_regen",
+      "name": "回复效果提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_regen.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_attackspeed": {
+      "id": "ui/upgrade_attackspeed",
+      "name": "攻速提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_attackspeed.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_pierce": {
+      "id": "ui/upgrade_pierce",
+      "name": "穿透提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_pierce.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_range": {
+      "id": "ui/upgrade_range",
+      "name": "攻击范围提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_range.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_rotatespeed": {
+      "id": "ui/upgrade_rotatespeed",
+      "name": "旋转速度提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_rotatespeed.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/title_logo": {
+      "id": "ui/title_logo",
+      "name": "Title Logo",
+      "category": "ui",
+      "path": "assets/ui/title_logo.png",
+      "w": 400,
+      "h": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_maxhp": {
+      "id": "ui/upgrade_maxhp",
+      "name": "最大生命提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_maxhp.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_crit": {
+      "id": "ui/upgrade_crit",
+      "name": "暴击提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_crit.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_weaponcount": {
+      "id": "ui/upgrade_weaponcount",
+      "name": "武器数量增加",
+      "category": "ui",
+      "path": "assets/ui/upgrade_weaponcount.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_movespeed": {
+      "id": "ui/upgrade_movespeed",
+      "name": "移动速度提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_movespeed.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_projspeed": {
+      "id": "ui/upgrade_projspeed",
+      "name": "弹丸速度提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_projspeed.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_knockback": {
+      "id": "ui/upgrade_knockback",
+      "name": "击退提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_knockback.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_pickuprange": {
+      "id": "ui/upgrade_pickuprange",
+      "name": "拾取范围提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_pickuprange.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_xpmult": {
+      "id": "ui/upgrade_xpmult",
+      "name": "经验加成",
+      "category": "ui",
+      "path": "assets/ui/upgrade_xpmult.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_critdamage": {
+      "id": "ui/upgrade_critdamage",
+      "name": "暴击伤害提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_critdamage.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_cooldown": {
+      "id": "ui/upgrade_cooldown",
+      "name": "冷却降低",
+      "category": "ui",
+      "path": "assets/ui/upgrade_cooldown.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_dashcd": {
+      "id": "ui/upgrade_dashcd",
+      "name": "闪避冷却降低",
+      "category": "ui",
+      "path": "assets/ui/upgrade_dashcd.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_armor": {
+      "id": "ui/upgrade_armor",
+      "name": "护甲提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_armor.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_luck": {
+      "id": "ui/upgrade_luck",
+      "name": "幸运提升",
+      "category": "ui",
+      "path": "assets/ui/upgrade_luck.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "ui/upgrade_lifesteal": {
+      "id": "ui/upgrade_lifesteal",
+      "name": "生命偷取",
+      "category": "ui",
+      "path": "assets/ui/upgrade_lifesteal.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "backgrounds/scene_village_forest": {
+      "id": "backgrounds/scene_village_forest",
+      "name": "Scene Village Forest",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_village_forest.png",
+      "w": 588,
+      "h": 418,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "backgrounds/scene_death_knight_rider": {
+      "id": "backgrounds/scene_death_knight_rider",
+      "name": "Scene Death Knight Rider",
+      "category": "backgrounds",
+      "path": "assets/backgrounds/scene_death_knight_rider.png",
+      "w": 588,
+      "h": 421,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "enemies/grim_reaper": {
+      "id": "enemies/grim_reaper",
+      "name": "收割者",
+      "category": "enemies",
+      "path": "assets/enemies/grim_reaper.png",
+      "w": 96,
+      "h": 89,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "reaper",
+      "tags": [
+        "elite"
+      ]
+    },
+    "enemies/bear_armored": {
+      "id": "enemies/bear_armored",
+      "name": "腐化猎犬",
+      "category": "enemies",
+      "path": "assets/enemies/bear_armored.png",
+      "w": 96,
+      "h": 93,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "wild_dog",
+      "tags": []
+    },
+    "enemies/reaper_with_minion": {
+      "id": "enemies/reaper_with_minion",
+      "name": "Reaper With Minion",
+      "category": "enemies",
+      "path": "assets/enemies/reaper_with_minion.png",
+      "w": 51,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "enemies/bandit_hooded": {
+      "id": "enemies/bandit_hooded",
+      "name": "腐化村民",
+      "category": "enemies",
+      "path": "assets/enemies/bandit_hooded.png",
+      "w": 71,
+      "h": 95,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "villager",
+      "tags": []
+    },
+    "enemies/archer": {
+      "id": "enemies/archer",
+      "name": "暗影弓手",
+      "category": "enemies",
+      "path": "assets/enemies/archer.png",
+      "w": 96,
+      "h": 76,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "archer",
+      "tags": []
+    },
+    "enemies/hooded_warrior": {
+      "id": "enemies/hooded_warrior",
+      "name": "腐化矿工",
+      "category": "enemies",
+      "path": "assets/enemies/hooded_warrior.png",
+      "w": 96,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "skeleton",
+      "tags": []
+    },
+    "enemies/demon_bat": {
+      "id": "enemies/demon_bat",
+      "name": "影翼蝙蝠",
+      "category": "enemies",
+      "path": "assets/enemies/demon_bat.png",
+      "w": 96,
+      "h": 49,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "bat",
+      "tags": []
+    },
+    "enemies/toxic_slime": {
+      "id": "enemies/toxic_slime",
+      "name": "疫病鼠群",
+      "category": "enemies",
+      "path": "assets/enemies/toxic_slime.png",
+      "w": 96,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "slime",
+      "tags": []
+    },
+    "enemies/flame_turtle": {
+      "id": "enemies/flame_turtle",
+      "name": "Flame Turtle",
+      "category": "enemies",
+      "path": "assets/enemies/flame_turtle.png",
+      "w": 92,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "enemies/spiked_boar": {
+      "id": "enemies/spiked_boar",
+      "name": "棘刺野猪",
+      "category": "enemies",
+      "path": "assets/enemies/spiked_boar.png",
+      "w": 96,
+      "h": 70,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "boar",
+      "tags": []
+    },
+    "enemies/spearman": {
+      "id": "enemies/spearman",
+      "name": "瘟疫弓手",
+      "category": "enemies",
+      "path": "assets/enemies/spearman.png",
+      "w": 96,
+      "h": 75,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "plague_archer",
+      "tags": []
+    },
+    "enemies/torchbearer": {
+      "id": "enemies/torchbearer",
+      "name": "腐化稻草怪",
+      "category": "enemies",
+      "path": "assets/enemies/torchbearer.png",
+      "w": 78,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "scarecrow",
+      "tags": []
+    },
+    "enemies/mimic_chest_dark": {
+      "id": "enemies/mimic_chest_dark",
+      "name": "Mimic Chest Dark",
+      "category": "enemies",
+      "path": "assets/enemies/mimic_chest_dark.png",
+      "w": 96,
+      "h": 86,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "enemies/fungal_golem": {
+      "id": "enemies/fungal_golem",
+      "name": "岩石粉碎者",
+      "category": "enemies",
+      "path": "assets/enemies/fungal_golem.png",
+      "w": 96,
+      "h": 86,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "golem",
+      "tags": [
+        "elite"
+      ]
+    },
+    "enemies/bone_spider": {
+      "id": "enemies/bone_spider",
+      "name": "腐化巨蛛",
+      "category": "enemies",
+      "path": "assets/enemies/bone_spider.png",
+      "w": 96,
+      "h": 52,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "spider",
+      "tags": []
+    },
+    "enemies/corrupted_slime": {
+      "id": "enemies/corrupted_slime",
+      "name": "Corrupted Slime",
+      "category": "enemies",
+      "path": "assets/enemies/corrupted_slime.png",
+      "w": 96,
+      "h": 47,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "enemies/dwarf_torchbearer": {
+      "id": "enemies/dwarf_torchbearer",
+      "name": "腐化稻草人之王",
+      "category": "enemies",
+      "path": "assets/enemies/dwarf_torchbearer.png",
+      "w": 80,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "elite_scarecrow",
+      "tags": [
+        "elite"
+      ]
+    },
+    "enemies/mimic_chest_red": {
+      "id": "enemies/mimic_chest_red",
+      "name": "宝箱怪",
+      "category": "enemies",
+      "path": "assets/enemies/mimic_chest_red.png",
+      "w": 96,
+      "h": 70,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "mimic",
+      "tags": [
+        "mimic"
+      ]
+    },
+    "enemies/dwarf_mage": {
+      "id": "enemies/dwarf_mage",
+      "name": "水晶法师",
+      "category": "enemies",
+      "path": "assets/enemies/dwarf_mage.png",
+      "w": 96,
+      "h": 93,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "enemyId": "mage",
+      "tags": []
+    },
+    "player/hero": {
+      "id": "player/hero",
+      "name": "Hero",
+      "category": "player",
+      "path": "assets/player/hero.png",
+      "w": 96,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "bosses/dark_knight_flame": {
+      "id": "bosses/dark_knight_flame",
+      "name": "无头骑士",
+      "category": "bosses",
+      "path": "assets/bosses/dark_knight_flame.png",
+      "w": 116,
+      "h": 160,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "tiles/wall_stone_horizontal_01": {
+      "id": "tiles/wall_stone_horizontal_01",
+      "name": "Wall Stone Horizontal 01",
+      "category": "tiles",
+      "path": "assets/tiles/wall_stone_horizontal_01.png",
+      "w": 128,
+      "h": 61,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/wall_stone_base_mossy": {
+      "id": "tiles/wall_stone_base_mossy",
+      "name": "Wall Stone Base Mossy",
+      "category": "tiles",
+      "path": "assets/tiles/wall_stone_base_mossy.png",
+      "w": 128,
+      "h": 66,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_mossy_patch_01": {
+      "id": "tiles/ground_mossy_patch_01",
+      "name": "Ground Mossy Patch 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_mossy_patch_01.png",
+      "w": 128,
+      "h": 70,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_large_01": {
+      "id": "tiles/ground_dirt_large_01",
+      "name": "Ground Dirt Large 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_large_01.png",
+      "w": 128,
+      "h": 68,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_mossy_stone_01": {
+      "id": "tiles/ground_mossy_stone_01",
+      "name": "Ground Mossy Stone 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_mossy_stone_01.png",
+      "w": 113,
+      "h": 75,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ruin_stone_wall_broken_02": {
+      "id": "tiles/ruin_stone_wall_broken_02",
+      "name": "Ruin Stone Wall Broken 02",
+      "category": "tiles",
+      "path": "assets/tiles/ruin_stone_wall_broken_02.png",
+      "w": 128,
+      "h": 57,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/wall_stone_brick_vertical": {
+      "id": "tiles/wall_stone_brick_vertical",
+      "name": "Wall Stone Brick Vertical",
+      "category": "tiles",
+      "path": "assets/tiles/wall_stone_brick_vertical.png",
+      "w": 87,
+      "h": 128,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/wall_stone_gapped_01": {
+      "id": "tiles/wall_stone_gapped_01",
+      "name": "Wall Stone Gapped 01",
+      "category": "tiles",
+      "path": "assets/tiles/wall_stone_gapped_01.png",
+      "w": 128,
+      "h": 54,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_patch_01": {
+      "id": "tiles/ground_dirt_patch_01",
+      "name": "Ground Dirt Patch 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_patch_01.png",
+      "w": 128,
+      "h": 49,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_edge_01": {
+      "id": "tiles/ground_dirt_edge_01",
+      "name": "Ground Dirt Edge 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_edge_01.png",
+      "w": 128,
+      "h": 52,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ruin_stone_wall_broken_01": {
+      "id": "tiles/ruin_stone_wall_broken_01",
+      "name": "Ruin Stone Wall Broken 01",
+      "category": "tiles",
+      "path": "assets/tiles/ruin_stone_wall_broken_01.png",
+      "w": 121,
+      "h": 69,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_grass_01": {
+      "id": "tiles/ground_dirt_grass_01",
+      "name": "Ground Dirt Grass 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_grass_01.png",
+      "w": 98,
+      "h": 75,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_stones_01": {
+      "id": "tiles/ground_dirt_stones_01",
+      "name": "Ground Dirt Stones 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_stones_01.png",
+      "w": 128,
+      "h": 61,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_dirt_path_01": {
+      "id": "tiles/ground_dirt_path_01",
+      "name": "Ground Dirt Path 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_dirt_path_01.png",
+      "w": 128,
+      "h": 53,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/wall_stone_stacked_01": {
+      "id": "tiles/wall_stone_stacked_01",
+      "name": "Wall Stone Stacked 01",
+      "category": "tiles",
+      "path": "assets/tiles/wall_stone_stacked_01.png",
+      "w": 119,
+      "h": 66,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "tiles/ground_grass_strip_01": {
+      "id": "tiles/ground_grass_strip_01",
+      "name": "Ground Grass Strip 01",
+      "category": "tiles",
+      "path": "assets/tiles/ground_grass_strip_01.png",
+      "w": 128,
+      "h": 19,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null
+    },
+    "effects/ground_crack": {
+      "id": "effects/ground_crack",
+      "name": "Ground Crack",
+      "category": "effects",
+      "path": "assets/effects/ground_crack.png",
+      "w": 96,
+      "h": 18,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/mana_orb_small": {
+      "id": "effects/mana_orb_small",
+      "name": "Mana Orb Small",
+      "category": "effects",
+      "path": "assets/effects/mana_orb_small.png",
+      "w": 42,
+      "h": 37,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/ice_spikes_vertical": {
+      "id": "effects/ice_spikes_vertical",
+      "name": "Ice Spikes Vertical",
+      "category": "effects",
+      "path": "assets/effects/ice_spikes_vertical.png",
+      "w": 42,
+      "h": 87,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/ice_orb": {
+      "id": "effects/ice_orb",
+      "name": "Ice Orb",
+      "category": "effects",
+      "path": "assets/effects/ice_orb.png",
+      "w": 42,
+      "h": 33,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/spirit_orbs_blue": {
+      "id": "effects/spirit_orbs_blue",
+      "name": "Spirit Orbs Blue",
+      "category": "effects",
+      "path": "assets/effects/spirit_orbs_blue.png",
+      "w": 41,
+      "h": 84,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/void_particle_small": {
+      "id": "effects/void_particle_small",
+      "name": "Void Particle Small",
+      "category": "effects",
+      "path": "assets/effects/void_particle_small.png",
+      "w": 42,
+      "h": 41,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/ice_shard_small": {
+      "id": "effects/ice_shard_small",
+      "name": "Ice Shard Small",
+      "category": "effects",
+      "path": "assets/effects/ice_shard_small.png",
+      "w": 70,
+      "h": 45,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/fire_projectile": {
+      "id": "effects/fire_projectile",
+      "name": "Fire Projectile",
+      "category": "effects",
+      "path": "assets/effects/fire_projectile.png",
+      "w": 25,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "items/chest": {
+      "id": "items/chest",
+      "name": "Chest",
+      "category": "items",
+      "path": "assets/items/chest.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "items/xp_gem_small": {
+      "id": "items/xp_gem_small",
+      "name": "Xp Gem Small",
+      "category": "items",
+      "path": "assets/items/xp_gem_small.png",
+      "w": 10,
+      "h": 10,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "items/xp_gem_medium": {
+      "id": "items/xp_gem_medium",
+      "name": "Xp Gem Medium",
+      "category": "items",
+      "path": "assets/items/xp_gem_medium.png",
+      "w": 14,
+      "h": 14,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "items/heart": {
+      "id": "items/heart",
+      "name": "Heart",
+      "category": "items",
+      "path": "assets/items/heart.png",
+      "w": 16,
+      "h": 16,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "items/xp_gem_large": {
+      "id": "items/xp_gem_large",
+      "name": "Xp Gem Large",
+      "category": "items",
+      "path": "assets/items/xp_gem_large.png",
+      "w": 18,
+      "h": 18,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/ring_fire_double": {
+      "id": "weapons/ring_fire_double",
+      "name": "Ring Fire Double",
+      "category": "weapons",
+      "path": "assets/weapons/ring_fire_double.png",
+      "w": 64,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/soul": {
+      "id": "weapons/soul",
+      "name": "获得武器: 灵魂弹",
+      "category": "weapons",
+      "path": "assets/weapons/soul.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "soul",
+      "weaponType": "homing"
+    },
+    "weapons/knife": {
+      "id": "weapons/knife",
+      "name": "获得武器: 飞刀",
+      "category": "weapons",
+      "path": "assets/weapons/knife.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "knife",
+      "weaponType": "ranged"
+    },
+    "weapons/bow": {
+      "id": "weapons/bow",
+      "name": "获得武器: 弓箭",
+      "category": "weapons",
+      "path": "assets/weapons/bow.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "bow",
+      "weaponType": "ranged"
+    },
+    "weapons/ring_fire_awakened": {
+      "id": "weapons/ring_fire_awakened",
+      "name": "Ring Fire Awakened",
+      "category": "weapons",
+      "path": "assets/weapons/ring_fire_awakened.png",
+      "w": 64,
+      "h": 51,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/ring_steel": {
+      "id": "weapons/ring_steel",
+      "name": "Ring Steel",
+      "category": "weapons",
+      "path": "assets/weapons/ring_steel.png",
+      "w": 64,
+      "h": 53,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/ring_target": {
+      "id": "weapons/ring_target",
+      "name": "Ring Target",
+      "category": "weapons",
+      "path": "assets/weapons/ring_target.png",
+      "w": 64,
+      "h": 60,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "weapons/shield": {
+      "id": "weapons/shield",
+      "name": "获得武器: 盾牌",
+      "category": "weapons",
+      "path": "assets/weapons/shield.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "shield",
+      "weaponType": "orbit"
+    },
+    "weapons/fireball": {
+      "id": "weapons/fireball",
+      "name": "获得武器: 火球",
+      "category": "weapons",
+      "path": "assets/weapons/fireball.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "fireball",
+      "weaponType": "ranged"
+    },
+    "weapons/ring_void": {
+      "id": "weapons/ring_void",
+      "name": "获得武器: 虚空环刃",
+      "category": "weapons",
+      "path": "assets/weapons/ring_void.png",
+      "w": 64,
+      "h": 57,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "ring_void",
+      "weaponType": "orbit"
+    },
+    "weapons/sword": {
+      "id": "weapons/sword",
+      "name": "铁剑",
+      "category": "weapons",
+      "path": "assets/weapons/sword.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "sword",
+      "weaponType": "orbit"
+    },
+    "weapons/scythe": {
+      "id": "weapons/scythe",
+      "name": "获得武器: 镰刀",
+      "category": "weapons",
+      "path": "assets/weapons/scythe.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "scythe",
+      "weaponType": "orbit"
+    },
+    "weapons/hammer": {
+      "id": "weapons/hammer",
+      "name": "获得武器: 战锤",
+      "category": "weapons",
+      "path": "assets/weapons/hammer.png",
+      "w": 24,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "hammer",
+      "weaponType": "orbit"
+    },
+    "weapons/ring_fire": {
+      "id": "weapons/ring_fire",
+      "name": "获得武器: 炎之环刃",
+      "category": "weapons",
+      "path": "assets/weapons/ring_fire.png",
+      "w": 64,
+      "h": 53,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "weaponId": "ring_fire",
+      "weaponType": "orbit"
+    },
+    "weapons/sword_slash_wind": {
+      "id": "weapons/sword_slash_wind",
+      "name": "Sword Slash Wind",
+      "category": "weapons",
+      "path": "assets/weapons/sword_slash_wind.png",
+      "w": 64,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    }
+  }
+}

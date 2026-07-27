@@ -140,9 +140,9 @@
 - [x] 生成预览索引图（contact sheet，自动缩放居中）
 
 ### 5.2 资源清单
-- [ ] 创建 `assets/asset_manifest.json`（含id/名称/分类/路径/尺寸/锚点/动画等）
-- [ ] 规范命名：`player_knight_idle_01.png` 等
-- [ ] 当前素材已有 manifest.json（仅含宽高），需扩展
+- [x] 创建 `assets/asset_manifest.json`（含id/名称/分类/路径/尺寸/锚点/动画等）— 123个资源，10个分类
+- [x] 规范命名：`player_knight_idle_01.png` 等 — namingConvention 规范写入 _meta
+- [x] 当前素材已有 manifest.json（仅含宽高），需扩展 — asset_manifest.json 扩展完成，保留 manifest.json 向后兼容
 
 ### 5.3 替换占位素材
 - [ ] 玩家：当前 `player/hero.png` 单张静态图 → 需 idle/move 动画帧

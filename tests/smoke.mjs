@@ -175,4 +175,29 @@ assert.ok(entitiesSource.includes("mimic: new MimicBehavior()"), 'MimicBehavior 
 assert.ok(entitiesSource.includes("this.mimicState === 'disguise'"), 'Enemy.draw should check mimic disguise state');
 assert.ok(entitiesSource.includes("mimicPassive"), 'Enemy.update should skip contact damage for passive mimics');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine.`);
+// Verify expanded asset manifest
+assert.ok(existsSync(path.join(root, 'assets/asset_manifest.json')), 'asset_manifest.json should exist');
+const assetManifest = JSON.parse(readFileSync(path.join(root, 'assets/asset_manifest.json'), 'utf8'));
+assert.ok(assetManifest._meta, 'asset_manifest should have _meta section');
+assert.ok(assetManifest._meta.totalAssets > 0, 'asset_manifest should have totalAssets > 0');
+assert.ok(assetManifest._meta.namingConvention, 'asset_manifest should have namingConvention spec');
+assert.ok(assetManifest.assets, 'asset_manifest should have assets section');
+// Verify every asset in manifest.json also exists in asset_manifest.json
+let assetCount = 0;
+for (const [key, entry] of Object.entries(assetManifest.assets)) {
+  assetCount++;
+  assert.ok(entry.id === key, `asset ${key} id should match key`);
+  assert.ok(entry.name && typeof entry.name === 'string', `asset ${key} should have a name`);
+  assert.ok(entry.category && typeof entry.category === 'string', `asset ${key} should have a category`);
+  assert.ok(entry.path && entry.path.endsWith('.png'), `asset ${key} path should end with .png`);
+  assert.ok(typeof entry.w === 'number' && entry.w > 0, `asset ${key} should have valid width`);
+  assert.ok(typeof entry.h === 'number' && entry.h > 0, `asset ${key} should have valid height`);
+  assert.ok(entry.anchor && typeof entry.anchor.x === 'number' && typeof entry.anchor.y === 'number',
+    `asset ${key} should have anchor with x and y`);
+  // Verify the PNG file exists
+  const pngPath = path.join(root, entry.path);
+  assert.ok(existsSync(pngPath), `asset ${key} PNG file should exist at ${entry.path}`);
+}
+assert.equal(assetCount, Object.keys(manifest).length, 'asset_manifest should have same count as manifest.json');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets).`);
