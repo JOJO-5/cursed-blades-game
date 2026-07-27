@@ -561,21 +561,21 @@ class Weapon {
       ctx.arc(0, 0, sz * 0.8, 0, TAU);
       ctx.stroke();
 
-      // weapon sprite
-      ctx.imageSmoothingEnabled = false;
+      // weapon sprite - 使用平滑缩放让小素材更清晰
+      ctx.imageSmoothingEnabled = true;
       const img = Assets.get(this.def.icon);
-      if (img && img.complete) {
+      if (img && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
       } else {
         ctx.fillStyle = this.def.color;
         ctx.fillRect(-sz/2, -sz/2, sz, sz);
       }
 
-      // animated edge highlight
-      ctx.strokeStyle = this.def.color + '80';
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 150 + offset) * 0.4;
-      ctx.strokeRect(-sz/2 - 2, -sz/2 - 2, sz + 4, sz + 4);
+      // animated edge highlight - 降低不透明度避免遮挡素材
+      ctx.strokeStyle = this.def.color + '40';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.3 + Math.sin(Date.now() / 150 + offset) * 0.2;
+      ctx.strokeRect(-sz/2 - 1, -sz/2 - 1, sz + 2, sz + 2);
 
       ctx.restore();
 
@@ -1989,9 +1989,9 @@ class Projectile {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
     const img = Assets.get(this.sprite);
-    if (img && img.complete) {
+    if (img && img.complete && img.naturalWidth > 0) {
       ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
     } else {
       ctx.fillStyle = this.color;
