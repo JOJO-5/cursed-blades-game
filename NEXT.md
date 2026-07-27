@@ -132,12 +132,12 @@
 ## 阶段5：素材整理
 
 ### 5.1 素材切分工具
-- [ ] 创建 `tools/sprite_slicer.py` 脚本
-- [ ] 支持透明背景连通区域切分
-- [ ] 支持纯色背景去除
-- [ ] 支持网格切分
-- [ ] 支持手动矩形配置（JSON）
-- [ ] 生成预览索引图
+- [x] 创建 `tools/sprite_slicer.py` 脚本
+- [x] 支持透明背景连通区域切分（BFS flood-fill 4-连通检测）
+- [x] 支持纯色背景去除（colorkey + 容差带，抗锯齿边缘处理）
+- [x] 支持网格切分（rows×cols，可选 pad bleed）
+- [x] 支持手动矩形配置（JSON 格式，含 name/x/y/w/h）
+- [x] 生成预览索引图（contact sheet，自动缩放居中）
 
 ### 5.2 资源清单
 - [ ] 创建 `assets/asset_manifest.json`（含id/名称/分类/路径/尺寸/锚点/动画等）
