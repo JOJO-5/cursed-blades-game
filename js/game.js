@@ -76,6 +76,7 @@ const Game = {
         Audio2.init();
         this.loadMeta();
         this.state = 'menu';
+        Audio2.playMusic('menu');
         document.getElementById('loading-screen').style.display = 'none';
         this.loop();
       })
@@ -170,6 +171,7 @@ const Game = {
     // We'll just proceed with what we have
     Audio2.init();
     this.state = 'menu';
+    Audio2.playMusic('menu');
     document.getElementById('loading-screen').style.display = 'none';
     this.loop();
   },
@@ -264,6 +266,7 @@ const Game = {
   updatePlaying(dt) {
     if (!this.player.alive) {
       this.state = 'gameover';
+      Audio2.stopMusic();
       this.updateMeta();
       this.saveProgress();
       return;
@@ -508,6 +511,7 @@ const Game = {
     const bossName = CONFIG.ENEMIES[bossId] ? CONFIG.ENEMIES[bossId].name : 'Boss';
     this.addMessage('Boss出现: ' + bossName + '!', '#ff3030');
     Audio2.boss();
+    Audio2.playMusic('boss');
     this.shakeScreen(10, 0.5);
     // show boss intro dialogue
     this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => { this.state = 'playing'; });
@@ -738,6 +742,7 @@ const Game = {
         } else {
           // Final victory after mine
           this.state = 'victory';
+          Audio2.playMusic('victory');
         }
       });
     }, 1000);
@@ -837,10 +842,12 @@ const Game = {
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 280, 200, 45)) {
       this.saveProgress();
       this.state = 'menu';
+      Audio2.playMusic('menu');
       Audio2.click();
     }
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 340, 200, 45)) {
       this.state = 'menu';
+      Audio2.playMusic('menu');
       Audio2.click();
     }
     // settings button
@@ -858,6 +865,7 @@ const Game = {
     }
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 400, 200, 45)) {
       this.state = 'menu';
+      Audio2.playMusic('menu');
       Audio2.click();
     }
   },
@@ -866,6 +874,7 @@ const Game = {
   updateVictory() {
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 380, 200, 45)) {
       this.state = 'menu';
+      Audio2.playMusic('menu');
       Audio2.click();
     }
   },
@@ -927,6 +936,7 @@ const Game = {
     this.loadLevel('village');
   },
 
+  // ---- Load level ----
   loadLevel(levelId) {
     this.levelData = CONFIG.LEVELS[levelId];
     // reset level state
@@ -958,6 +968,8 @@ const Game = {
       this.pickups.push(new Pickup(x, y, 'chest', 'chest', 0));
     }
 
+    // start gameplay BGM (resumes from menu/victory)
+    Audio2.playMusic('gameplay');
     // start story
     const storyLines = CONFIG.STORY[this.levelData.theme].intro;
     this.startStory(storyLines, () => { this.state = 'playing'; });

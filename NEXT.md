@@ -170,7 +170,7 @@
 - [x] 基础音效已接入（hit/hurt/pickup/levelup/death/boss/click/victory）
 - [x] 武器命中不同材质音效（hitMaterial: flesh/bone/leather/metal/wood/chest 六种音色）
 - [x] Boss阶段转换音效（复用 Audio2.boss，HP<50% 狂暴时触发）
-- [ ] 背景音乐
+- [x] 背景音乐（playMusic 命名轨道系统：menu/gameplay/boss/victory 四种氛围，procedural drone+LFO，状态切换自动过渡，浏览器自动播放策略处理 _pendingTrack）
 
 ### 6.4 视觉反馈
 - [x] 伤害数字（普通/暴击）

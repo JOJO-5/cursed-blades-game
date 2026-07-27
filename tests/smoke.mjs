@@ -113,6 +113,10 @@ assert.ok(coreSource.includes('masterVolume') && coreSource.includes('sfxVolume'
   'Audio2 should define masterVolume, sfxVolume, musicVolume');
 assert.ok(coreSource.includes('syncVolumes'), 'Audio2 should have syncVolumes method');
 assert.ok(coreSource.includes('startMusic') && coreSource.includes('stopMusic'), 'Audio2 should have BGM methods');
+assert.ok(coreSource.includes('playMusic'), 'Audio2 should have playMusic method for named tracks');
+assert.ok(coreSource.includes('_musicTracks'), 'Audio2 should define _musicTracks for named BGM');
+assert.ok(coreSource.includes('_pendingTrack'), 'Audio2 should handle pending track for autoplay policy');
+assert.ok(gameSource.includes('playMusic'), 'Game should call playMusic for BGM state transitions');
 assert.ok(gameSource.includes('_settingsOverlay') && gameSource.includes('renderSettings'),
   'Game should have settings overlay state and render method');
 assert.ok(gameSource.includes('openSettings') && gameSource.includes('closeSettings'),
@@ -147,4 +151,4 @@ assert.ok(!game.isOnScreen(config.CANVAS_W + 5000, config.CANVAS_H + 5000, game.
 // With margin, a point just outside the canvas edge should be on-screen
 assert.ok(game.isOnScreen(config.CANVAS_W + 10, config.CANVAS_H / 2, game.CULL_MARGIN), 'point just outside edge should be on-screen with margin');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling.`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks.`);

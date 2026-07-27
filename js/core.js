@@ -311,6 +311,7 @@ const Audio2 = {
   // background music state
   _musicNode: null,    // { osc, gain } for currently playing BGM
   _musicGain: null,
+  _pendingTrack: null,  // track to start once AudioContext resumes
 
   init() {
     try {
@@ -322,6 +323,13 @@ const Audio2 = {
   resume() {
     this.hasUserInteracted = true;
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    // start pending BGM if any (browser autoplay policy: music queued before user interaction)
+    if (this._pendingTrack) {
+      const track = this._pendingTrack;
+      this._pendingTrack = null;
+      // slight delay to let context fully resume
+      setTimeout(() => this.playMusic(track), 100);
+    }
   },
 
   // copy volume settings from Game.settings
@@ -330,9 +338,11 @@ const Audio2 = {
     this.masterVolume = settings.masterVolume ?? 0.5;
     this.sfxVolume = settings.sfxVolume ?? 0.7;
     this.musicVolume = settings.musicVolume ?? 0.4;
-    // update live music gain if playing
+    // update live music gain if playing (use track-specific volume scale)
     if (this._musicGain && this.ctx) {
-      this._musicGain.gain.setValueAtTime(this.musicVolume * this.masterVolume * 0.15, this.ctx.currentTime);
+      const trackDef = this._currentTrack ? this._musicTracks[this._currentTrack] : null;
+      const volScale = trackDef ? trackDef.vol : 0.14;
+      this._musicGain.gain.setValueAtTime(this.musicVolume * this.masterVolume * volScale, this.ctx.currentTime);
     }
   },
 
@@ -376,13 +386,42 @@ const Audio2 = {
   click()  { this.play('square', 600, 0.03, 0.05); },
   victory(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.play('sine',f,0.2,0.1),i*120)); },
 
-  // ---- Background music (simple looping oscillator pad) ----
-  // Plays a low drone with slow LFO modulation for atmospheric BGM.
-  startMusic(baseFreq) {
+  // ---- Background music (procedural looping pad/drone) ----
+  // Named tracks with distinct moods. Each track = base freq + oscillator type + LFO rate.
+  _musicTracks: {
+    menu:     { baseFreq: 98,  oscType: 'triangle', lfoRate: 0.10, harmonic: 1.5,  vol: 0.12 },
+    gameplay: { baseFreq: 110, oscType: 'triangle', lfoRate: 0.15, harmonic: 1.5,  vol: 0.14 },
+    boss:     { baseFreq: 146, oscType: 'sawtooth', lfoRate: 0.30, harmonic: 1.33, vol: 0.16 },
+    victory:  { baseFreq: 131, oscType: 'sine',     lfoRate: 0.08, harmonic: 2.0,  vol: 0.12 },
+  },
+  _currentTrack: null,
+
+  // Play a named track ('menu', 'gameplay', 'boss', 'victory').
+  // If the same track is already playing, does nothing (avoids restarts).
+  // If AudioContext is suspended (no user interaction yet), queues the track.
+  playMusic(track) {
+    const def = this._musicTracks[track];
+    if (!def) return;
+    // If context is suspended, queue for later (browser autoplay policy)
+    if (this.ctx && this.ctx.state === 'suspended' && !this.hasUserInteracted) {
+      this._pendingTrack = track;
+      return;
+    }
+    if (this._currentTrack === track && this._musicNode) return; // already playing
+    this._currentTrack = track;
+    this.startMusic(def.baseFreq, def.oscType, def.lfoRate, def.harmonic, def.vol);
+  },
+
+  // Low-level: plays a drone with LFO modulation for atmospheric BGM.
+  startMusic(baseFreq, oscType, lfoRate, harmonic, volScale) {
     if (!this.enabled || !this.ctx) return;
     this.stopMusic();
     baseFreq = baseFreq || 110; // A2
-    const vol = this.musicVolume * this.masterVolume * 0.15;
+    oscType = oscType || 'triangle';
+    lfoRate = lfoRate || 0.15;
+    harmonic = harmonic || 1.5;
+    volScale = volScale || 0.14;
+    const vol = this.musicVolume * this.masterVolume * volScale;
     if (vol < 0.001) return;
 
     const gain = this.ctx.createGain();
@@ -393,16 +432,16 @@ const Audio2 = {
 
     // main drone oscillator
     const osc = this.ctx.createOscillator();
-    osc.type = 'triangle';
+    osc.type = oscType;
     osc.frequency.value = baseFreq;
     osc.connect(gain);
     osc.start();
     this._musicNode = osc;
 
-    // fifth harmonic for richness
+    // harmonic for richness
     const osc2 = this.ctx.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.value = baseFreq * 1.5;
+    osc2.frequency.value = baseFreq * harmonic;
     const gain2 = this.ctx.createGain();
     gain2.gain.value = 0.4;
     osc2.connect(gain2);
@@ -410,10 +449,10 @@ const Audio2 = {
     osc2.start();
     this._musicNode2 = osc2;
 
-    // slow LFO for tremolo effect
+    // LFO for tremolo effect
     const lfo = this.ctx.createOscillator();
     lfo.type = 'sine';
-    lfo.frequency.value = 0.15;
+    lfo.frequency.value = lfoRate;
     const lfoGain = this.ctx.createGain();
     lfoGain.gain.value = vol * 0.3;
     lfo.connect(lfoGain);
@@ -427,6 +466,7 @@ const Audio2 = {
     if (this._musicNode2) { try { this._musicNode2.stop(); } catch(e){} this._musicNode2 = null; }
     if (this._musicLfo) { try { this._musicLfo.stop(); } catch(e){} this._musicLfo = null; }
     if (this._musicGain) { try { this._musicGain.disconnect(); } catch(e){} this._musicGain = null; }
+    this._currentTrack = null;
   },
 };
 
