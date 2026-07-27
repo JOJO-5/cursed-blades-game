@@ -311,6 +311,22 @@
     "w": 96,
     "h": 94
   },
+  "player/hero_idle_01": {
+    "w": 48,
+    "h": 48
+  },
+  "player/hero_idle_02": {
+    "w": 48,
+    "h": 48
+  },
+  "player/hero_move_01": {
+    "w": 48,
+    "h": 48
+  },
+  "player/hero_move_02": {
+    "w": 48,
+    "h": 48
+  },
   "bosses/dark_knight_flame": {
     "w": 116,
     "h": 160

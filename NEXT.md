@@ -145,7 +145,7 @@
 - [x] 当前素材已有 manifest.json（仅含宽高），需扩展 — asset_manifest.json 扩展完成，保留 manifest.json 向后兼容
 
 ### 5.3 替换占位素材
-- [ ] 玩家：当前 `player/hero.png` 单张静态图 → 需 idle/move 动画帧
+- [x] 玩家：当前 `player/hero.png` 单张静态图 → 已添加 hero_idle_01/02 + hero_move_01/02 动画帧, Player.draw() 根据 isMoving 切换
 - [ ] 敌人：当前各一张静态图 → 需 idle/move/attack/hit/death 帧或简单浮动模拟
 - [ ] Boss：当前 `bosses/dark_knight_flame.png` → 需多状态图
 

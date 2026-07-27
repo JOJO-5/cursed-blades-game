@@ -3,13 +3,13 @@
     "version": "1.0",
     "generated": "2026-07-27T01:20:56.299Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 126,
+    "totalAssets": 130,
     "categories": {
       "props": 35,
       "ui": 21,
       "backgrounds": 2,
       "enemies": 19,
-      "player": 1,
+      "player": 5,
       "bosses": 1,
       "tiles": 16,
       "effects": 8,
@@ -1167,6 +1167,46 @@
         "y": 0.5
       },
       "animation": null
+    },
+    "player/hero_idle_01": {
+      "id": "player/hero_idle_01",
+      "name": "Hero Idle 01",
+      "category": "player",
+      "path": "assets/player/hero_idle_01.png",
+      "w": 48,
+      "h": 48,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle"
+    },
+    "player/hero_idle_02": {
+      "id": "player/hero_idle_02",
+      "name": "Hero Idle 02",
+      "category": "player",
+      "path": "assets/player/hero_idle_02.png",
+      "w": 48,
+      "h": 48,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "idle"
+    },
+    "player/hero_move_01": {
+      "id": "player/hero_move_01",
+      "name": "Hero Move 01",
+      "category": "player",
+      "path": "assets/player/hero_move_01.png",
+      "w": 48,
+      "h": 48,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "move"
+    },
+    "player/hero_move_02": {
+      "id": "player/hero_move_02",
+      "name": "Hero Move 02",
+      "category": "player",
+      "path": "assets/player/hero_move_02.png",
+      "w": 48,
+      "h": 48,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "animation": "move"
     },
     "bosses/dark_knight_flame": {
       "id": "bosses/dark_knight_flame",

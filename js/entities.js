@@ -218,7 +218,13 @@ class Player {
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    Assets.drawCentered(ctx, 'player/hero', this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
+    // animated sprite: idle (2 frames) or move (2 frames)
+    const frameRate = this.isMoving ? 0.2 : 0.4;
+    const frameIdx = Math.floor(this.animTime / frameRate) % 2;
+    const spriteKey = this.isMoving
+      ? ('player/hero_move_0' + (frameIdx + 1))
+      : ('player/hero_idle_0' + (frameIdx + 1));
+    Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
 
     // hit flash overlay (red tint on sprite)
     if (this.hitFlash > 0) {
@@ -226,7 +232,7 @@ class Player {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.globalAlpha = alpha * 0.7 * (this.hitFlash / 0.2);
       ctx.fillStyle = '#ff2020';
-      const img = Assets.get('player/hero');
+      const img = Assets.get(spriteKey);
       const w = img ? img.width * 0.7 : 32;
       const h = img ? img.height * 0.7 : 32;
       ctx.fillRect(this.x + sx - w/2, this.y + bob + sy - h/2, w, h);
