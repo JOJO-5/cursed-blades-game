@@ -78,8 +78,8 @@
 - [x] 蝙蝠（不规则轨迹，快速接近）— BatBehavior 正弦侧向偏移，zig-zag 飞行
 
 ### 3.2 补齐2种精英敌人
-- [ ] 精英稻草人（镰刀范围攻击，召唤普通稻草怪）
-- [ ] 腐化骑士（高生命高防御，冲锋，冲锋前提示）
+- [x] 精英稻草人（镰刀范围攻击，召唤普通稻草怪）— elite_scarecrow: EliteScarecrowBehavior, cleave arc + summon scarecrows + death explosion
+- [x] 腐化骑士（高生命高防御，冲锋，冲锋前提示）— corrupted_knight: KnightChargeBehavior, armor 6 flat reduction, charge with windup telegraph
 
 ### 3.3 敌人AI拆分
 已用策略模式将敌人 AI 拆分为独立行为类，Enemy.update() 委托给 behavior 策略：

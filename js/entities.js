@@ -531,6 +531,169 @@ class DashBehavior extends EnemyBehavior {
   }
 }
 
+// Elite Scarecrow: chases player, periodically cleaves in an arc and summons scarecrows.
+// State machine: chase → cleaveWindup → cleave → chase, with summon on cooldown.
+class EliteScarecrowBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    // lazy-init per-enemy state
+    if (!enemy.esState) {
+      enemy.esState = 'chase';
+      enemy.esTimer = 0;
+      enemy.esCleaveCd = enemy.def.cleaveCooldown * 0.5; // first cleave comes sooner
+      enemy.esSummonCd = enemy.def.summonCooldown || 8;
+      enemy.esCleaveAngle = 0;
+    }
+
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    enemy.esTimer -= dt;
+    enemy.esCleaveCd -= dt;
+    enemy.esSummonCd -= dt;
+
+    // summon scarecrows on cooldown
+    if (enemy.esSummonCd <= 0) {
+      enemy.esSummonCd = enemy.def.summonCooldown;
+      ENEMY_SUMMON_BEHAVIOR.execute(enemy, enemy.def.summonCount, 60, 'scarecrow', ' 召唤了稻草怪！');
+    }
+
+    switch (enemy.esState) {
+      case 'chase':
+        enemy.vx = Math.cos(ang) * enemy.speed;
+        enemy.vy = Math.sin(ang) * enemy.speed;
+        // start cleave windup when in range
+        if (d < enemy.def.cleaveRange && enemy.esCleaveCd <= 0) {
+          enemy.esState = 'cleaveWindup';
+          enemy.esTimer = enemy.def.cleaveWindup;
+          enemy.esCleaveAngle = ang;
+        }
+        break;
+      case 'cleaveWindup':
+        // slow down, telegraph
+        enemy.vx = Math.cos(ang) * enemy.speed * 0.1;
+        enemy.vy = Math.sin(ang) * enemy.speed * 0.1;
+        enemy.hitFlash = Math.max(enemy.hitFlash, 0.08);
+        if (enemy.esTimer <= 0) {
+          enemy.esState = 'cleave';
+          enemy.esTimer = 0.2;
+          this.executeCleave(enemy, player);
+        }
+        break;
+      case 'cleave':
+        enemy.vx *= 0.5;
+        enemy.vy *= 0.5;
+        if (enemy.esTimer <= 0) {
+          enemy.esState = 'chase';
+          enemy.esCleaveCd = enemy.def.cleaveCooldown;
+        }
+        break;
+    }
+  }
+
+  // cleave: damage player if within arc range
+  executeCleave(enemy, player) {
+    const range = enemy.def.cleaveRange;
+    const arc = enemy.def.cleaveArc;
+    const dmg = enemy.damage * enemy.def.cleaveDamage;
+    const d = dist(enemy.x, enemy.y, player.x, player.y);
+    if (d < range + player.radius) {
+      const angToPlayer = angleTo(enemy.x, enemy.y, player.x, player.y);
+      let diff = angToPlayer - enemy.esCleaveAngle;
+      while (diff > Math.PI) diff -= TAU;
+      while (diff < -Math.PI) diff += TAU;
+      if (Math.abs(diff) < arc / 2) {
+        player.takeDamage(dmg);
+      }
+    }
+    // cleave particles — arc slash effect
+    for (let i = 0; i < 16; i++) {
+      const a = enemy.esCleaveAngle - arc / 2 + (i / 16) * arc;
+      const spd = rand(60, 120);
+      const r = range * 0.7;
+      Game.particles.push(Game.particlePool.obtain(
+        enemy.x + Math.cos(a) * r, enemy.y + Math.sin(a) * r,
+        Math.cos(a) * spd, Math.sin(a) * spd,
+        '#ffaa30', 0.3, 4
+      ));
+    }
+    Audio2.play('sawtooth', 200, 0.15, 0.08);
+    Game.shakeScreen(4, 0.15);
+  }
+}
+
+// Corrupted Knight: chases player, periodically charges with telegraph.
+// Has flat armor damage reduction. State machine: chase → windup → charge → recover.
+class KnightChargeBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    // lazy-init per-enemy state
+    if (!enemy.kcState) {
+      enemy.kcState = 'chase';
+      enemy.kcTimer = 0;
+      enemy.kcChargeCd = enemy.def.chargeCooldown * 0.6; // first charge sooner
+      enemy.kcDir = { x: 0, y: 0 };
+    }
+
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    enemy.kcTimer -= dt;
+    enemy.kcChargeCd -= dt;
+
+    switch (enemy.kcState) {
+      case 'chase':
+        enemy.vx = Math.cos(ang) * enemy.speed;
+        enemy.vy = Math.sin(ang) * enemy.speed;
+        // start charge windup when in range and cooldown ready
+        if (d < 300 && d > 40 && enemy.kcChargeCd <= 0) {
+          enemy.kcState = 'windup';
+          enemy.kcTimer = enemy.def.chargeWindup;
+        }
+        break;
+      case 'windup':
+        // stop and telegraph — flash and face player
+        enemy.vx *= 0.1;
+        enemy.vy *= 0.1;
+        enemy.hitFlash = Math.max(enemy.hitFlash, 0.12);
+        if (enemy.kcTimer <= 0) {
+          enemy.kcState = 'charge';
+          enemy.kcTimer = enemy.def.chargeDuration || 0.4;
+          enemy.kcDir = { x: Math.cos(ang), y: Math.sin(ang) };
+          Audio2.play('sawtooth', 250, 0.15, 0.08);
+        }
+        break;
+      case 'charge':
+        // burst toward player at high speed
+        const chargeSpd = enemy.def.chargeSpeed;
+        enemy.vx = enemy.kcDir.x * chargeSpd;
+        enemy.vy = enemy.kcDir.y * chargeSpd;
+        // charge particles trail
+        if (Math.random() < 0.5) {
+          Game.particles.push(Game.particlePool.obtain(
+            enemy.x, enemy.y,
+            rand(-30, 30), rand(-30, 30),
+            '#806060', 0.2, 3
+          ));
+        }
+        // charge contact damage
+        if (d < enemy.radius + 16 && enemy.contactCooldown <= 0) {
+          player.takeDamage(enemy.damage * enemy.def.chargeDamage);
+          enemy.contactCooldown = 0.8;
+          Game.shakeScreen(6, 0.2);
+        }
+        if (enemy.kcTimer <= 0) {
+          enemy.kcState = 'recover';
+          enemy.kcTimer = 0.5;
+        }
+        break;
+      case 'recover':
+        // slow down after charge
+        enemy.vx *= 0.7;
+        enemy.vy *= 0.7;
+        if (enemy.kcTimer <= 0) {
+          enemy.kcState = 'chase';
+          enemy.kcChargeCd = enemy.def.chargeCooldown;
+        }
+        break;
+    }
+  }
+}
+
 // behavior registry: map behavior string -> singleton instance
 const ENEMY_BEHAVIORS = {
   chase: new ChaseBehavior(),
@@ -538,6 +701,8 @@ const ENEMY_BEHAVIORS = {
   boss: new BossBehavior(),
   bat: new BatBehavior(),
   dash: new DashBehavior(),
+  eliteScarecrow: new EliteScarecrowBehavior(),
+  knightCharge: new KnightChargeBehavior(),
 };
 
 // ==================== SUMMON BEHAVIOR ====================
@@ -685,8 +850,8 @@ class Enemy {
       case 'bat': case 'boar': case 'wild_dog': return 'leather';
       case 'skeleton': case 'spider': case 'beetle': return 'bone';
       case 'archer': case 'mage': case 'crystal': case 'miner': case 'villager': case 'plague_archer': return 'flesh';
-      case 'golem': case 'scarecrow': return 'wood';
-      case 'reaper': return 'metal';
+      case 'golem': case 'scarecrow': case 'elite_scarecrow': return 'wood';
+      case 'reaper': case 'corrupted_knight': return 'metal';
       case 'mimic': return 'chest';
       default: return 'flesh';
     }
@@ -694,6 +859,8 @@ class Enemy {
 
   takeDamage(amount, isCrit, knockback, fromX, fromY) {
     if (!this.alive) return;
+    // apply flat armor reduction (e.g. corrupted_knight)
+    if (this.def.armor) amount = Math.max(1, amount - this.def.armor);
     this.hp -= amount;
     this.hitFlash = 0.15;
     Game.spawnDamageNumber(this.x, this.y - this.radius - 5, Math.floor(amount), isCrit ? '#ffd040' : '#ffffff', isCrit);

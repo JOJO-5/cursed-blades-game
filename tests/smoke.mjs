@@ -20,7 +20,7 @@ const config = context.__CONFIG__;
 
 assert.equal(Object.keys(config.WEAPONS).length, 10, 'expected 10 weapons');
 assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
-assert.equal(Object.keys(config.ENEMIES).length, 21, 'expected 21 enemies');
+assert.equal(Object.keys(config.ENEMIES).length, 23, 'expected 23 enemies');
 assert.ok(config.LEVELS.village && config.LEVELS.mine, 'expected village and mine levels');
 
 // Verify phased spawning config for each level
@@ -159,4 +159,4 @@ assert.ok(gameSource.includes('enemyProjectilePool') && gameSource.includes('dam
 // Verify entities have reset methods for pool reuse
 assert.ok(entitiesSource.includes('reset('), 'entity classes should have reset methods for pool reuse');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 21 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools.`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools.`);

@@ -272,6 +272,24 @@ const CONFIG = {
       hp: 140, speed: 50, damage: 25, xp: 18, radius: 24,
       color: '#3a2a4a', behavior: 'chase', elite: true,
     },
+    // elite scarecrow — cleave arc attack + summons regular scarecrows
+    elite_scarecrow: {
+      name: '腐化稻草人之王', sprite: 'enemies/dwarf_torchbearer',
+      hp: 220, speed: 28, damage: 16, xp: 28, radius: 26,
+      color: '#9a6a2a', behavior: 'eliteScarecrow', elite: true,
+      cleaveRange: 120, cleaveDamage: 1.2, cleaveCooldown: 4.0, cleaveWindup: 0.6, cleaveArc: 1.6,
+      summonCooldown: 8.0, summonCount: 2,
+      deathExplosion: { radius: 100, damage: 30 },
+    },
+    // corrupted knight — high HP, defense, charge attack with telegraph
+    corrupted_knight: {
+      name: '腐化骑士', sprite: 'enemies/hooded_warrior',
+      hp: 280, speed: 32, damage: 22, xp: 32, radius: 28,
+      color: '#4a3a3a', behavior: 'knightCharge', elite: true,
+      armor: 6, // flat damage reduction
+      chargeCooldown: 5.0, chargeWindup: 0.8, chargeSpeed: 360, chargeDamage: 1.5,
+      chargeDuration: 0.4,
+    },
     // mimic
     mimic: {
       name: '宝箱怪', sprite: 'enemies/mimic_chest_red',
@@ -350,7 +368,7 @@ const CONFIG = {
       maxEnemies: 25,
       enemyPool: ['slime','bat','skeleton','spider','boar','villager','scarecrow','wild_dog'],
       rangedPool: ['archer','mage','plague_archer'],
-      elitePool: ['golem','reaper'],
+      elitePool: ['golem','reaper','elite_scarecrow','corrupted_knight'],
       eliteInterval: 90, // seconds — first elite at ~1.5min, then every 1.5min
       bossSpawnTime: 480,  // boss appears at 8 minutes
       bossId: 'boss',
@@ -384,7 +402,7 @@ const CONFIG = {
       maxEnemies: 30,
       enemyPool: ['rat','miner','beetle','spider','skeleton'],
       rangedPool: ['crystal','archer'],
-      elitePool: ['crusher','reaper'],
+      elitePool: ['crusher','reaper','elite_scarecrow','corrupted_knight'],
       eliteInterval: 75,
       bossSpawnTime: 420,  // boss appears at 7 minutes
       bossId: 'bossSpider',
