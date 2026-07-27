@@ -290,11 +290,25 @@ const CONFIG = {
       chargeCooldown: 5.0, chargeWindup: 0.8, chargeSpeed: 360, chargeDamage: 1.5,
       chargeDuration: 0.4,
     },
-    // mimic
+    // mimic — treasure chest monster with state machine
     mimic: {
       name: '宝箱怪', sprite: 'enemies/mimic_chest_red',
       hp: 100, speed: 35, damage: 18, xp: 15, radius: 22,
-      color: '#aa6a3a', behavior: 'chase', isMimic: true,
+      color: '#aa6a3a', behavior: 'mimic', isMimic: true,
+      // state machine params
+      disguiseRange: 80,     // reveal when player within this distance
+      revealDuration: 0.6,   // reveal animation time
+      attackRange: 40,       // bite attack range
+      attackCooldown: 1.5,   // between bite attacks
+      attackDamage: 1.3,     // bite damage multiplier
+      jumpRange: [60, 250],  // min/max distance to trigger jump attack
+      jumpCooldown: 5.0,     // between jump attacks
+      jumpWindup: 0.5,       // jump telegraph time
+      jumpDuration: 0.35,    // jump travel time
+      jumpSpeed: 4.0,        // jump speed multiplier (× enemy.speed)
+      jumpDamage: 1.5,       // jump attack damage multiplier
+      jumpRecover: 0.4,      // recovery after landing
+      hurtDuration: 0.3,     // stagger duration when taking heavy hit
     },
     // boss — 无头骑士 (Headless Knight), two-phase boss
     boss: {

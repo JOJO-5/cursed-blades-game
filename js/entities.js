@@ -694,6 +694,174 @@ class KnightChargeBehavior extends EnemyBehavior {
   }
 }
 
+// Mimic (treasure chest monster): state machine with disguise → reveal → chase →
+// attack / jumpAttack → hurt → dead.  Disguise renders as a normal chest; the
+// enemy becomes aggressive when the player approaches.
+// States: disguise | reveal | chase | attack | jumpWindup | jumpAttack | jumpRecover | hurt
+// Consume state is reserved for future weapon-eating mechanic (interface only).
+class MimicBehavior extends EnemyBehavior {
+  update(enemy, dt, player, d) {
+    // lazy-init per-enemy state
+    if (!enemy.mimicState) {
+      enemy.mimicState = 'disguise';
+      enemy.mimicTimer = 0;
+      enemy.mimicAttackCd = enemy.def.attackCooldown;
+      enemy.mimicJumpCd = enemy.def.jumpCooldown;
+      enemy.mimicJumpDir = { x: 0, y: 0 };
+      enemy.mimicPrevHp = enemy.hp;
+    }
+
+    const ang = angleTo(enemy.x, enemy.y, player.x, player.y);
+    enemy.mimicTimer -= dt;
+    enemy.mimicAttackCd -= dt;
+    enemy.mimicJumpCd -= dt;
+
+    // detect heavy hits (crit or >15% maxHp in one blow) → stagger
+    if (enemy.mimicPrevHp - enemy.hp > enemy.maxHp * 0.15) {
+      enemy.mimicState = 'hurt';
+      enemy.mimicTimer = enemy.def.hurtDuration;
+      // stagger particles
+      for (let i = 0; i < 6; i++) {
+        const a = Math.random() * TAU;
+        const spd = rand(30, 80);
+        Game.particles.push(Game.particlePool.obtain(
+          enemy.x, enemy.y,
+          Math.cos(a) * spd, Math.sin(a) * spd,
+          '#cc8844', 0.3, 3
+        ));
+      }
+    }
+    enemy.mimicPrevHp = enemy.hp;
+
+    switch (enemy.mimicState) {
+      case 'disguise':
+        // stay still, look like a chest
+        enemy.vx = 0;
+        enemy.vy = 0;
+        // reveal when player approaches
+        if (d < enemy.def.disguiseRange) {
+          enemy.mimicState = 'reveal';
+          enemy.mimicTimer = enemy.def.revealDuration;
+          this.revealEffect(enemy);
+        }
+        break;
+
+      case 'reveal':
+        // brief stationary reveal animation (jaw snapping open)
+        enemy.vx = 0;
+        enemy.vy = 0;
+        enemy.hitFlash = Math.max(enemy.hitFlash, 0.06);
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'chase';
+        }
+        break;
+
+      case 'chase':
+        enemy.vx = Math.cos(ang) * enemy.speed;
+        enemy.vy = Math.sin(ang) * enemy.speed;
+        // close-range bite attack
+        if (d < enemy.def.attackRange && enemy.mimicAttackCd <= 0) {
+          enemy.mimicState = 'attack';
+          enemy.mimicTimer = 0.4;
+          enemy.mimicAttackCd = enemy.def.attackCooldown;
+        }
+        // periodic jump attack at medium range
+        else if (d > enemy.def.jumpRange[0] && d < enemy.def.jumpRange[1] && enemy.mimicJumpCd <= 0) {
+          enemy.mimicState = 'jumpWindup';
+          enemy.mimicTimer = enemy.def.jumpWindup;
+        }
+        break;
+
+      case 'attack':
+        // quick lunge toward player
+        enemy.vx = Math.cos(ang) * enemy.speed * 0.6;
+        enemy.vy = Math.sin(ang) * enemy.speed * 0.6;
+        // bite contact damage
+        if (d < enemy.radius + 18 && enemy.contactCooldown <= 0) {
+          player.takeDamage(enemy.damage * enemy.def.attackDamage);
+          enemy.contactCooldown = 0.8;
+          Game.shakeScreen(4, 0.15);
+        }
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'chase';
+        }
+        break;
+
+      case 'jumpWindup':
+        // telegraph the leap — flash and face player
+        enemy.vx *= 0.1;
+        enemy.vy *= 0.1;
+        enemy.hitFlash = Math.max(enemy.hitFlash, 0.1);
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'jumpAttack';
+          enemy.mimicTimer = enemy.def.jumpDuration;
+          enemy.mimicJumpDir = { x: Math.cos(ang), y: Math.sin(ang) };
+          Audio2.play('sawtooth', 200, 0.1, 0.06);
+        }
+        break;
+
+      case 'jumpAttack':
+        // leap toward player at high speed
+        const jumpSpd = enemy.speed * enemy.def.jumpSpeed;
+        enemy.vx = enemy.mimicJumpDir.x * jumpSpd;
+        enemy.vy = enemy.mimicJumpDir.y * jumpSpd;
+        // trail particles
+        if (Math.random() < 0.4) {
+          Game.particles.push(Game.particlePool.obtain(
+            enemy.x, enemy.y,
+            rand(-20, 20), rand(-20, 20),
+            '#8a5a2a', 0.2, 3
+          ));
+        }
+        // jump contact damage
+        if (d < enemy.radius + 20 && enemy.contactCooldown <= 0) {
+          player.takeDamage(enemy.damage * enemy.def.jumpDamage);
+          enemy.contactCooldown = 0.8;
+          Game.shakeScreen(6, 0.2);
+        }
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'jumpRecover';
+          enemy.mimicTimer = enemy.def.jumpRecover;
+        }
+        break;
+
+      case 'jumpRecover':
+        // slow down after landing
+        enemy.vx *= 0.6;
+        enemy.vy *= 0.6;
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'chase';
+          enemy.mimicJumpCd = enemy.def.jumpCooldown + Math.random() * 2;
+        }
+        break;
+
+      case 'hurt':
+        // brief stagger after heavy hit
+        enemy.vx *= 0.3;
+        enemy.vy *= 0.3;
+        if (enemy.mimicTimer <= 0) {
+          enemy.mimicState = 'chase';
+        }
+        break;
+    }
+  }
+
+  // visual + audio feedback when the mimic drops its disguise
+  revealEffect(enemy) {
+    for (let i = 0; i < 12; i++) {
+      const a = Math.random() * TAU;
+      const spd = rand(40, 100);
+      Game.particles.push(Game.particlePool.obtain(
+        enemy.x, enemy.y,
+        Math.cos(a) * spd, Math.sin(a) * spd,
+        '#aa6a3a', rand(0.3, 0.6), rand(2, 4)
+      ));
+    }
+    Audio2.play('sawtooth', 150, 0.2, 0.08);
+    Game.shakeScreen(3, 0.15);
+  }
+}
+
 // behavior registry: map behavior string -> singleton instance
 const ENEMY_BEHAVIORS = {
   chase: new ChaseBehavior(),
@@ -703,6 +871,7 @@ const ENEMY_BEHAVIORS = {
   dash: new DashBehavior(),
   eliteScarecrow: new EliteScarecrowBehavior(),
   knightCharge: new KnightChargeBehavior(),
+  mimic: new MimicBehavior(),
 };
 
 // ==================== SUMMON BEHAVIOR ====================
@@ -998,8 +1167,9 @@ class Enemy {
       this.updateBoss(dt, player, d);
     }
 
-    // contact damage
-    if (d < this.radius + 16 && this.contactCooldown <= 0) {
+    // contact damage (mimics in disguise/reveal don't deal contact damage)
+    const mimicPassive = this.isMimic && (this.mimicState === 'disguise' || this.mimicState === 'reveal');
+    if (!mimicPassive && d < this.radius + 16 && this.contactCooldown <= 0) {
       player.takeDamage(this.damage);
       this.contactCooldown = 0.8;
       // push enemy back slightly
@@ -1296,6 +1466,15 @@ class Enemy {
     ctx.ellipse(this.x, this.y + this.radius * 0.7, this.radius * 0.8, this.radius * 0.35, 0, 0, TAU);
     ctx.fill();
 
+    // ---- Mimic disguise: render as a normal chest while disguised ----
+    if (this.isMimic && this.mimicState === 'disguise') {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      Assets.drawCentered(ctx, 'items/chest', this.x, this.y, 1, 0, 1);
+      ctx.restore();
+      return; // no health bar, no bob — fully disguised
+    }
+
     // ---- Boss extras: ground hazards, windup telegraphs, orbit weapons ----
     if (this.isBoss) {
       this.drawBossExtras(ctx);
@@ -1322,8 +1501,10 @@ class Enemy {
     }
     ctx.restore();
 
-    // health bar (for elites/boss/damaged)
-    if (this.isBoss || this.isElite || this.hp < this.maxHp) {
+    // health bar (for elites/boss/damaged — mimic shows bar only after reveal)
+    const showHpBar = (this.isBoss || this.isElite || this.hp < this.maxHp)
+      && !(this.isMimic && this.mimicState === 'disguise');
+    if (showHpBar) {
       const barW = this.isBoss ? 60 : 30;
       const barH = this.isBoss ? 6 : 4;
       const bx = this.x - barW/2;

@@ -159,4 +159,20 @@ assert.ok(gameSource.includes('enemyProjectilePool') && gameSource.includes('dam
 // Verify entities have reset methods for pool reuse
 assert.ok(entitiesSource.includes('reset('), 'entity classes should have reset methods for pool reuse');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools.`);
+// Verify mimic state machine
+const mimicDef = config.ENEMIES.mimic;
+assert.equal(mimicDef.behavior, 'mimic', 'mimic should use mimic behavior');
+assert.ok(mimicDef.isMimic === true, 'mimic should have isMimic flag');
+assert.ok(mimicDef.disguiseRange > 0, 'mimic should have disguiseRange');
+assert.ok(mimicDef.revealDuration > 0, 'mimic should have revealDuration');
+assert.ok(Array.isArray(mimicDef.jumpRange) && mimicDef.jumpRange.length === 2, 'mimic should have jumpRange array');
+assert.ok(mimicDef.jumpCooldown > 0, 'mimic should have jumpCooldown');
+assert.ok(mimicDef.attackCooldown > 0, 'mimic should have attackCooldown');
+assert.ok(mimicDef.hurtDuration > 0, 'mimic should have hurtDuration');
+assert.ok(entitiesSource.includes('class MimicBehavior'), 'entities.js should define MimicBehavior class');
+assert.ok(entitiesSource.includes("mimic: new MimicBehavior()"), 'MimicBehavior should be registered in ENEMY_BEHAVIORS');
+// Verify disguise rendering check exists in draw method
+assert.ok(entitiesSource.includes("this.mimicState === 'disguise'"), 'Enemy.draw should check mimic disguise state');
+assert.ok(entitiesSource.includes("mimicPassive"), 'Enemy.update should skip contact damage for passive mimics');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine.`);
