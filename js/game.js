@@ -1717,45 +1717,7 @@ const Game = {
   },
 
   renderStory() {
-    const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(0,0,0,0.75)';
-    ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
-
-    const line = this.storyLines[this.storyIndex];
-    if (!line) return;
-
-    const visible = this.getVisibleCanvasRect();
-    // Keep the dialogue entirely within the viewport after cover cropping.
-    const boxX = visible.x + 10;
-    const boxW = visible.w - 20;
-    const boxY = visible.y + visible.h - 180;
-    const boxH = 140;
-    ctx.fillStyle = 'rgba(20,15,10,0.95)';
-    ctx.fillRect(boxX, boxY, boxW, boxH);
-    ctx.strokeStyle = '#4a3a20';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(boxX, boxY, boxW, boxH);
-
-    // speaker
-    ctx.fillStyle = '#c4a87a';
-    ctx.font = 'bold 16px Courier New';
-    ctx.textAlign = 'left';
-    ctx.fillText('【' + line.speaker + '】', boxX + 15, boxY + 30);
-
-    // text (with typewriter effect)
-    ctx.fillStyle = '#e0d0b0';
-    ctx.font = '15px Courier New';
-    const maxChars = Math.floor(this.storyTimer * 40);
-    const displayText = line.text.substring(0, Math.min(line.text.length, maxChars));
-    this.drawTextWrapped(ctx, displayText, boxX + 15, boxY + 60, boxW - 30, 22);
-
-    // skip indicator
-    if (this.storyTimer > 0.3) {
-      ctx.fillStyle = '#5a4a30';
-      ctx.font = '11px Courier New';
-      ctx.textAlign = 'right';
-      ctx.fillText(this.storyIndex < this.storyLines.length - 1 ? '点击/空格 继续 →' : '点击/空格 结束 →', boxX + boxW - 15, boxY + boxH - 15);
-    }
+    StoryUI.render(this);
   },
 
   drawTextWrapped(ctx, text, x, y, maxW, lineH) {

@@ -118,4 +118,22 @@ assert.ok(gameSource.includes('_settingsOverlay') && gameSource.includes('render
 assert.ok(gameSource.includes('openSettings') && gameSource.includes('closeSettings'),
   'Game should have openSettings/closeSettings methods');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay.`);
+// Verify story data / UI separation
+assert.ok(existsSync(path.join(jsDir, 'story.js')), 'story.js module should exist');
+const storySource = readFileSync(path.join(jsDir, 'story.js'), 'utf8');
+assert.ok(storySource.includes('const StoryUI'), 'story.js should define StoryUI object');
+assert.ok(storySource.includes('render(game)'), 'StoryUI should have a render(game) method');
+assert.ok(storySource.includes('drawTextWrapped'), 'StoryUI should have drawTextWrapped utility');
+// CONFIG.STORY should have data for each level theme
+for (const [theme, level] of Object.entries(config.LEVELS)) {
+  const story = config.STORY[theme];
+  assert.ok(story && Array.isArray(story.intro) && story.intro.length > 0, `STORY.${theme}.intro should be a non-empty array`);
+  assert.ok(story.bossIntro && story.bossIntro.length > 0, `STORY.${theme}.bossIntro should exist`);
+  assert.ok(story.victory && story.victory.length > 0, `STORY.${theme}.victory should exist`);
+  for (const line of [...story.intro, ...story.bossIntro, ...story.victory]) {
+    assert.ok(line.speaker && line.text, `story line in ${theme} should have speaker and text`);
+  }
+}
+assert.ok(config.STORY.mimicEncounter && config.STORY.mimicEncounter.length > 0, 'STORY.mimicEncounter should exist');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation.`);
