@@ -494,5 +494,9 @@
   "weapons/holy_cross": {
     "w": 32,
     "h": 32
+  },
+  "weapons/poison_aura": {
+    "w": 32,
+    "h": 32
   }
 }

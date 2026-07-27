@@ -102,6 +102,13 @@ const CONFIG = {
       projectileCount: 4, // fires in cross pattern (4 directions)
       desc: '旋转弹幕·十字方向发射',
     },
+    poison_aura: {
+      name: '剧毒光环', type: 'aura', icon: 'weapons/poison_aura',
+      damage: 5, range: 90, cooldown: 0.5,
+      pierce: 0, critChance: 0.05, critMult: 2.0,
+      color: '#60c040', size: 20,
+      desc: '持续光环·范围毒伤',
+    },
     // ---- Evolved weapons (replaced via evolution system) ----
     sword_wind: {
       name: '疾风双刃', type: 'orbit', icon: 'weapons/sword_slash_wind',

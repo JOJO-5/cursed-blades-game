@@ -352,6 +352,31 @@ class Weapon {
         this.cooldown = this.getCooldown();
         this.firePattern(player);
       }
+    } else if (this.def.type === 'aura') {
+      // Aura type: periodic damage to nearby enemies
+      this.cooldown -= dt;
+      if (this.cooldown <= 0) {
+        this.cooldown = this.getCooldown();
+        const range = this.getRange();
+        const dmg = this.getDamage();
+        const crit = this.getCritChance();
+        const kb = (this.def.knockback || 0) * player.stats.knockbackMult;
+        for (const e of Game.enemyGrid.query(player.x, player.y, range)) {
+          if (!e.alive) continue;
+          const d = dist(player.x, player.y, e.x, e.y);
+          if (d < range + e.radius) {
+            let damage = dmg;
+            let isCrit = Math.random() < crit;
+            if (isCrit) damage *= this.getCritMult();
+            e.takeDamage(damage, isCrit, kb, player.x, player.y);
+            if (player.stats.lifesteal > 0) {
+              player.heal(damage * player.stats.lifesteal);
+            }
+          }
+        }
+        // periodic aura sound (subtle, low volume)
+        Audio2.play('sine', 200, 0.06, 0.03);
+      }
     }
   }
 
@@ -423,6 +448,24 @@ class Weapon {
   }
 
   draw(ctx) {
+    if (this.def.type === 'aura') {
+      // draw pulsing aura ring
+      const range = this.getRange();
+      const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
+      ctx.save();
+      ctx.globalAlpha = 0.25 + Math.sin(Date.now() / 150) * 0.05;
+      ctx.fillStyle = this.def.color;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, range * pulse, 0, TAU);
+      ctx.fill();
+      // inner ring
+      ctx.globalAlpha = 0.15;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, range * pulse * 0.6, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
     if (this.def.type !== 'orbit') return;
     const range = this.getRange();
     const count = 1 + Game.player.stats.weaponCountBonus;
