@@ -300,6 +300,33 @@ const Game = {
       return;
     }
 
+    // Boss defeated grace period: allow player to collect drops before victory sequence
+    if (this.bossDefeatedGraceTimer > 0) {
+      this.bossDefeatedGraceTimer -= dt;
+      if (this.bossDefeatedGraceTimer <= 0) {
+        this.bossDefeatedGraceTimer = 0;
+        this.startVictorySequence();
+      }
+      // Still update player, pickups, particles, camera during grace period
+      this.player.update(dt);
+      for (const p of this.pickups) p.update(dt);
+      this.pickupPool.recycle(this.pickups);
+      for (const p of this.particles) p.update(dt);
+      this.particlePool.recycle(this.particles);
+      for (const d of this.damageNumbers) d.update(dt);
+      this.damageNumberPool.recycle(this.damageNumbers);
+      // camera follows player
+      const tx = this.player.x - CONFIG.CANVAS_W / 2;
+      const ty = this.player.y - CONFIG.CANVAS_H / 2;
+      this.camera.x = lerp(this.camera.x, tx, 0.1);
+      this.camera.y = lerp(this.camera.y, ty, 0.1);
+      const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+      const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+      this.camera.x = clamp(this.camera.x, 0, Math.max(0, mapW - CONFIG.CANVAS_W));
+      this.camera.y = clamp(this.camera.y, 0, Math.max(0, mapH - CONFIG.CANVAS_H));
+      return;
+    }
+
     // Rebuild spatial grid for collision queries (before player/weapons/projectiles use it)
     this.enemyGrid.clear();
     for (const e of this.enemies) {
@@ -814,6 +841,7 @@ const Game = {
 
   // ---- Boss defeated ----
   onBossDefeated() {
+    if (this.bossDefeated) return; // already handled
     this.bossDefeated = true;
     Audio2.victory();
     // record level completion in meta
@@ -821,7 +849,13 @@ const Game = {
       this.meta.levelsCompleted[this.levelData.theme] = true;
       this.saveMeta();
     }
-    // start victory story
+    // Enter grace period so player can collect boss drops
+    this.bossDefeatedGraceTimer = 8; // 8 seconds to collect drops
+    this.addMessage('Boss已击败！8秒后可拾取掉落物', '#ffd040');
+  },
+
+  // Continue to victory story after grace period expires
+  startVictorySequence() {
     setTimeout(() => {
       this.startStory(CONFIG.STORY[this.levelData.theme].victory, () => {
         // After village victory, proceed to mine level
@@ -1034,6 +1068,7 @@ const Game = {
     this.eliteTimer = 0;
     this.bossSpawned = false;
     this.bossDefeated = false;
+    this.bossDefeatedGraceTimer = 0;
     this.enemies = [];
     this.projectiles = [];
     this.enemyProjectiles = [];
@@ -1067,7 +1102,11 @@ const Game = {
 
   // ---- Map generation ----
   generateMap() {
-    const rng = makeRNG(42);
+    // Use a theme-based seed so each level has a unique random pattern
+    let seed = 0;
+    const theme = this.levelData.theme || 'default';
+    for (let i = 0; i < theme.length; i++) seed = seed * 31 + theme.charCodeAt(i);
+    const rng = makeRNG(seed);
     const mapW = this.levelData.mapW, mapH = this.levelData.mapH, ts = CONFIG.TILE_SIZE;
     this.mapData = { tiles: [], props: [] };
 
@@ -1078,15 +1117,34 @@ const Game = {
     const gctx = this.groundTileCache.getContext('2d');
     gctx.imageSmoothingEnabled = false;
 
-    // fill ground with dirt base
-    gctx.fillStyle = '#2a2218';
+    // fill ground with theme-specific base colour
+    const baseColors = { village: '#2a2218', mine: '#1a1520' };
+    gctx.fillStyle = baseColors[theme] || '#2a2218';
     gctx.fillRect(0, 0, mapW * ts, mapH * ts);
 
-    // draw ground tiles
+    // draw ground tiles with larger organic patches instead of pure random
     const groundTiles = this.levelData.groundTiles;
+    // Pre-generate a low-res noise map so adjacent tiles tend to be similar
+    const patchW = Math.ceil(mapW / 4), patchH = Math.ceil(mapH / 4);
+    const patchMap = new Array(patchH);
+    for (let py = 0; py < patchH; py++) {
+      patchMap[py] = new Array(patchW);
+      for (let px = 0; px < patchW; px++) {
+        patchMap[py][px] = Math.floor(rng() * groundTiles.length);
+      }
+    }
     for (let ty = 0; ty < mapH; ty++) {
       for (let tx = 0; tx < mapW; tx++) {
-        const tileName = groundTiles[Math.floor(rng() * groundTiles.length)];
+        const px = Math.min(patchW - 1, Math.floor(tx / 4));
+        const py = Math.min(patchH - 1, Math.floor(ty / 4));
+        // 20% chance to pick a neighbour patch for smooth blending
+        let tileIdx = patchMap[py][px];
+        if (rng() < 0.2) {
+          const npx = clamp(px + (rng() < 0.5 ? -1 : 1), 0, patchW - 1);
+          const npy = clamp(py + (rng() < 0.5 ? -1 : 1), 0, patchH - 1);
+          tileIdx = patchMap[npy][npx];
+        }
+        const tileName = groundTiles[tileIdx];
         const img = Assets.get(tileName);
         if (img && img.complete) {
           // draw with slight random offset and alpha for variation
@@ -1099,8 +1157,31 @@ const Game = {
     }
     gctx.globalAlpha = 1;
 
-    // add some dark patches / paths
-    gctx.fillStyle = 'rgba(15,10,5,0.3)';
+    // Smooth tile edges: draw soft gradient strips between tiles to hide grid lines
+    const edgeGrad = gctx.createLinearGradient(0, 0, ts, 0);
+    edgeGrad.addColorStop(0, 'rgba(0,0,0,0.18)');
+    edgeGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+    edgeGrad.addColorStop(1, 'rgba(0,0,0,0.18)');
+    for (let ty = 0; ty < mapH; ty++) {
+      for (let tx = 1; tx < mapW; tx++) {
+        gctx.fillStyle = edgeGrad;
+        gctx.fillRect(tx * ts - 3, ty * ts, 6, ts);
+      }
+    }
+    const edgeGradV = gctx.createLinearGradient(0, 0, 0, ts);
+    edgeGradV.addColorStop(0, 'rgba(0,0,0,0.18)');
+    edgeGradV.addColorStop(0.5, 'rgba(0,0,0,0)');
+    edgeGradV.addColorStop(1, 'rgba(0,0,0,0.18)');
+    for (let tx = 0; tx < mapW; tx++) {
+      for (let ty = 1; ty < mapH; ty++) {
+        gctx.fillStyle = edgeGradV;
+        gctx.fillRect(tx * ts, ty * ts - 3, ts, 6);
+      }
+    }
+
+    // add some dark patches / paths (theme-tinted)
+    const patchColor = theme === 'mine' ? 'rgba(8,5,12,0.35)' : 'rgba(15,10,5,0.3)';
+    gctx.fillStyle = patchColor;
     for (let i = 0; i < 30; i++) {
       const x = rng() * mapW * ts;
       const y = rng() * mapH * ts;

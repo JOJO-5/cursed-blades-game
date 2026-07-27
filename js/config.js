@@ -615,7 +615,9 @@ const CONFIG = {
         bones: ['props/bone_pile'],
         gallows: ['props/gallows_wooden'],
       },
-      groundTiles: ['tiles/ground_dirt_grass_01','tiles/ground_dirt_stones_01','tiles/ground_dirt_path_01','tiles/ground_mossy_stone_01','tiles/ground_grass_strip_01'],
+      groundTiles: ['tiles/ground_dirt_grass_01','tiles/ground_grass_strip_01','tiles/ground_dirt_path_01','tiles/ground_dirt_patch_01','tiles/ground_dirt_edge_01'],
+      // Village border walls (ruined stone walls fitting the graveyard theme)
+      wallTiles: ['tiles/ruin_stone_wall_broken_01','tiles/ruin_stone_wall_broken_02','tiles/wall_stone_gapped_01'],
     },
     mine: {
       name: '地下矿洞',
@@ -658,7 +660,7 @@ const CONFIG = {
         ruins: ['props/stone_arch_broken','props/stone_pillars_01','props/stone_pillars_02','props/stone_well_broken'],
         houses: ['props/shrine_stone_lit'],
       },
-      groundTiles: ['tiles/ground_dirt_stones_01','tiles/ground_mossy_stone_01','tiles/ground_dirt_path_01','tiles/ground_dirt_large_01','tiles/ground_dirt_patch_01','tiles/ground_dirt_edge_01','tiles/ground_mossy_patch_01'],
+      groundTiles: ['tiles/ground_mossy_stone_01','tiles/ground_dirt_large_01','tiles/ground_mossy_patch_01','tiles/ground_dirt_stones_01','tiles/ground_dirt_edge_01'],
       // Mine-specific wall tiles for cave border and interior wall segments
       wallTiles: ['tiles/wall_stone_stacked_01','tiles/wall_stone_horizontal_01','tiles/wall_stone_gapped_01','tiles/wall_stone_base_mossy','tiles/wall_stone_brick_vertical','tiles/ruin_stone_wall_broken_01','tiles/ruin_stone_wall_broken_02'],
       // Ground decoration overlays (drawn on top of ground tiles)
