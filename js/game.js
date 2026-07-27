@@ -655,6 +655,11 @@ const Game = {
   onBossDefeated() {
     this.bossDefeated = true;
     Audio2.victory();
+    // record level completion in meta
+    if (this.levelData && this.levelData.theme) {
+      this.meta.levelsCompleted[this.levelData.theme] = true;
+      this.saveMeta();
+    }
     // start victory story
     setTimeout(() => {
       this.startStory(CONFIG.STORY[this.levelData.theme].victory, () => {
