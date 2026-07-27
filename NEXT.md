@@ -59,13 +59,13 @@
 - [x] 添加 `prerequisite` 前置条件（critdamage 需 crit，lifesteal 需 armor）
 
 ### 2.4 武器进化系统
-- [ ] 定义进化配方数据结构
-- [ ] 实现至少3个进化配方：
-  - [ ] 铁剑 + 攻速遗物 → 疾风双刃
-  - [ ] 巨锤 + 范围遗物 → 星陨重锤
-  - [ ] 灵魂飞弹 + 索敌遗物 → 千魂追猎
-- [ ] 进化后替换原武器，改变外观和行为
-- [ ] 通过宝箱奖励触发进化
+- [x] 定义进化配方数据结构 — CONFIG.WEAPON_EVOLUTIONS 数组 (baseWeapon/relic/relicMinLevel/resultWeapon)
+- [x] 实现至少3个进化配方：
+  - [x] 铁剑 + 攻速遗物Lv.3 → 疾风双刃 (sword_wind: 高速双刃环绕, 5.5旋转速度)
+  - [x] 巨锤 + 范围遗物Lv.3 → 星陨重锤 (hammer_meteor: 大范围震荡splash 50px, 200击退)
+  - [x] 灵魂飞弹 + 穿透遗物Lv.2 → 千魂追猎 (soul_hunter: 多弹追踪穿透, multiShot=2, pierce=3)
+- [x] 进化后替换原武器，改变外观和行为 — selectChestReward 处理 evolution 类型, 保留武器等级
+- [x] 通过宝箱奖励触发进化 — generateChestReward 调用 checkEvolutions, 进化选项优先放入奖励池
 
 ## 阶段3：敌人与宝箱怪
 

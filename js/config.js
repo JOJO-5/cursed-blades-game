@@ -94,6 +94,32 @@ const CONFIG = {
       color: '#a040c0', size: 34,
       desc: '诅咒环刃·虚空多穿',
     },
+    // ---- Evolved weapons (replaced via evolution system) ----
+    sword_wind: {
+      name: '疾风双刃', type: 'orbit', icon: 'weapons/sword_slash_wind',
+      damage: 22, range: 90, rotateSpeed: 5.5, knockback: 80,
+      pierce: 1, critChance: 0.12, critMult: 2.0,
+      color: '#80ffd0', size: 32,
+      desc: '进化·高速双刃环绕',
+      evolved: true,
+    },
+    hammer_meteor: {
+      name: '星陨重锤', type: 'orbit', icon: 'weapons/ring_fire_awakened',
+      damage: 36, range: 80, rotateSpeed: 2.0, knockback: 200,
+      pierce: 0, critChance: 0.08, critMult: 2.0, splash: 50,
+      color: '#ff6020', size: 38,
+      desc: '进化·大范围震荡重击',
+      evolved: true,
+    },
+    soul_hunter: {
+      name: '千魂追猎', type: 'homing', icon: 'weapons/ring_target',
+      damage: 18, range: 350, cooldown: 0.8, projectileSpeed: 240,
+      pierce: 3, critChance: 0.12, critMult: 2.2, homingStrength: 12,
+      color: '#a0ff80', size: 22,
+      desc: '进化·多弹追踪穿透',
+      evolved: true,
+      multiShot: 2, // fires 2 projectiles per volley
+    },
   },
 
   // ---- Rarity system ----
@@ -193,6 +219,45 @@ const CONFIG = {
     { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/shield',   rarity:'rare' },
     { weaponId:'ring_fire',name:'获得武器: 炎之环刃', icon:'weapons/ring_fire', rarity:'epic' },
     { weaponId:'ring_void',name:'获得武器: 虚空环刃', icon:'weapons/ring_void', rarity:'epic' },
+  ],
+
+  // ---- Weapon evolutions (epic, triggered by chest when conditions met) ----
+  // Each recipe requires a base weapon + a relic upgrade at sufficient level.
+  // On evolution, the base weapon is replaced by the evolved weapon.
+  WEAPON_EVOLUTIONS: [
+    {
+      id: 'evo_sword_wind',
+      baseWeapon: 'sword',
+      relic: 'attackspeed',    // upgrade id
+      relicMinLevel: 3,        // need attackspeed Lv.3+
+      resultWeapon: 'sword_wind',
+      name: '武器进化: 疾风双刃',
+      desc: '铁剑 + 攻速遗物Lv.3 → 疾风双刃 (高速双刃环绕)',
+      icon: 'weapons/sword_slash_wind',
+      rarity: 'epic',
+    },
+    {
+      id: 'evo_hammer_meteor',
+      baseWeapon: 'hammer',
+      relic: 'range',
+      relicMinLevel: 3,
+      resultWeapon: 'hammer_meteor',
+      name: '武器进化: 星陨重锤',
+      desc: '战锤 + 范围遗物Lv.3 → 星陨重锤 (大范围震荡 splash)',
+      icon: 'weapons/ring_fire_awakened',
+      rarity: 'epic',
+    },
+    {
+      id: 'evo_soul_hunter',
+      baseWeapon: 'soul',
+      relic: 'pierce',
+      relicMinLevel: 2,
+      resultWeapon: 'soul_hunter',
+      name: '武器进化: 千魂追猎',
+      desc: '灵魂弹 + 穿透遗物Lv.2 → 千魂追猎 (多弹追踪穿透)',
+      icon: 'weapons/ring_target',
+      rarity: 'epic',
+    },
   ],
 
   // ---- Enemy definitions ----

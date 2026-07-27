@@ -18,10 +18,23 @@ const context = {};
 vm.runInNewContext(`${configSource}\nglobalThis.__CONFIG__ = CONFIG;`, context, { filename: 'js/config.js' });
 const config = context.__CONFIG__;
 
-assert.equal(Object.keys(config.WEAPONS).length, 10, 'expected 10 weapons');
+assert.equal(Object.keys(config.WEAPONS).length, 13, 'expected 13 weapons (10 base + 3 evolved)');
 assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
 assert.equal(Object.keys(config.ENEMIES).length, 23, 'expected 23 enemies');
 assert.ok(config.LEVELS.village && config.LEVELS.mine, 'expected village and mine levels');
+
+// Verify weapon evolution system
+assert.ok(Array.isArray(config.WEAPON_EVOLUTIONS), 'WEAPON_EVOLUTIONS should be an array');
+assert.equal(config.WEAPON_EVOLUTIONS.length, 3, 'expected 3 evolution recipes');
+for (const evo of config.WEAPON_EVOLUTIONS) {
+  assert.ok(evo.id && evo.baseWeapon && evo.resultWeapon, `evolution ${evo.id} missing key fields`);
+  assert.ok(config.WEAPONS[evo.baseWeapon], `evolution ${evo.id} baseWeapon ${evo.baseWeapon} must exist in WEAPONS`);
+  assert.ok(config.WEAPONS[evo.resultWeapon], `evolution ${evo.id} resultWeapon ${evo.resultWeapon} must exist in WEAPONS`);
+  assert.ok(config.WEAPONS[evo.resultWeapon].evolved === true, `evolved weapon ${evo.resultWeapon} should have evolved: true`);
+  const relic = config.UPGRADES.find(u => u.id === evo.relic);
+  assert.ok(relic, `evolution ${evo.id} relic ${evo.relic} must reference an existing upgrade`);
+  assert.ok(evo.relicMinLevel > 0 && evo.relicMinLevel <= relic.maxLevel, `evolution ${evo.id} relicMinLevel must be valid`);
+}
 
 // Verify phased spawning config for each level
 for (const [id, level] of Object.entries(config.LEVELS)) {
@@ -200,4 +213,10 @@ for (const [key, entry] of Object.entries(assetManifest.assets)) {
 }
 assert.equal(assetCount, Object.keys(manifest).length, 'asset_manifest should have same count as manifest.json');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets).`);
+// Verify weapon evolution source code integration
+assert.ok(gameSource.includes('checkEvolutions'), 'Game should have checkEvolutions method');
+assert.ok(gameSource.includes("'evolution'"), 'Game should handle evolution reward type');
+assert.ok(entitiesSource.includes('multiShot'), 'Weapon.fire should support multiShot for evolved weapons');
+assert.ok(entitiesSource.includes('this.def.splash'), 'Orbit weapons should support splash damage for evolved weapons');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 13 weapons (10 base + 3 evolved), 20 upgrades, 23 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system.`);

@@ -310,6 +310,27 @@ class Weapon {
               if (this.def.type === 'orbit' && this.id !== 'shield') {
                 Audio2.hit();
               }
+              // splash damage for evolved orbit weapons (e.g. hammer_meteor)
+              if (this.def.splash) {
+                const splashR = this.def.splash;
+                for (const e2 of Game.enemies) {
+                  if (!e2.alive || e2.id === e.id) continue;
+                  const sd = dist(e.x, e.y, e2.x, e2.y);
+                  if (sd < splashR) {
+                    const splashDmg = damage * 0.5;
+                    e2.takeDamage(splashDmg, false, kb * 0.5, e.x, e.y);
+                  }
+                }
+                // splash particles
+                for (let p = 0; p < 6; p++) {
+                  const pa = Math.random() * TAU;
+                  const ps = rand(40, 100);
+                  Game.particles.push(Game.particlePool.obtain(
+                    e.x, e.y, Math.cos(pa) * ps, Math.sin(pa) * ps,
+                    this.def.color, 0.3, 3
+                  ));
+                }
+              }
             }
           }
         }
@@ -336,25 +357,33 @@ class Weapon {
     }
     if (!target) return;
 
-    const ang = angleTo(player.x, player.y, target.x, target.y);
+    const baseAng = angleTo(player.x, player.y, target.x, target.y);
     const dmg = this.getDamage();
     const crit = this.getCritChance();
     const pierce = this.getPierce();
     const critMult = this.getCritMult();
     const projSpeed = this.def.projectileSpeed * player.stats.projectileSpeedMult;
+    // multiShot: fire multiple projectiles in a spread (e.g. soul_hunter)
+    const shots = this.def.multiShot || 1;
+    const spread = shots > 1 ? 0.3 : 0; // total spread angle in radians
 
-    const proj = Game.projectilePool.obtain(
-      player.x, player.y,
-      Math.cos(ang) * projSpeed,
-      Math.sin(ang) * projSpeed,
-      dmg, this.def.range, pierce, crit, critMult,
-      this.id === 'fireball' ? '#ff8030' : this.def.color,
-      this.def.icon, this.def.size, this.id
-    );
-    proj.homing = this.def.type === 'homing';
-    proj.homingStrength = this.def.homingStrength || 0;
-    proj.splash = this.def.splash || 0;
-    Game.projectiles.push(proj);
+    for (let s = 0; s < shots; s++) {
+      const ang = shots > 1
+        ? baseAng - spread/2 + (s / (shots - 1)) * spread
+        : baseAng;
+      const proj = Game.projectilePool.obtain(
+        player.x, player.y,
+        Math.cos(ang) * projSpeed,
+        Math.sin(ang) * projSpeed,
+        dmg, this.def.range, pierce, crit, critMult,
+        this.id === 'fireball' ? '#ff8030' : this.def.color,
+        this.def.icon, this.def.size, this.id
+      );
+      proj.homing = this.def.type === 'homing';
+      proj.homingStrength = this.def.homingStrength || 0;
+      proj.splash = this.def.splash || 0;
+      Game.projectiles.push(proj);
+    }
     Audio2.play('square', 300, 0.04, 0.04);
   }
 

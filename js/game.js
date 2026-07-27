@@ -678,6 +678,21 @@ const Game = {
     const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
     const rewards = [];
 
+    // ---- Weapon evolution check: if player has base weapon + relic at required level ----
+    const evolutions = this.checkEvolutions();
+    for (const evo of evolutions) {
+      rewards.push({
+        type: 'evolution',
+        evolutionId: evo.id,
+        baseWeapon: evo.baseWeapon,
+        resultWeapon: evo.resultWeapon,
+        name: evo.name,
+        desc: evo.desc,
+        icon: evo.icon,
+        rarity: evo.rarity,
+      });
+    }
+
     if (availableUnlocks.length > 0) {
       rewards.push(pick(availableUnlocks));
     }
@@ -708,6 +723,23 @@ const Game = {
     this.chestRewardChoices = rewards.slice(0, 3);
   },
 
+  // Check for available weapon evolutions based on owned weapons and upgrade levels
+  checkEvolutions() {
+    const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
+    const result = [];
+    for (const evo of CONFIG.WEAPON_EVOLUTIONS) {
+      // player must own the base weapon (and not already have the evolved version)
+      if (!ownedWeaponIds.has(evo.baseWeapon)) continue;
+      if (ownedWeaponIds.has(evo.resultWeapon)) continue;
+      // relic upgrade must be at sufficient level
+      const relicLevel = this.player.upgradeLevels[evo.relic] || 0;
+      if (relicLevel >= evo.relicMinLevel) {
+        result.push(evo);
+      }
+    }
+    return result;
+  },
+
   triggerMimicReward() {
     this.state = 'chestReward';
     this.generateChestReward();
@@ -717,7 +749,32 @@ const Game = {
   selectChestReward(idx) {
     const choice = this.chestRewardChoices[idx];
     if (!choice) return;
-    if (choice.weaponId) {
+    if (choice.type === 'evolution') {
+      // weapon evolution: remove base weapon, add evolved weapon
+      const baseIdx = this.player.weapons.findIndex(w => w.id === choice.baseWeapon);
+      if (baseIdx >= 0) {
+        const baseWeapon = this.player.weapons[baseIdx];
+        const evolvedLevel = baseWeapon.level; // preserve weapon level
+        this.player.weapons.splice(baseIdx, 1);
+        this.player.addWeapon(choice.resultWeapon);
+        // restore level (addWeapon sets level=1 for new weapons)
+        const newWeapon = this.player.weapons[this.player.weapons.length - 1];
+        newWeapon.level = evolvedLevel;
+      }
+      this.addMessage('武器进化! ' + choice.name, '#e080ff');
+      Audio2.boss(); // dramatic sound for evolution
+      Game.shakeScreen(8, 0.3);
+      // evolution particles
+      for (let i = 0; i < 20; i++) {
+        const a = Math.random() * TAU;
+        const spd = rand(60, 160);
+        Game.particles.push(Game.particlePool.obtain(
+          this.player.x, this.player.y,
+          Math.cos(a) * spd, Math.sin(a) * spd,
+          '#e080ff', rand(0.4, 0.8), rand(3, 5)
+        ));
+      }
+    } else if (choice.weaponId) {
       this.player.addWeapon(choice.weaponId);
       this.addMessage('获得新武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#ffd040');
       if (!this.meta.unlockedWeapons.includes(choice.weaponId)) {
@@ -1991,8 +2048,16 @@ const Game = {
       ctx.textAlign = 'center';
       ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
 
+      // Evolution badge (top right) for evolution choices
+      if (choice.type === 'evolution') {
+        ctx.fillStyle = '#e080ff';
+        ctx.font = 'bold 10px Courier New';
+        ctx.textAlign = 'right';
+        ctx.fillText('★进化', cardX + cardW - 8, cardY + 16);
+      }
+
       // Level indicator (top right) for stat upgrades
-      if (!choice.weaponId && choice.maxLevel) {
+      if (!choice.weaponId && !choice.type && choice.maxLevel) {
         const curLevel = this.player.upgradeLevels[choice.id] || 0;
         ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
         ctx.font = '10px Courier New';
