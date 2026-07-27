@@ -304,6 +304,13 @@ const Audio2 = {
   ctx: null,
   enabled: true,
   hasUserInteracted: false,
+  // volume settings (0..1), synced from Game.settings via syncVolumes()
+  masterVolume: 0.5,
+  sfxVolume: 0.7,
+  musicVolume: 0.4,
+  // background music state
+  _musicNode: null,    // { osc, gain } for currently playing BGM
+  _musicGain: null,
 
   init() {
     try {
@@ -317,9 +324,25 @@ const Audio2 = {
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
   },
 
+  // copy volume settings from Game.settings
+  syncVolumes(settings) {
+    if (!settings) return;
+    this.masterVolume = settings.masterVolume ?? 0.5;
+    this.sfxVolume = settings.sfxVolume ?? 0.7;
+    this.musicVolume = settings.musicVolume ?? 0.4;
+    // update live music gain if playing
+    if (this._musicGain && this.ctx) {
+      this._musicGain.gain.setValueAtTime(this.musicVolume * this.masterVolume * 0.15, this.ctx.currentTime);
+    }
+  },
+
+  // effective SFX volume = master * sfx
+  _sfxVol(v) { return (v || 0.1) * this.masterVolume * this.sfxVolume; },
+
   play(type, freq, duration, volume) {
     if (!this.enabled || !this.ctx) return;
-    volume = volume || 0.1;
+    volume = this._sfxVol(volume);
+    if (volume < 0.001) return; // skip if essentially muted
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = type || 'square';
@@ -352,6 +375,59 @@ const Audio2 = {
   boss()   { this.play('sawtooth', 80, 0.5, 0.15); setTimeout(()=>this.play('sawtooth',60,0.5,0.12),200); },
   click()  { this.play('square', 600, 0.03, 0.05); },
   victory(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.play('sine',f,0.2,0.1),i*120)); },
+
+  // ---- Background music (simple looping oscillator pad) ----
+  // Plays a low drone with slow LFO modulation for atmospheric BGM.
+  startMusic(baseFreq) {
+    if (!this.enabled || !this.ctx) return;
+    this.stopMusic();
+    baseFreq = baseFreq || 110; // A2
+    const vol = this.musicVolume * this.masterVolume * 0.15;
+    if (vol < 0.001) return;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 1.0); // fade in
+    gain.connect(this.ctx.destination);
+    this._musicGain = gain;
+
+    // main drone oscillator
+    const osc = this.ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = baseFreq;
+    osc.connect(gain);
+    osc.start();
+    this._musicNode = osc;
+
+    // fifth harmonic for richness
+    const osc2 = this.ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = baseFreq * 1.5;
+    const gain2 = this.ctx.createGain();
+    gain2.gain.value = 0.4;
+    osc2.connect(gain2);
+    gain2.connect(gain);
+    osc2.start();
+    this._musicNode2 = osc2;
+
+    // slow LFO for tremolo effect
+    const lfo = this.ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.15;
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = vol * 0.3;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gain.gain);
+    lfo.start();
+    this._musicLfo = lfo;
+  },
+
+  stopMusic() {
+    if (this._musicNode) { try { this._musicNode.stop(); } catch(e){} this._musicNode = null; }
+    if (this._musicNode2) { try { this._musicNode2.stop(); } catch(e){} this._musicNode2 = null; }
+    if (this._musicLfo) { try { this._musicLfo.stop(); } catch(e){} this._musicLfo = null; }
+    if (this._musicGain) { try { this._musicGain.disconnect(); } catch(e){} this._musicGain = null; }
+  },
 };
 
 // ---- Random number generator (seeded, for map gen) ----

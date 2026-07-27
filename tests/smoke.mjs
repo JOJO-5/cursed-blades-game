@@ -99,4 +99,23 @@ pickup.vy = 0;
 pickup.update(0.1);
 assert.ok(pickup.x < 200, 'expanded pickup range should move a distant gem toward the player');
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction.`);
+// Verify upgrade prerequisite system
+const prereqUpgrades = config.UPGRADES.filter(u => u.prerequisite);
+assert.ok(prereqUpgrades.length >= 2, 'expected at least 2 upgrades with prerequisites');
+for (const u of prereqUpgrades) {
+  const prereq = config.UPGRADES.find(p => p.id === u.prerequisite);
+  assert.ok(prereq, `prerequisite '${u.prerequisite}' for upgrade '${u.id}' must reference an existing upgrade`);
+}
+
+// Verify settings defaults and audio volume properties exist in source
+const coreSource = readFileSync(path.join(jsDir, 'core.js'), 'utf8');
+assert.ok(coreSource.includes('masterVolume') && coreSource.includes('sfxVolume') && coreSource.includes('musicVolume'),
+  'Audio2 should define masterVolume, sfxVolume, musicVolume');
+assert.ok(coreSource.includes('syncVolumes'), 'Audio2 should have syncVolumes method');
+assert.ok(coreSource.includes('startMusic') && coreSource.includes('stopMusic'), 'Audio2 should have BGM methods');
+assert.ok(gameSource.includes('_settingsOverlay') && gameSource.includes('renderSettings'),
+  'Game should have settings overlay state and render method');
+assert.ok(gameSource.includes('openSettings') && gameSource.includes('closeSettings'),
+  'Game should have openSettings/closeSettings methods');
+
+console.log(`Smoke checks passed: ${resources.size} configured resources, 10 weapons, 20 upgrades, 17 enemies, 2 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay.`);

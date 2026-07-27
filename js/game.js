@@ -36,6 +36,10 @@ const Game = {
   upgradeChoices: [],
   chestRewardChoices: [],
 
+  // settings overlay state
+  _settingsOverlay: false,
+  _dragSlider: null,    // which slider is being dragged: 'master'|'sfx'|'music'|null
+
   // run statistics (persist across levels within a run, reset on new game)
   eliteKills: 0,
   bossKills: 0,
@@ -752,6 +756,9 @@ const Game = {
 
   // ---- Menu ----
   updateMenu() {
+    // settings overlay takes priority when open
+    if (this._settingsOverlay) { this.updateSettingsOverlay(); return; }
+
     // start button
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 300, 200, 50)) {
       this.startNewGame();
@@ -774,6 +781,17 @@ const Game = {
           Audio2.click();
         }
       }
+      // settings button
+      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 490, 200, 36)) {
+        this.openSettings();
+        Audio2.click();
+      }
+    } else {
+      // settings button (no save case)
+      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 370, 200, 36)) {
+        this.openSettings();
+        Audio2.click();
+      }
     }
     // decay confirmation timer
     if (this.resetConfirmTimer > 0) this.resetConfirmTimer -= 1/60;
@@ -781,6 +799,9 @@ const Game = {
 
   // ---- Pause ----
   updatePause() {
+    // settings overlay takes priority when open
+    if (this._settingsOverlay) { this.updateSettingsOverlay(); return; }
+
     if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
       this.state = 'playing';
       Audio2.click();
@@ -796,6 +817,11 @@ const Game = {
     }
     if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 340, 200, 45)) {
       this.state = 'menu';
+      Audio2.click();
+    }
+    // settings button
+    if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 400, 200, 45)) {
+      this.openSettings();
       Audio2.click();
     }
   },
@@ -1109,6 +1135,8 @@ const Game = {
         this.settings.sfxVolume = data.settings.sfxVolume ?? 0.7;
         this.settings.musicVolume = data.settings.musicVolume ?? 0.4;
       }
+      // sync Audio2 with loaded settings
+      Audio2.syncVolumes(this.settings);
     } catch(e) { console.warn('Load meta failed', e); }
   },
 
@@ -1254,6 +1282,7 @@ const Game = {
 
     if (this.state === 'menu') {
       this.renderMenu();
+      if (this._settingsOverlay) this.renderSettings();
     } else if (this.state === 'loading') {
       // loading screen handled by DOM
     } else {
@@ -1275,7 +1304,10 @@ const Game = {
       }
 
       if (this.state === 'story') this.renderStory();
-      if (this.state === 'paused') this.renderPause();
+      if (this.state === 'paused') {
+        this.renderPause();
+        if (this._settingsOverlay) this.renderSettings();
+      }
       if (this.state === 'levelup') this.renderLevelUp();
       if (this.state === 'chestReward') this.renderChestReward();
       if (this.state === 'gameover') this.renderGameOver();
@@ -1655,6 +1687,11 @@ const Game = {
       this.drawButton(CONFIG.CANVAS_W/2 - 100, 440, 200, 36,
         confirmActive ? '再次点击确认清除' : '重置存档',
         confirmActive ? '#ff6060' : '#6a4a3a');
+      // settings button
+      this.drawButton(CONFIG.CANVAS_W/2 - 100, 490, 200, 36, '设置', '#6a6a8a');
+    } else {
+      // settings button (no save case)
+      this.drawButton(CONFIG.CANVAS_W/2 - 100, 370, 200, 36, '设置', '#6a6a8a');
     }
 
     ctx.fillStyle = '#5a4a30';
@@ -1751,6 +1788,150 @@ const Game = {
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 220, 200, 45, '继续游戏', '#c4a87a');
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 280, 200, 45, '保存并退出', '#8aaa6a');
     this.drawButton(CONFIG.CANVAS_W/2 - 100, 340, 200, 45, '返回主菜单', '#aa6a4a');
+    this.drawButton(CONFIG.CANVAS_W/2 - 100, 400, 200, 45, '设置', '#6a6a8a');
+  },
+
+  // ---- Settings overlay ----
+  openSettings() {
+    this._settingsOverlay = true;
+    this._dragSlider = null;
+  },
+
+  closeSettings() {
+    this._settingsOverlay = false;
+    this._dragSlider = null;
+    // persist and apply
+    Audio2.syncVolumes(this.settings);
+    this.saveMeta();
+  },
+
+  // slider geometry helper
+  _getSliderRects() {
+    const cx = CONFIG.CANVAS_W / 2;
+    const trackW = 240;
+    const trackX = cx - trackW / 2;
+    const baseY = 220;
+    const gap = 60;
+    return [
+      { key: 'master', label: '主音量',  val: this.settings.masterVolume, x: trackX, y: baseY,             w: trackW },
+      { key: 'sfx',    label: '音效音量', val: this.settings.sfxVolume,    x: trackX, y: baseY + gap,       w: trackW },
+      { key: 'music',  label: '音乐音量', val: this.settings.musicVolume,  x: trackX, y: baseY + gap * 2,   w: trackW },
+    ];
+  },
+
+  updateSettingsOverlay() {
+    const sliders = this._getSliderRects();
+
+    // start dragging a slider
+    if (Input.mouse.clicked) {
+      for (const s of sliders) {
+        // clickable area: track + knob (expanded vertically for touch)
+        if (Input.isMouseInRect(s.x - 10, s.y - 12, s.w + 20, 24)) {
+          this._dragSlider = s.key;
+          Input.mouse.clicked = false;
+          break;
+        }
+      }
+      // back button
+      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 80, 420, 160, 40)) {
+        this.closeSettings();
+        Audio2.click();
+        return;
+      }
+    }
+
+    // while dragging, update value from mouse X
+    if (this._dragSlider && Input.mouse.down) {
+      const s = sliders.find(sl => sl.key === this._dragSlider);
+      if (s) {
+        const t = clamp((Input.mouse.x - s.x) / s.w, 0, 1);
+        this.settings[this._dragSlider + 'Volume'] = t;
+        Audio2.syncVolumes(this.settings);
+        // preview sound when adjusting sfx
+        if (this._dragSlider === 'sfx' && Math.random() < 0.15) Audio2.click();
+      }
+    } else {
+      this._dragSlider = null;
+    }
+
+    // ESC closes
+    if (Input.wasPressed('Escape')) {
+      this.closeSettings();
+      Audio2.click();
+    }
+  },
+
+  renderSettings() {
+    const ctx = this.ctx;
+    // dark overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+
+    // panel
+    const px = CONFIG.CANVAS_W/2 - 170;
+    const py = 150;
+    const pw = 340;
+    const ph = 320;
+    ctx.fillStyle = 'rgba(20,18,25,0.95)';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = '#6a6a8a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(px, py, pw, ph);
+
+    // title
+    ctx.fillStyle = '#a0a0d0';
+    ctx.font = 'bold 24px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('设置', CONFIG.CANVAS_W/2, py + 35);
+
+    // sliders
+    const sliders = this._getSliderRects();
+    for (const s of sliders) {
+      // label
+      ctx.fillStyle = '#c0c0d0';
+      ctx.font = '14px Courier New';
+      ctx.textAlign = 'left';
+      ctx.fillText(s.label, s.x, s.y - 8);
+
+      // value
+      ctx.fillStyle = '#8a8aaa';
+      ctx.font = '12px Courier New';
+      ctx.textAlign = 'right';
+      ctx.fillText(Math.round(s.val * 100) + '%', s.x + s.w, s.y - 8);
+
+      // track background
+      ctx.fillStyle = 'rgba(40,38,50,0.9)';
+      ctx.fillRect(s.x, s.y, s.w, 8);
+      ctx.strokeStyle = '#3a3a4a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(s.x, s.y, s.w, 8);
+
+      // filled portion
+      const fillW = s.w * s.val;
+      const isDragging = this._dragSlider === s.key;
+      ctx.fillStyle = isDragging ? '#a0a0ff' : '#6a6acc';
+      ctx.fillRect(s.x, s.y, fillW, 8);
+
+      // knob
+      const knobX = s.x + fillW;
+      const knobR = isDragging ? 10 : 8;
+      ctx.fillStyle = isDragging ? '#e0e0ff' : '#a0a0cc';
+      ctx.beginPath();
+      ctx.arc(knobX, s.y + 4, knobR, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = '#4a4a6a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // back button
+    this.drawButton(CONFIG.CANVAS_W/2 - 80, 420, 160, 40, '返回', '#6a6a8a');
+
+    // hint
+    ctx.fillStyle = '#5a5a6a';
+    ctx.font = '11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('拖动滑块调节音量  |  ESC 返回', CONFIG.CANVAS_W/2, 475);
   },
 
   isPortrait() {
