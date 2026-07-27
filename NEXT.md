@@ -194,9 +194,9 @@
 ### 6.6 存档系统完善
 - [x] 保存：等级/经验/HP/击杀/武器/属性/时间/关卡
 - [x] 保存：是否完成第一关（meta.levelsCompleted 记录已通关关卡，Boss击败时写入）
-- [ ] 保存：已解锁武器/升级/剧情
+- [x] 保存：已解锁武器/升级/剧情（selectUpgrade/selectChestReward 记录 unlockedWeapons/unlockedUpgrades，startStory 记录 seenStories）
 - [x] 保存：最高生存时间/等级/击杀数（metaKey 独立存储，updateMeta 在死亡时更新，失败页显示最高记录）
-- [ ] 保存：设置项（音量等）
+- [x] 保存：设置项（settings.masterVolume/sfxVolume/musicVolume 存入 metaKey）
 - [x] 读取失败时使用默认数据（loadAndContinue try/catch 回退 startNewGame）
 - [x] 存档字段增加后兼容旧版本（migrateSave 按版本号逐步迁移 v0→v3，字段容错 + 迁移逻辑）
 - [x] 提供重置存档入口（菜单"重置存档"按钮，二次确认机制）

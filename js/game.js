@@ -563,9 +563,21 @@ const Game = {
     if (choice.weaponId) {
       this.player.addWeapon(choice.weaponId);
       this.addMessage('获得武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#40c0ff');
+      // record unlocked weapon
+      if (!this.meta.unlockedWeapons.includes(choice.weaponId)) {
+        this.meta.unlockedWeapons.push(choice.weaponId);
+        this.saveMeta();
+      }
     } else if (choice.apply) {
       choice.apply(this.player);
-      if (!choice.isFallback) this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+      if (!choice.isFallback) {
+        this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+        // record unlocked upgrade
+        if (!this.meta.unlockedUpgrades.includes(choice.id)) {
+          this.meta.unlockedUpgrades.push(choice.id);
+          this.saveMeta();
+        }
+      }
       this.addMessage(choice.name, '#c0c0ff');
     }
     Audio2.click();
@@ -643,9 +655,19 @@ const Game = {
     if (choice.weaponId) {
       this.player.addWeapon(choice.weaponId);
       this.addMessage('获得新武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#ffd040');
+      if (!this.meta.unlockedWeapons.includes(choice.weaponId)) {
+        this.meta.unlockedWeapons.push(choice.weaponId);
+        this.saveMeta();
+      }
     } else if (choice.apply) {
       choice.apply(this.player);
-      if (!choice.isFallback) this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+      if (!choice.isFallback) {
+        this.player.upgradeLevels[choice.id] = (this.player.upgradeLevels[choice.id] || 0) + 1;
+        if (!this.meta.unlockedUpgrades.includes(choice.id)) {
+          this.meta.unlockedUpgrades.push(choice.id);
+          this.saveMeta();
+        }
+      }
     }
     Audio2.click();
     this.state = 'playing';
@@ -681,6 +703,14 @@ const Game = {
     this.storyComplete = onComplete;
     this.state = 'story';
     this.storyTimer = 0;
+    // record seen story for this level theme
+    if (this.levelData && this.levelData.theme) {
+      const storyKey = this.levelData.theme + '_story_' + (this.storyComplete ? 'victory' : 'intro');
+      if (!this.meta.seenStories.includes(storyKey)) {
+        this.meta.seenStories.push(storyKey);
+        this.saveMeta();
+      }
+    }
   },
 
   updateStory(dt) {
@@ -1035,6 +1065,13 @@ const Game = {
     seenStories: [],
   },
 
+  // ---- Settings (persisted in meta) ----
+  settings: {
+    masterVolume: 0.5,
+    sfxVolume: 0.7,
+    musicVolume: 0.4,
+  },
+
   loadMeta() {
     try {
       const raw = localStorage.getItem(this.metaKey);
@@ -1047,12 +1084,19 @@ const Game = {
       this.meta.unlockedWeapons = data.unlockedWeapons || ['sword'];
       this.meta.unlockedUpgrades = data.unlockedUpgrades || [];
       this.meta.seenStories = data.seenStories || [];
+      // load settings
+      if (data.settings) {
+        this.settings.masterVolume = data.settings.masterVolume ?? 0.5;
+        this.settings.sfxVolume = data.settings.sfxVolume ?? 0.7;
+        this.settings.musicVolume = data.settings.musicVolume ?? 0.4;
+      }
     } catch(e) { console.warn('Load meta failed', e); }
   },
 
   saveMeta() {
     try {
-      localStorage.setItem(this.metaKey, JSON.stringify(this.meta));
+      const data = Object.assign({}, this.meta, { settings: this.settings });
+      localStorage.setItem(this.metaKey, JSON.stringify(data));
     } catch(e) { console.warn('Save meta failed', e); }
   },
 
