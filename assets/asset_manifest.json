@@ -1287,21 +1287,21 @@
       },
       "animation": null
     },
-    "bosses/dark_knight_idle_01": {
-      "id": "bosses/dark_knight_idle_01",
+    "bosses/dark_knight_flame_idle_01": {
+      "id": "bosses/dark_knight_flame_idle_01",
       "name": "无头骑士 Idle",
       "category": "bosses",
-      "path": "assets/bosses/dark_knight_idle_01.png",
+      "path": "assets/bosses/dark_knight_flame_idle_01.png",
       "w": 64,
       "h": 64,
       "anchor": { "x": 0.5, "y": 0.5 },
       "animation": "idle"
     },
-    "bosses/dark_knight_attack_01": {
-      "id": "bosses/dark_knight_attack_01",
+    "bosses/dark_knight_flame_attack_01": {
+      "id": "bosses/dark_knight_flame_attack_01",
       "name": "无头骑士 Attack",
       "category": "bosses",
-      "path": "assets/bosses/dark_knight_attack_01.png",
+      "path": "assets/bosses/dark_knight_flame_attack_01.png",
       "w": 64,
       "h": 64,
       "anchor": { "x": 0.5, "y": 0.5 },

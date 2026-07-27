@@ -355,11 +355,11 @@
     "w": 116,
     "h": 160
   },
-  "bosses/dark_knight_idle_01": {
+  "bosses/dark_knight_flame_idle_01": {
     "w": 64,
     "h": 64
   },
-  "bosses/dark_knight_attack_01": {
+  "bosses/dark_knight_flame_attack_01": {
     "w": 64,
     "h": 64
   },
