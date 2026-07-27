@@ -706,7 +706,20 @@ const Game = {
         this.loadAndContinue();
         Audio2.click();
       }
+      // reset save button (with confirmation)
+      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 440, 200, 36)) {
+        if (this.resetConfirmTimer > 0) {
+          this.resetSave();
+          this.addMessage('存档已清除', '#ff6060');
+          Audio2.click();
+        } else {
+          this.resetConfirmTimer = 3;
+          Audio2.click();
+        }
+      }
     }
+    // decay confirmation timer
+    if (this.resetConfirmTimer > 0) this.resetConfirmTimer -= 1/60;
   },
 
   // ---- Pause ----
@@ -988,6 +1001,13 @@ const Game = {
     try {
       return localStorage.getItem(this.saveKey) !== null;
     } catch(e) { return false; }
+  },
+
+  resetSave() {
+    try {
+      localStorage.removeItem(this.saveKey);
+    } catch(e) { console.warn('Reset save failed', e); }
+    this.resetConfirmTimer = 0;
   },
 
   loadAndContinue() {
@@ -1513,6 +1533,11 @@ const Game = {
     // continue button
     if (this.hasSave()) {
       this.drawButton(CONFIG.CANVAS_W/2 - 100, 370, 200, 50, '继续游戏', '#8aaa6a');
+      // reset save button with confirmation state
+      const confirmActive = this.resetConfirmTimer > 0;
+      this.drawButton(CONFIG.CANVAS_W/2 - 100, 440, 200, 36,
+        confirmActive ? '再次点击确认清除' : '重置存档',
+        confirmActive ? '#ff6060' : '#6a4a3a');
     }
 
     ctx.fillStyle = '#5a4a30';
