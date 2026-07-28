@@ -6,6 +6,7 @@
 class Player {
   constructor(x, y) {
     this.x = x; this.y = y;
+    this.radius = CONFIG.PLAYER.radius;
     this.vx = 0; this.vy = 0;
     this.facing = 0; // angle
     this.moveAngle = 0;

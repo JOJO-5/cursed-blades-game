@@ -235,6 +235,12 @@ const playerContext = {
 };
 vm.runInNewContext(`${entitiesSource}\nglobalThis.__Player__ = Player;\nglobalThis.__Enemy__ = Enemy;`, playerContext, { filename: 'js/entities.js' });
 const player = new playerContext.__Player__(9999, 9999);
+assert.equal(player.radius, config.PLAYER.radius, 'player should expose a collision radius for prop collision');
+const playerNearRectProp = new playerContext.__Player__(200, 200);
+game.collisionProps = [{ x: 100, y: 100, radius: 24, halfW: 24, halfH: 24 }];
+game.resolvePropCollision(playerNearRectProp);
+assert.ok(Number.isFinite(playerNearRectProp.x) && Number.isFinite(playerNearRectProp.y),
+  'rectangular prop collision should not corrupt player coordinates');
 player.weapons = [];
 player.update(0);
 assert.ok(player.x <= config.LEVELS.mine.mapW * config.TILE_SIZE - 30, 'player x should clamp to active mine map width');
