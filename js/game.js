@@ -25,6 +25,7 @@ const Game = {
   eliteTimer: 0,
   bossSpawned: false,
   bossDefeated: false,
+  bossDefeatedGraceTimer: 0,
   levelData: null,
   mapData: null,
   propPositions: [],
@@ -1048,8 +1049,10 @@ const Game = {
     this.eliteTimer = 0;
     this.bossSpawned = false;
     this.bossDefeated = false;
+    this.bossDefeatedGraceTimer = 0;
     this.currentPhase = -1;
     this.triggeredPhases = {};
+    this.pendingMimicStory = false;
     this.damageVignette = 0;
     this.eliteKills = 0;
     this.bossKills = 0;
@@ -1070,6 +1073,9 @@ const Game = {
     this.bossSpawned = false;
     this.bossDefeated = false;
     this.bossDefeatedGraceTimer = 0;
+    this.currentPhase = -1;
+    this.triggeredPhases = {};
+    this.pendingMimicStory = false;
     this.enemies = [];
     this.projectiles = [];
     this.enemyProjectiles = [];
@@ -1088,17 +1094,33 @@ const Game = {
 
     this.generateMap();
     // spawn initial chests
-    for (let i = 0; i < this.levelData.chestCount; i++) {
-      const x = rand(200, this.levelData.mapW * CONFIG.TILE_SIZE - 200);
-      const y = rand(200, this.levelData.mapH * CONFIG.TILE_SIZE - 200);
-      this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', 0));
-    }
+    this.spawnInitialChests();
 
     // start gameplay BGM (resumes from menu/victory)
     Audio2.playMusic('gameplay');
     // start story
     const storyLines = CONFIG.STORY[this.levelData.theme].intro;
     this.startStory(storyLines, () => { this.state = 'playing'; });
+  },
+
+  spawnInitialChests() {
+    for (let i = 0; i < this.levelData.chestCount; i++) {
+      const x = rand(200, this.levelData.mapW * CONFIG.TILE_SIZE - 200);
+      const y = rand(200, this.levelData.mapH * CONFIG.TILE_SIZE - 200);
+      this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', 0));
+    }
+  },
+
+  inferTriggeredPhases(levelTime, bossAlreadyHandled) {
+    const triggered = {};
+    const phases = this.levelData && this.levelData.phases ? this.levelData.phases : [];
+    for (let i = 0; i < phases.length; i++) {
+      if (levelTime < phases[i].time) continue;
+      const hasBossEvent = (phases[i].events || []).some(ev => ev.type === 'boss');
+      if (hasBossEvent && !bossAlreadyHandled) continue;
+      triggered[i] = true;
+    }
+    return triggered;
   },
 
   // ---- Map generation ----
@@ -1193,6 +1215,10 @@ const Game = {
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
     const cx = mapW * ts / 2, cy = mapH * ts / 2;
+    const wallCollisionProps = [];
+    const addWallCollision = (x, y) => {
+      wallCollisionProps.push({ type: 'wall', x, y, category: 'wall', radius: ts * 0.45 });
+    };
 
     // draw wall tiles around map border and as interior wall segments (mine/cave themes)
     const wallTiles = this.levelData.wallTiles;
@@ -1203,6 +1229,8 @@ const Game = {
         for (let tx = 0; tx < mapW; tx++) {
           const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
           const img = Assets.get(wt);
+          addWallCollision(tx * ts + ts / 2, by * ts + ts / 2);
+          addWallCollision(tx * ts + ts / 2, (mapH - 1 - by) * ts + ts / 2);
           if (img && img.complete) {
             gctx.globalAlpha = 0.7 + rng() * 0.3;
             gctx.drawImage(img, tx * ts - 4, by * ts - 6, ts + 8, ts + 8);
@@ -1215,6 +1243,8 @@ const Game = {
         for (let ty = borderThick; ty < mapH - borderThick; ty++) {
           const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
           const img = Assets.get(wt);
+          addWallCollision(bx * ts + ts / 2, ty * ts + ts / 2);
+          addWallCollision((mapW - 1 - bx) * ts + ts / 2, ty * ts + ts / 2);
           if (img && img.complete) {
             gctx.globalAlpha = 0.7 + rng() * 0.3;
             gctx.drawImage(img, bx * ts - 6, ty * ts - 4, ts + 8, ts + 8);
@@ -1232,11 +1262,14 @@ const Game = {
         for (let j = 0; j < segLen; j++) {
           const wt = wallTiles[Math.floor(rng() * wallTiles.length)];
           const img = Assets.get(wt);
+          const wx = horiz ? (startX + j) * ts : startX * ts;
+          const wy = horiz ? startY * ts : (startY + j) * ts;
+          const wallX = wx + ts / 2;
+          const wallY = wy + ts / 2;
+          // skip if too close to player spawn
+          if (dist(wallX, wallY, cx, cy) < 100) continue;
+          addWallCollision(wallX, wallY);
           if (img && img.complete) {
-            const wx = horiz ? (startX + j) * ts : startX * ts;
-            const wy = horiz ? startY * ts : (startY + j) * ts;
-            // skip if too close to player spawn
-            if (dist(wx, wy, cx, cy) < 100) continue;
             gctx.globalAlpha = 0.5 + rng() * 0.4;
             gctx.drawImage(img, wx - 4, wy - 4, ts + 8, ts + 8);
           }
@@ -1302,7 +1335,7 @@ const Game = {
 
     this.mapData.props = propList;
     // build collision list (only solid props)
-    this.collisionProps = propList.filter(p => p.radius > 0);
+    this.collisionProps = propList.filter(p => p.radius > 0).concat(wallCollisionProps);
     // sort by Y for proper depth
     this.mapData.props.sort((a, b) => a.y - b.y);
   },
@@ -1368,6 +1401,18 @@ const Game = {
       eliteTimer: this.eliteTimer,
       bossSpawned: this.bossSpawned,
       bossDefeated: this.bossDefeated,
+      bossDefeatedGraceTimer: this.bossDefeatedGraceTimer,
+      currentPhase: this.currentPhase,
+      triggeredPhases: this.triggeredPhases,
+      eliteKills: this.eliteKills,
+      bossKills: this.bossKills,
+      chestsOpened: this.chestsOpened,
+      pickups: this.pickups
+        .filter(p => p.alive)
+        .map(p => ({
+          x: p.x, y: p.y, type: p.type, sprite: p.sprite, value: p.value,
+          life: p.life, magnetized: p.magnetized,
+        })),
     };
     try {
       localStorage.setItem(this.saveKey, JSON.stringify(data));
@@ -1454,9 +1499,18 @@ const Game = {
       const raw = localStorage.getItem(this.saveKey);
       if (!raw) { this.startNewGame(); return; }
       const data = this.migrateSave(JSON.parse(raw));
-      this.startNewGame();
       const levelId = CONFIG.LEVELS[data.levelId] ? data.levelId : 'village';
       this.levelData = CONFIG.LEVELS[levelId];
+      this.player = new Player(this.levelData.mapW * CONFIG.TILE_SIZE / 2, this.levelData.mapH * CONFIG.TILE_SIZE / 2);
+      this.enemies = [];
+      this.projectiles = [];
+      this.enemyProjectiles = [];
+      this.pickups = [];
+      this.particles = [];
+      this.damageNumbers = [];
+      this.messages = [];
+      this.minions = [];
+      this.damageVignette = 0;
       this.player.level = data.level ?? 1;
       this.player.xp = data.xp ?? 0;
       this.player.xpToNext = CONFIG.XP_CURVE[Math.min(this.player.level - 1, CONFIG.XP_CURVE.length - 1)] || 9999;
@@ -1466,16 +1520,19 @@ const Game = {
       this.player.kills = data.kills ?? 0;
       this.player.upgradeLevels = data.upgradeLevels || {};
       if (data.playerPosition) {
-        this.player.x = clamp(data.playerPosition.x ?? this.player.x, 0, CONFIG.MAP_W * CONFIG.TILE_SIZE);
-        this.player.y = clamp(data.playerPosition.y ?? this.player.y, 0, CONFIG.MAP_H * CONFIG.TILE_SIZE);
+        this.player.x = clamp(data.playerPosition.x ?? this.player.x, 30, this.levelData.mapW * CONFIG.TILE_SIZE - 30);
+        this.player.y = clamp(data.playerPosition.y ?? this.player.y, 30, this.levelData.mapH * CONFIG.TILE_SIZE - 30);
       }
       this.levelTime = data.levelTime ?? 0;
       this.spawnTimer = data.spawnTimer ?? 1;
       this.eliteTimer = data.eliteTimer ?? 0;
       this.bossDefeated = !!data.bossDefeated;
-      // A save may claim its boss spawned while the boss entity itself was not
-      // persisted. Re-spawn it when the timer has passed, unless it was defeated.
-      this.bossSpawned = !!data.bossDefeated;
+      this.bossDefeatedGraceTimer = data.bossDefeatedGraceTimer ?? 0;
+      this.currentPhase = data.currentPhase ?? -1;
+      this.triggeredPhases = data.triggeredPhases || this.inferTriggeredPhases(this.levelTime, !!data.bossSpawned || !!data.bossDefeated);
+      this.eliteKills = data.eliteKills ?? 0;
+      this.bossKills = data.bossKills ?? 0;
+      this.chestsOpened = data.chestsOpened ?? 0;
       // load weapons
       this.player.weapons = [];
       if (data.weapons) {
@@ -1485,10 +1542,36 @@ const Game = {
           if (wobj) wobj.level = w.level;
         }
       }
-      if (this.levelData) {
-        const cb = () => { this.state = 'playing'; };
-        this.startStory(CONFIG.STORY[this.levelData.theme].intro, cb);
+      if (this.player.weapons.length === 0) this.player.addWeapon('sword');
+      this.generateMap();
+      if (Array.isArray(data.pickups)) {
+        for (const p of data.pickups) {
+          const pickup = this.pickupPool.obtain(p.x, p.y, p.type, p.sprite, p.value);
+          pickup.life = p.life ?? pickup.life;
+          pickup.magnetized = !!p.magnetized;
+          pickup.vx = 0;
+          pickup.vy = 0;
+          this.pickups.push(pickup);
+        }
+      } else {
+        this.spawnInitialChests();
       }
+      if (data.bossSpawned && !data.bossDefeated) {
+        const bossId = this.levelData.bossId || 'boss';
+        const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+        const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+        const bossX = clamp(this.player.x + 200, 50, mapW - 50);
+        const bossY = clamp(this.player.y, 50, mapH - 50);
+        this.enemies.push(new Enemy(bossId, bossX, bossY));
+        this.bossSpawned = true;
+        Audio2.playMusic('boss');
+      } else {
+        this.bossSpawned = !!data.bossDefeated;
+        Audio2.playMusic('gameplay');
+      }
+      this.camera.x = clamp(this.player.x - CONFIG.CANVAS_W / 2, 0, Math.max(0, this.levelData.mapW * CONFIG.TILE_SIZE - CONFIG.CANVAS_W));
+      this.camera.y = clamp(this.player.y - CONFIG.CANVAS_H / 2, 0, Math.max(0, this.levelData.mapH * CONFIG.TILE_SIZE - CONFIG.CANVAS_H));
+      this.state = 'playing';
     } catch(e) {
       console.error('Load failed', e);
       this.startNewGame();

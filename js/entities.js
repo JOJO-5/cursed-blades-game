@@ -183,9 +183,10 @@ class Player {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // clamp to map
-    const mapW = CONFIG.MAP_W * CONFIG.TILE_SIZE;
-    const mapH = CONFIG.MAP_H * CONFIG.TILE_SIZE;
+    // clamp to current level bounds
+    const levelData = Game.levelData || {};
+    const mapW = (levelData.mapW || CONFIG.MAP_W) * CONFIG.TILE_SIZE;
+    const mapH = (levelData.mapH || CONFIG.MAP_H) * CONFIG.TILE_SIZE;
     this.x = clamp(this.x, 30, mapW - 30);
     this.y = clamp(this.y, 30, mapH - 30);
 
@@ -218,8 +219,14 @@ class Player {
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    // use main sprite (animation frames are placeholder color blocks)
-    const spriteKey = 'player/hero';
+    let spriteKey = 'player/hero';
+    const frameRate = this.isMoving ? 8 : 3;
+    const frame = Math.floor(this.animTime * frameRate) % 2 + 1;
+    const candidate = this.isMoving ? `player/hero_move_0${frame}` : `player/hero_idle_0${frame}`;
+    const candidateImg = Assets.get(candidate);
+    if (candidateImg && candidateImg.complete && candidateImg.width > 0) {
+      spriteKey = candidate;
+    }
     Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
 
     // hit flash overlay (red tint on sprite)
@@ -1741,8 +1748,19 @@ class Enemy {
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'source-over';
     }
-    // use main sprite (animation frames are placeholder color blocks)
-    const spriteKey = this.def.sprite;
+    let spriteKey = this.def.sprite;
+    let animCandidate = null;
+    if (this.isBoss) {
+      const attacking = this.bossState === 'windup' || this.bossState === 'attack' || this.bossState === 'charging';
+      animCandidate = `${this.def.sprite}_${attacking ? 'attack' : 'idle'}_01`;
+    } else {
+      const frame = Math.floor(this.animTime * 4) % 2 + 1;
+      animCandidate = `${this.def.sprite}_idle_0${frame}`;
+    }
+    const animImg = Assets.get(animCandidate);
+    if (animImg && animImg.complete && animImg.width > 0) {
+      spriteKey = animCandidate;
+    }
     Assets.drawCentered(ctx, spriteKey, this.x, this.y + bob, scale, 0, 1);
 
     // hit flash overlay - use collision radius so it matches enemy size

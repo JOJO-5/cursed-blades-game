@@ -112,6 +112,118 @@ pickup.vy = 0;
 pickup.update(0.1);
 assert.ok(pickup.x < 200, 'expanded pickup range should move a distant gem toward the player');
 
+// Regression: player bounds must use the active level dimensions, not only the
+// original global village map dimensions.
+const playerContext = {
+  CONFIG: config,
+  Game: {
+    levelData: config.LEVELS.mine,
+    resolvePropCollision() {},
+    enemyGrid: { query: () => [] },
+  },
+  Input: {
+    joystick: { active: false, dx: 0, dy: 0 },
+    dashButton: { pressed: false },
+    isDown: () => false,
+    wasPressed: () => false,
+  },
+  Audio2: { play() {}, hurt() {}, death() {}, hitMaterial() {} },
+  Assets: { get: () => ({ complete: true, width: 16, height: 16 }), drawCentered() {} },
+  Math,
+  TAU: Math.PI * 2,
+  clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
+  rand: (min, max) => min + (max - min) * 0.5,
+  dist: (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay),
+  angleTo: (ax, ay, bx, by) => Math.atan2(by - ay, bx - ax),
+  normalizeAngle: (a) => a,
+};
+vm.runInNewContext(`${entitiesSource}\nglobalThis.__Player__ = Player;`, playerContext, { filename: 'js/entities.js' });
+const player = new playerContext.__Player__(9999, 9999);
+player.weapons = [];
+player.update(0);
+assert.ok(player.x <= config.LEVELS.mine.mapW * config.TILE_SIZE - 30, 'player x should clamp to active mine map width');
+assert.ok(player.y <= config.LEVELS.mine.mapH * config.TILE_SIZE - 30, 'player y should clamp to active mine map height');
+
+// Regression: continuing a non-village save should rebuild that level directly,
+// preserve phase trigger state, and create collision bodies for rendered walls.
+const fakeCanvasContext = {
+  imageSmoothingEnabled: false,
+  globalAlpha: 1,
+  fillStyle: '',
+  fillRect() {},
+  drawImage() {},
+  beginPath() {},
+  ellipse() {},
+  fill() {},
+  createLinearGradient() { return { addColorStop() {} }; },
+};
+const savedRun = {
+  schemaVersion: game.saveSchemaVersion,
+  levelId: 'hell',
+  level: 7,
+  xp: 12,
+  hp: 88,
+  kills: 42,
+  weapons: [{ id: 'sword', level: 3 }],
+  stats: {},
+  upgradeLevels: { damage: 2 },
+  levelTime: 350,
+  playerPosition: { x: 1900, y: 1900 },
+  spawnTimer: 1.5,
+  eliteTimer: 10,
+  bossSpawned: false,
+  bossDefeated: false,
+  triggeredPhases: { 0: true, 1: true, 2: true },
+  pickups: [{ x: 400, y: 400, type: 'chest', sprite: 'chest', value: 0, life: 20 }],
+};
+Object.assign(gameContext, {
+  document: { createElement: () => ({ width: 0, height: 0, getContext: () => fakeCanvasContext }) },
+  Assets: { get: () => ({ complete: true, width: 48, height: 48, naturalWidth: 48 }) },
+  Audio2: { playMusic() {} },
+  localStorage: { getItem: () => JSON.stringify(savedRun) },
+  Player: class {
+    constructor(x, y) {
+      this.x = x; this.y = y; this.level = 1; this.xp = 0; this.xpToNext = config.XP_CURVE[0];
+      this.hp = config.PLAYER.maxHp; this.kills = 0; this.alive = true; this.weapons = [];
+      this.stats = {
+        damageMult: 1, attackSpeedMult: 1, rotateSpeedMult: 1, rangeMult: 1, moveSpeedMult: 1,
+        pierceBonus: 0, critChanceBonus: 0, weaponCountBonus: 0, maxHpBonus: 0, regenBonus: 0,
+        critMultBonus: 0, cooldownMult: 1, projectileSpeedMult: 1, knockbackMult: 1,
+        pickupRangeBonus: 0, dashCooldownMult: 1, armor: 0, luck: 0, xpMult: 1, lifesteal: 0,
+      };
+      this.upgradeLevels = {};
+    }
+    addWeapon(id) { this.weapons.push({ id, level: 1, def: config.WEAPONS[id] }); }
+    getMaxHp() { return config.PLAYER.maxHp + this.stats.maxHpBonus; }
+  },
+  Enemy: class {
+    constructor(type, x, y) { this.type = type; this.x = x; this.y = y; this.alive = true; this.isBoss = true; }
+  },
+  makeRNG: (seed) => {
+    let s = seed;
+    return () => {
+      s = (s * 1103515245 + 12345) & 0x7fffffff;
+      return s / 0x7fffffff;
+    };
+  },
+  rand: (min, max) => min + (max - min) * 0.5,
+  dist: (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay),
+  clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
+  TAU: Math.PI * 2,
+});
+game.pickupPool = {
+  obtain: (x, y, type, sprite, value) => ({
+    x, y, type, sprite, value, alive: true, life: 30, magnetized: false, vx: 0, vy: 0,
+  }),
+};
+game.startNewGame = () => { throw new Error('loadAndContinue should not boot the village level first'); };
+game.loadAndContinue();
+assert.equal(game.levelData.theme, 'hell', 'continue should restore the saved level');
+assert.ok(game.collisionProps.some(p => p.category === 'wall'), 'generated wall tiles should have collision bodies');
+assert.ok(game.player.y <= config.LEVELS.hell.mapH * config.TILE_SIZE - 30, 'continued position should clamp to saved level bounds');
+assert.equal(game.pickups.length, 1, 'continue should restore saved pickups instead of respawning initial chests');
+assert.deepEqual(JSON.parse(JSON.stringify(game.triggeredPhases)), savedRun.triggeredPhases, 'continue should preserve triggered phase state');
+
 // Verify upgrade prerequisite system
 const prereqUpgrades = config.UPGRADES.filter(u => u.prerequisite);
 assert.ok(prereqUpgrades.length >= 2, 'expected at least 2 upgrades with prerequisites');
@@ -309,4 +421,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

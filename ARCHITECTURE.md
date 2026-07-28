@@ -19,11 +19,12 @@ index.html
   ├── js/config.js    → 全局 CONFIG 对象
   ├── js/core.js      → 依赖 CONFIG；定义 Input, Assets, Audio2, makeRNG, 数学函数
   ├── js/entities.js  → 依赖 CONFIG, Input, Assets, Audio2, Game；定义所有实体类
-  ├── js/game.js      → 依赖 CONFIG, Input, Assets, Audio2, 所有实体类；定义 Game 对象
+  ├── js/story.js     → 依赖 CONFIG；定义 StoryUI 剧情渲染模块
+  ├── js/game.js      → 依赖 CONFIG, Input, Assets, Audio2, StoryUI, 所有实体类；定义 Game 对象
   └── js/main.js      → 依赖 Game；DOMContentLoaded 时调用 Game.init()
 ```
 
-加载顺序：config → core → entities → game → main
+加载顺序：config → core → entities → story → game → main
 
 ## 核心系统
 
@@ -95,11 +96,11 @@ index.html
 | 画布/地图配置 | `CONFIG.CANVAS_W/H`, `MAP_W/H`, `TILE_SIZE` | 固定参数 |
 | 玩家属性 | `CONFIG.PLAYER` | 基础移速、生命、拾取范围、闪避参数 |
 | 经验曲线 | `CONFIG.XP_CURVE` | 20级经验表 |
-| 武器定义 | `CONFIG.WEAPONS` | 10种武器，每种含伤害/范围/速度/暴击等 |
-| 升级池 | `CONFIG.UPGRADES` | 10种升级，每种含apply函数 |
-| 武器解锁 | `CONFIG.WEAPON_UNLOCKS` | 9种武器解锁选项 |
-| 敌人定义 | `CONFIG.ENEMIES` | 12种敌人，含HP/速度/伤害/AI行为 |
-| 关卡定义 | `CONFIG.LEVELS` | 1个关卡（荒废村庄），含刷怪池/精英池/Boss时间 |
+| 武器定义 | `CONFIG.WEAPONS` | 38种武器，每种含伤害/范围/速度/暴击等 |
+| 升级池 | `CONFIG.UPGRADES` | 20种升级，每种含apply函数 |
+| 武器解锁 | `CONFIG.WEAPON_UNLOCKS` | 多种武器解锁选项 |
+| 敌人定义 | `CONFIG.ENEMIES` | 31种敌人，含HP/速度/伤害/AI行为 |
+| 关卡定义 | `CONFIG.LEVELS` | 3个关卡（荒废村庄、地下矿洞、地狱熔渊），含阶段刷怪、精英池、Boss时间 |
 | 剧情文本 | `CONFIG.STORY` | 3组剧情（开场/Boss出现/通关） |
 
 ## 渲染流程
@@ -135,14 +136,14 @@ render()
 
 - 地面tile预渲染到离屏Canvas（`groundTileCache`），每帧只drawImage一次
 - 场景物件视锥裁剪（只绘制屏幕可见区域）
-- 实体通过 `alive` 标志 + `filter()` 回收，避免频繁GC
-- `separateEnemies()` O(n²) 分离，当前 maxEnemies=25 可接受
+- Projectile/Pickup/Particle/DamageNumber 等热路径对象使用 `ObjectPool` 复用，减少GC压力
+- 敌人碰撞查询使用 `SpatialGrid` 做 broad phase，`separateEnemies()` 仅处理屏幕附近敌人
 - `dt` 上限 0.05s，防止帧率波动导致物理穿越
 
 ## 已知限制
 
-- 无对象池（依赖GC回收，高数量时可能GC卡顿）
-- 敌人碰撞分离 O(n²)，100+敌人时需优化为空间分区
+- 敌人/召唤物本体仍直接 new，极端数量下仍需继续压测
+- `separateEnemies()` 仍是局部 O(n²)，高密度同屏敌人时还可继续优化
 - 武器hitSet使用Set，清理策略简单（>200条目时全清）
-- 无帧动画系统，仅使用静态图+浮动/缩放模拟动态
+- 帧动画仍是轻量硬编码接入，尚未抽象成统一 animation clip 系统
 - 无正式音频文件，全部使用WebAudio程序生成音调
