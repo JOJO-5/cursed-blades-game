@@ -8,10 +8,17 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const jsDir = path.join(root, 'js');
 const manifest = JSON.parse(readFileSync(path.join(root, 'assets/manifest.json'), 'utf8'));
+const indexSource = readFileSync(path.join(root, 'index.html'), 'utf8');
 
 for (const file of readdirSync(jsDir).filter((name) => name.endsWith('.js'))) {
   execFileSync(process.execPath, ['--check', path.join(jsDir, file)], { stdio: 'pipe' });
 }
+
+assert.ok(!indexSource.includes('?v=19'), 'index.html should not use the stale v=19 JS cache-buster');
+const scriptVersions = [...indexSource.matchAll(/<script src="js\/[^"]+\.js\?v=([^"]+)"><\/script>/g)].map(m => m[1]);
+assert.equal(scriptVersions.length, readdirSync(jsDir).filter((name) => name.endsWith('.js')).length,
+  'index.html should load every JS entry with an explicit cache-buster');
+assert.equal(new Set(scriptVersions).size, 1, 'all JS entry scripts should share the same cache-buster version');
 
 const configSource = readFileSync(path.join(jsDir, 'config.js'), 'utf8');
 const context = {};
