@@ -544,6 +544,11 @@ const Game = {
   resolvePropCollision(entity) {
     if (!this.collisionProps || this.collisionProps.length === 0) return;
     for (const prop of this.collisionProps) {
+      if (prop.halfW && prop.halfH) {
+        this.resolveRectPropCollision(entity, prop);
+        continue;
+      }
+
       let dx = entity.x - prop.x;
       let dy = entity.y - prop.y;
       const minDist = entity.radius + prop.radius;
@@ -563,6 +568,46 @@ const Game = {
         entity.y += dy * push;
       }
     }
+  },
+
+  resolveRectPropCollision(entity, prop) {
+    const cx = prop.collisionX ?? prop.x;
+    const cy = prop.collisionY ?? prop.y;
+    const left = cx - prop.halfW;
+    const right = cx + prop.halfW;
+    const top = cy - prop.halfH;
+    const bottom = cy + prop.halfH;
+
+    if (entity.x >= left && entity.x <= right && entity.y >= top && entity.y <= bottom) {
+      const distLeft = entity.x - left;
+      const distRight = right - entity.x;
+      const distTop = entity.y - top;
+      const distBottom = bottom - entity.y;
+      const minSide = Math.min(distLeft, distRight, distTop, distBottom);
+
+      if (minSide === distLeft) entity.x = left - entity.radius;
+      else if (minSide === distRight) entity.x = right + entity.radius;
+      else if (minSide === distTop) entity.y = top - entity.radius;
+      else entity.y = bottom + entity.radius;
+      return;
+    }
+
+    const closestX = clamp(entity.x, left, right);
+    const closestY = clamp(entity.y, top, bottom);
+    let dx = entity.x - closestX;
+    let dy = entity.y - closestY;
+    let d2 = dx * dx + dy * dy;
+    if (d2 >= entity.radius * entity.radius) return;
+
+    if (d2 <= 0.001) {
+      dx = 1;
+      dy = 0;
+      d2 = 1;
+    }
+    const d = Math.sqrt(d2);
+    const push = (entity.radius - d) / d;
+    entity.x += dx * push;
+    entity.y += dy * push;
   },
 
   clampEntityToMap(entity, marginOverride) {
@@ -588,17 +633,21 @@ const Game = {
   },
 
   getPropCollisionRadius(categoryKey, type) {
+    return this.getPropCollisionFootprint(categoryKey, type).radius;
+  },
+
+  getPropCollisionFootprint(categoryKey, type) {
     const base = CONFIG.PROP_COLLISION[categoryKey] || 0;
-    if (base <= 0) return 0;
+    if (base <= 0) return { radius: 0 };
 
     const img = Assets.get(type);
-    if (!img || !img.width || !img.height) return base;
+    if (!img || !img.width || !img.height) return { radius: base };
 
     const visualScale = 0.8;
-    const minDim = Math.min(img.width, img.height);
-    const maxDim = Math.max(img.width, img.height);
-    const visualRadius = Math.max(minDim * 0.38, maxDim * 0.27) * visualScale;
-    return Math.max(base, Math.min(52, Math.round(visualRadius)));
+    const halfW = Math.max(base, Math.min(64, Math.round(img.width * visualScale * 0.42)));
+    const halfH = Math.max(base, Math.min(56, Math.round(img.height * visualScale * 0.42)));
+    const radius = Math.max(base, Math.min(56, Math.max(halfW, halfH)));
+    return { radius, halfW, halfH };
   },
 
   spawnBoss() {
@@ -1356,8 +1405,8 @@ const Game = {
           tries++;
         } while (tries < 5 && dist(px, py, cx, cy) < 80);
         const type = pick(categoryArr);
-        const radius = this.getPropCollisionRadius(categoryKey, type);
-        propList.push({ type, x: px, y: py, category: categoryKey, radius });
+        const footprint = this.getPropCollisionFootprint(categoryKey, type);
+        propList.push({ type, x: px, y: py, category: categoryKey, ...footprint });
       }
     };
 
@@ -1777,27 +1826,32 @@ const Game = {
     const viewL = camX - 50, viewR = camX + CONFIG.CANVAS_W + 50;
     const viewT = camY - 50, viewB = camY + CONFIG.CANVAS_H + 50;
 
-    // draw props that are behind player (y < player.y)
-    if (this.mapData) {
-      for (const prop of this.mapData.props) {
-        if (prop.x < viewL || prop.x > viewR || prop.y < viewT || prop.y > viewB) continue;
-        Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1);
-      }
-    }
-
     // draw pickups
     for (const p of this.pickups) p.draw(ctx);
 
-    // draw enemies
-    for (const e of this.enemies) {
-      if (this.isOnScreen(e.x, e.y, 80)) e.draw(ctx);
+    const worldDrawables = [];
+    if (this.mapData) {
+      for (const prop of this.mapData.props) {
+        if (prop.x < viewL || prop.x > viewR || prop.y < viewT || prop.y > viewB) continue;
+        worldDrawables.push({
+          y: prop.y,
+          draw: () => Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1),
+        });
+      }
     }
 
-    // draw player
-    if (this.player) this.player.draw(ctx);
+    for (const e of this.enemies) {
+      if (this.isOnScreen(e.x, e.y, 80)) worldDrawables.push({ y: e.y, draw: () => e.draw(ctx) });
+    }
 
-    // draw summoned minions
-    for (const m of this.minions) { if (this.isOnScreen(m.x, m.y, 40)) m.draw(ctx); }
+    if (this.player) worldDrawables.push({ y: this.player.y, draw: () => this.player.draw(ctx) });
+
+    for (const m of this.minions) {
+      if (this.isOnScreen(m.x, m.y, 40)) worldDrawables.push({ y: m.y, draw: () => m.draw(ctx) });
+    }
+
+    worldDrawables.sort((a, b) => a.y - b.y);
+    for (const item of worldDrawables) item.draw();
 
     // draw projectiles
     for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }

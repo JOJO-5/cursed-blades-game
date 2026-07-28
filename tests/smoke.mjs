@@ -121,15 +121,27 @@ assert.ok(weaponHud.x > landscapeVisible.x + 180,
 assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible.w - 180,
   'landscape weapon HUD should avoid the right dash zone');
 assert.ok(typeof game.getPropCollisionRadius === 'function', 'Game should expose prop collision radius helper');
+assert.ok(typeof game.getPropCollisionFootprint === 'function', 'Game should expose prop collision footprint helper');
 const stoneworkRadius = game.getPropCollisionRadius('stonework', 'props/stone_wall_doorway');
 assert.ok(stoneworkRadius > config.PROP_COLLISION.stonework,
   'large props should derive a larger collision radius from sprite dimensions');
 assert.ok(stoneworkRadius >= 30, 'stone doorway collision radius should cover its visible footprint');
+const tombstoneFootprint = game.getPropCollisionFootprint('tombstones', 'props/tombstone_single_rounded');
+assert.ok(tombstoneFootprint.halfW >= 24 && tombstoneFootprint.halfH >= 24,
+  'tombstone collision should use a rectangular footprint large enough to cover the sprite');
+game.collisionProps = [{ x: 100, y: 100, ...tombstoneFootprint }];
+const entityOnTombstone = { x: 100, y: 100, radius: 14 };
+game.resolvePropCollision(entityOnTombstone);
+assert.ok(entityOnTombstone.x <= 100 - tombstoneFootprint.halfW || entityOnTombstone.x >= 100 + tombstoneFootprint.halfW ||
+  entityOnTombstone.y <= 100 - tombstoneFootprint.halfH || entityOnTombstone.y >= 100 + tombstoneFootprint.halfH,
+  'rectangular prop collision should push entities out of the visible prop footprint');
 game.collisionProps = [{ x: 100, y: 100, radius: stoneworkRadius }];
 const centeredEntity = { x: 100, y: 100, radius: 14 };
 game.resolvePropCollision(centeredEntity);
 assert.ok(Math.hypot(centeredEntity.x - 100, centeredEntity.y - 100) >= stoneworkRadius + centeredEntity.radius - 0.1,
   'prop collision should push entities out even when centers exactly overlap');
+assert.ok(gameSource.includes('worldDrawables.sort((a, b) => a.y - b.y)'),
+  'renderWorld should depth-sort props and actors together by y');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
@@ -467,4 +479,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, prop collision footprint sizing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, prop/actor depth sorting, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
