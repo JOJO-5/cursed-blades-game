@@ -219,14 +219,7 @@ class Player {
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    let spriteKey = 'player/hero';
-    const frameRate = this.isMoving ? 8 : 3;
-    const frame = Math.floor(this.animTime * frameRate) % 2 + 1;
-    const candidate = this.isMoving ? `player/hero_move_0${frame}` : `player/hero_idle_0${frame}`;
-    const candidateImg = Assets.get(candidate);
-    if (candidateImg && candidateImg.complete && candidateImg.width > 0) {
-      spriteKey = candidate;
-    }
+    const spriteKey = 'player/hero';
     Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
 
     // hit flash overlay (red tint on sprite)
@@ -1748,19 +1741,7 @@ class Enemy {
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'source-over';
     }
-    let spriteKey = this.def.sprite;
-    let animCandidate = null;
-    if (this.isBoss) {
-      const attacking = this.bossState === 'windup' || this.bossState === 'attack' || this.bossState === 'charging';
-      animCandidate = `${this.def.sprite}_${attacking ? 'attack' : 'idle'}_01`;
-    } else {
-      const frame = Math.floor(this.animTime * 4) % 2 + 1;
-      animCandidate = `${this.def.sprite}_idle_0${frame}`;
-    }
-    const animImg = Assets.get(animCandidate);
-    if (animImg && animImg.complete && animImg.width > 0) {
-      spriteKey = animCandidate;
-    }
+    const spriteKey = this.def.sprite;
     Assets.drawCentered(ctx, spriteKey, this.x, this.y + bob, scale, 0, 1);
 
     // hit flash overlay - use collision radius so it matches enemy size
