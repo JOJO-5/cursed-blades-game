@@ -90,6 +90,12 @@ const gameContext = {
 };
 vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
 const game = gameContext.__GAME__;
+gameContext.Assets = {
+  get: (key) => {
+    const entry = manifest[key];
+    return entry ? { complete: true, width: entry.w, height: entry.h } : null;
+  },
+};
 const visible = game.getVisibleCanvasRect();
 const choiceLayout = game.getChoiceLayout(3);
 assert.equal(game.isPortrait(), true, '390x844 viewport should use portrait layout');
@@ -114,6 +120,16 @@ assert.ok(weaponHud.x > landscapeVisible.x + 180,
   'landscape weapon HUD should avoid the left joystick zone');
 assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible.w - 180,
   'landscape weapon HUD should avoid the right dash zone');
+assert.ok(typeof game.getPropCollisionRadius === 'function', 'Game should expose prop collision radius helper');
+const stoneworkRadius = game.getPropCollisionRadius('stonework', 'props/stone_wall_doorway');
+assert.ok(stoneworkRadius > config.PROP_COLLISION.stonework,
+  'large props should derive a larger collision radius from sprite dimensions');
+assert.ok(stoneworkRadius >= 30, 'stone doorway collision radius should cover its visible footprint');
+game.collisionProps = [{ x: 100, y: 100, radius: stoneworkRadius }];
+const centeredEntity = { x: 100, y: 100, radius: 14 };
+game.resolvePropCollision(centeredEntity);
+assert.ok(Math.hypot(centeredEntity.x - 100, centeredEntity.y - 100) >= stoneworkRadius + centeredEntity.radius - 0.1,
+  'prop collision should push entities out even when centers exactly overlap');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
@@ -451,4 +467,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, prop collision footprint sizing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

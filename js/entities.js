@@ -192,6 +192,7 @@ class Player {
 
     // resolve collision with solid props
     Game.resolvePropCollision(this);
+    if (Game.clampEntityToMap) Game.clampEntityToMap(this, 30);
 
     // update weapons
     for (const w of this.weapons) w.update(dt, this);

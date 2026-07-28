@@ -544,13 +544,21 @@ const Game = {
   resolvePropCollision(entity) {
     if (!this.collisionProps || this.collisionProps.length === 0) return;
     for (const prop of this.collisionProps) {
-      const dx = entity.x - prop.x;
-      const dy = entity.y - prop.y;
+      let dx = entity.x - prop.x;
+      let dy = entity.y - prop.y;
       const minDist = entity.radius + prop.radius;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < minDist * minDist && d2 > 0.001) {
-        const d = Math.sqrt(d2);
-        const push = (minDist - d) / d;
+      let d2 = dx * dx + dy * dy;
+      if (d2 < minDist * minDist) {
+        let push;
+        if (d2 <= 0.001) {
+          dx = 1;
+          dy = 0;
+          d2 = 1;
+          push = minDist;
+        } else {
+          const d = Math.sqrt(d2);
+          push = (minDist - d) / d;
+        }
         entity.x += dx * push;
         entity.y += dy * push;
       }
@@ -577,6 +585,20 @@ const Game = {
       if ((oldY < entity.y && entity.knockbackVy < 0) || (oldY > entity.y && entity.knockbackVy > 0)) entity.knockbackVy = 0;
       if ((oldY < entity.y && entity.chargeVy < 0) || (oldY > entity.y && entity.chargeVy > 0)) entity.chargeVy = 0;
     }
+  },
+
+  getPropCollisionRadius(categoryKey, type) {
+    const base = CONFIG.PROP_COLLISION[categoryKey] || 0;
+    if (base <= 0) return 0;
+
+    const img = Assets.get(type);
+    if (!img || !img.width || !img.height) return base;
+
+    const visualScale = 0.8;
+    const minDim = Math.min(img.width, img.height);
+    const maxDim = Math.max(img.width, img.height);
+    const visualRadius = Math.max(minDim * 0.38, maxDim * 0.27) * visualScale;
+    return Math.max(base, Math.min(52, Math.round(visualRadius)));
   },
 
   spawnBoss() {
@@ -1324,8 +1346,6 @@ const Game = {
     // generate props — dynamically scatter all categories defined in level config
     const props = this.levelData.props;
     const propList = [];
-    const collRad = CONFIG.PROP_COLLISION;
-
     // helper: scatter a prop category, avoid spawning on top of player spawn
     const scatter = (count, categoryKey, categoryArr) => {
       for (let i = 0; i < count; i++) {
@@ -1335,8 +1355,9 @@ const Game = {
           py = rng() * mapH * ts;
           tries++;
         } while (tries < 5 && dist(px, py, cx, cy) < 80);
-        const radius = collRad[categoryKey] || 0;
-        propList.push({ type: pick(categoryArr), x: px, y: py, category: categoryKey, radius: radius });
+        const type = pick(categoryArr);
+        const radius = this.getPropCollisionRadius(categoryKey, type);
+        propList.push({ type, x: px, y: py, category: categoryKey, radius });
       }
     };
 
