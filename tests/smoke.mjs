@@ -79,6 +79,7 @@ const gameContext = {
   CONFIG: config,
   window: { innerWidth: 390, innerHeight: 844 },
   Math,
+  clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
   pick: (items) => items[0],
 };
 vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
@@ -92,6 +93,17 @@ for (const card of choiceLayout.cards) {
   assert.ok(card.x >= visible.x && card.x + card.w <= visible.x + visible.w, 'portrait card should remain horizontally visible');
   assert.ok(card.y >= visible.y && card.y + card.h <= visible.y + visible.h, 'portrait card should remain vertically visible');
 }
+gameContext.window.innerWidth = 1366;
+gameContext.window.innerHeight = 768;
+game._rotate90 = false;
+assert.equal(game.isPortrait(), false, '1366x768 viewport should use landscape layout');
+assert.ok(typeof game.getWeaponHudLayout === 'function', 'Game should expose weapon HUD layout helper');
+const landscapeVisible = game.getVisibleCanvasRect();
+const weaponHud = game.getWeaponHudLayout(4);
+assert.ok(weaponHud.y + weaponHud.itemHeight <= landscapeVisible.y + landscapeVisible.h,
+  'weapon HUD should stay vertically visible in landscape');
+assert.ok(weaponHud.y + weaponHud.itemHeight < landscapeVisible.y + landscapeVisible.h - 115,
+  'landscape weapon HUD should stay above the bottom touch-control zone');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
@@ -137,12 +149,20 @@ const playerContext = {
   angleTo: (ax, ay, bx, by) => Math.atan2(by - ay, bx - ax),
   normalizeAngle: (a) => a,
 };
-vm.runInNewContext(`${entitiesSource}\nglobalThis.__Player__ = Player;`, playerContext, { filename: 'js/entities.js' });
+vm.runInNewContext(`${entitiesSource}\nglobalThis.__Player__ = Player;\nglobalThis.__Enemy__ = Enemy;`, playerContext, { filename: 'js/entities.js' });
 const player = new playerContext.__Player__(9999, 9999);
 player.weapons = [];
 player.update(0);
 assert.ok(player.x <= config.LEVELS.mine.mapW * config.TILE_SIZE - 30, 'player x should clamp to active mine map width');
 assert.ok(player.y <= config.LEVELS.mine.mapH * config.TILE_SIZE - 30, 'player y should clamp to active mine map height');
+playerContext.Game.player = { x: 120, y: 120, radius: 16, takeDamage() {} };
+const edgeEnemy = new playerContext.__Enemy__('slime', -120, config.LEVELS.mine.mapH * config.TILE_SIZE + 120);
+edgeEnemy.knockbackVx = -1000;
+edgeEnemy.knockbackVy = 1000;
+edgeEnemy.update(0.05);
+assert.ok(edgeEnemy.x >= edgeEnemy.radius, 'enemy should clamp inside the active level left edge');
+assert.ok(edgeEnemy.y <= config.LEVELS.mine.mapH * config.TILE_SIZE - edgeEnemy.radius,
+  'enemy should clamp inside the active level bottom edge');
 
 // Regression: continuing a non-village save should rebuild that level directly,
 // preserve phase trigger state, and create collision bodies for rendered walls.
@@ -421,4 +441,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

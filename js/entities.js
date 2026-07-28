@@ -1412,6 +1412,7 @@ class Enemy {
 
     // resolve collision with solid props (enemies too)
     Game.resolvePropCollision(this);
+    this.clampToLevelBounds();
 
     // boss state machine
     if (this.isBoss) {
@@ -1431,6 +1432,33 @@ class Enemy {
   }
 
   // ---- Boss state machine (无头骑士 two-phase boss) ----
+  clampToLevelBounds() {
+    if (Game.clampEntityToMap) {
+      Game.clampEntityToMap(this);
+      return;
+    }
+
+    const levelData = Game.levelData || {};
+    const mapW = (levelData.mapW || CONFIG.MAP_W) * CONFIG.TILE_SIZE;
+    const mapH = (levelData.mapH || CONFIG.MAP_H) * CONFIG.TILE_SIZE;
+    const margin = Math.max(1, this.radius || 16);
+    const oldX = this.x;
+    const oldY = this.y;
+    this.x = clamp(this.x, margin, Math.max(margin, mapW - margin));
+    this.y = clamp(this.y, margin, Math.max(margin, mapH - margin));
+
+    if (this.x !== oldX) {
+      if ((oldX < this.x && this.vx < 0) || (oldX > this.x && this.vx > 0)) this.vx = 0;
+      if ((oldX < this.x && this.knockbackVx < 0) || (oldX > this.x && this.knockbackVx > 0)) this.knockbackVx = 0;
+      if ((oldX < this.x && this.chargeVx < 0) || (oldX > this.x && this.chargeVx > 0)) this.chargeVx = 0;
+    }
+    if (this.y !== oldY) {
+      if ((oldY < this.y && this.vy < 0) || (oldY > this.y && this.vy > 0)) this.vy = 0;
+      if ((oldY < this.y && this.knockbackVy < 0) || (oldY > this.y && this.knockbackVy > 0)) this.knockbackVy = 0;
+      if ((oldY < this.y && this.chargeVy < 0) || (oldY > this.y && this.chargeVy > 0)) this.chargeVy = 0;
+    }
+  }
+
   updateBoss(dt, player, d) {
     // update phase-2 persistent effects (orbit weapons, hazards, thrown swords)
     if (this.phase >= 2) {

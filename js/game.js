@@ -508,6 +508,8 @@ const Game = {
           a.y -= ny * push * 0.5;
           b.x += nx * push * 0.5;
           b.y += ny * push * 0.5;
+          this.clampEntityToMap(a);
+          this.clampEntityToMap(b);
         }
       }
     }
@@ -552,6 +554,28 @@ const Game = {
         entity.x += dx * push;
         entity.y += dy * push;
       }
+    }
+  },
+
+  clampEntityToMap(entity, marginOverride) {
+    if (!entity || !this.levelData) return;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+    const margin = Math.max(1, marginOverride ?? entity.radius ?? 16);
+    const oldX = entity.x;
+    const oldY = entity.y;
+    entity.x = clamp(entity.x, margin, Math.max(margin, mapW - margin));
+    entity.y = clamp(entity.y, margin, Math.max(margin, mapH - margin));
+
+    if (entity.x !== oldX) {
+      if ((oldX < entity.x && entity.vx < 0) || (oldX > entity.x && entity.vx > 0)) entity.vx = 0;
+      if ((oldX < entity.x && entity.knockbackVx < 0) || (oldX > entity.x && entity.knockbackVx > 0)) entity.knockbackVx = 0;
+      if ((oldX < entity.x && entity.chargeVx < 0) || (oldX > entity.x && entity.chargeVx > 0)) entity.chargeVx = 0;
+    }
+    if (entity.y !== oldY) {
+      if ((oldY < entity.y && entity.vy < 0) || (oldY > entity.y && entity.vy > 0)) entity.vy = 0;
+      if ((oldY < entity.y && entity.knockbackVy < 0) || (oldY > entity.y && entity.knockbackVy > 0)) entity.knockbackVy = 0;
+      if ((oldY < entity.y && entity.chargeVy < 0) || (oldY > entity.y && entity.chargeVy > 0)) entity.chargeVy = 0;
     }
   },
 
@@ -1633,6 +1657,20 @@ const Game = {
     return { x: visible.x + 12, y: visible.y + 52, w: 36, h: 36 };
   },
 
+  getWeaponHudLayout(count) {
+    const visible = this.getVisibleCanvasRect();
+    const portrait = this.isPortrait();
+    const gap = 42;
+    const iconSize = 36;
+    const itemHeight = 50;
+    const totalW = Math.max(0, count - 1) * gap + iconSize;
+    const rawX = portrait ? visible.x + (visible.w - totalW) / 2 : visible.x + 20;
+    const x = clamp(rawX, visible.x + 12, Math.max(visible.x + 12, visible.x + visible.w - totalW - 12));
+    const rawY = portrait ? visible.y + visible.h - 165 : visible.y + 96;
+    const y = clamp(rawY, visible.y + 8, Math.max(visible.y + 8, visible.y + visible.h - itemHeight - 8));
+    return { x, y, gap, iconSize, itemHeight, totalW };
+  },
+
   getChoiceLayout(count) {
     const portrait = this.isPortrait();
     const visible = this.getVisibleCanvasRect();
@@ -1830,11 +1868,10 @@ const Game = {
 
     // weapon icons
     ctx.textAlign = 'left';
-    const weaponGap = 42;
-    const weaponTotalW = Math.max(0, p.weapons.length - 1) * weaponGap + 36;
-    const weaponStartX = portrait ? visible.x + (visible.w - weaponTotalW) / 2 : visible.x + 20;
-    // Keep the bar above the mobile controls' large touch targets.
-    const wY = portrait ? visible.y + visible.h - 165 : visible.y + visible.h - 40;
+    const weaponHud = this.getWeaponHudLayout(p.weapons.length);
+    const weaponStartX = weaponHud.x;
+    const weaponGap = weaponHud.gap;
+    const wY = weaponHud.y;
     for (let i = 0; i < p.weapons.length; i++) {
       const w = p.weapons[i];
       const wx = weaponStartX + i * weaponGap;
