@@ -56,6 +56,12 @@ for (const upgrade of config.UPGRADES) {
 for (const [id, enemy] of Object.entries(config.ENEMIES)) {
   assert.ok(enemy.name && enemy.sprite && enemy.hp > 0, `enemy ${id} is incomplete`);
 }
+for (const [id, level] of Object.entries(config.LEVELS)) {
+  for (const tile of level.groundTiles || []) {
+    assert.ok(!tile.includes('wall'), `level ${id} groundTiles should not contain wall art: ${tile}`);
+    assert.ok(!tile.includes('grass_strip'), `level ${id} groundTiles should not contain strip overlay art: ${tile}`);
+  }
+}
 
 const resourcePrefix = /^(?:backgrounds|bosses|effects|enemies|items|player|props|tiles|ui|weapons)\//;
 const resources = new Set();
@@ -102,8 +108,12 @@ const landscapeVisible = game.getVisibleCanvasRect();
 const weaponHud = game.getWeaponHudLayout(4);
 assert.ok(weaponHud.y + weaponHud.itemHeight <= landscapeVisible.y + landscapeVisible.h,
   'weapon HUD should stay vertically visible in landscape');
-assert.ok(weaponHud.y + weaponHud.itemHeight < landscapeVisible.y + landscapeVisible.h - 115,
-  'landscape weapon HUD should stay above the bottom touch-control zone');
+assert.ok(weaponHud.y > landscapeVisible.y + landscapeVisible.h - 100,
+  'landscape weapon HUD should stay in the bottom-center HUD zone');
+assert.ok(weaponHud.x > landscapeVisible.x + 180,
+  'landscape weapon HUD should avoid the left joystick zone');
+assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible.w - 180,
+  'landscape weapon HUD should avoid the right dash zone');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
@@ -441,4 +451,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

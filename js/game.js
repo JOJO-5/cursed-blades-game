@@ -1664,9 +1664,9 @@ const Game = {
     const iconSize = 36;
     const itemHeight = 50;
     const totalW = Math.max(0, count - 1) * gap + iconSize;
-    const rawX = portrait ? visible.x + (visible.w - totalW) / 2 : visible.x + 20;
+    const rawX = visible.x + (visible.w - totalW) / 2;
     const x = clamp(rawX, visible.x + 12, Math.max(visible.x + 12, visible.x + visible.w - totalW - 12));
-    const rawY = portrait ? visible.y + visible.h - 165 : visible.y + 96;
+    const rawY = portrait ? visible.y + visible.h - 165 : visible.y + visible.h - itemHeight - 12;
     const y = clamp(rawY, visible.y + 8, Math.max(visible.y + 8, visible.y + visible.h - itemHeight - 8));
     return { x, y, gap, iconSize, itemHeight, totalW };
   },
