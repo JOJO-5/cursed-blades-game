@@ -409,13 +409,13 @@ const CONFIG = {
 
   // ---- Weapon unlock upgrades (rare, from mimics/chests) ----
   WEAPON_UNLOCKS: [
-    { weaponId:'hammer',  name:'获得武器: 战锤', icon:'weapons/hammer',   rarity:'rare' },
-    { weaponId:'scythe',  name:'获得武器: 镰刀', icon:'weapons/scythe',   rarity:'rare' },
-    { weaponId:'bow',     name:'获得武器: 弓箭', icon:'weapons/bow',      rarity:'rare' },
-    { weaponId:'fireball',name:'获得武器: 火球', icon:'weapons/fireball', rarity:'rare' },
-    { weaponId:'knife',   name:'获得武器: 飞刀', icon:'weapons/knife',    rarity:'rare' },
-    { weaponId:'soul',    name:'获得武器: 灵魂弹', icon:'weapons/soul',   rarity:'rare' },
-    { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/shield',   rarity:'rare' },
+    { weaponId:'hammer',  name:'获得武器: 战锤', icon:'weapons/ring_fire_awakened', rarity:'rare' },
+    { weaponId:'scythe',  name:'获得武器: 镰刀', icon:'weapons/sword_slash_wind',   rarity:'rare' },
+    { weaponId:'bow',     name:'获得武器: 弓箭', icon:'weapons/sword_slash_wind',   rarity:'rare' },
+    { weaponId:'fireball',name:'获得武器: 火球', icon:'weapons/ring_fire',          rarity:'rare' },
+    { weaponId:'knife',   name:'获得武器: 飞刀', icon:'weapons/sword_slash_wind',   rarity:'rare' },
+    { weaponId:'soul',    name:'获得武器: 灵魂弹', icon:'weapons/ring_void',        rarity:'rare' },
+    { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/ring_target',        rarity:'rare' },
     { weaponId:'ring_fire',name:'获得武器: 炎之环刃', icon:'weapons/ring_fire', rarity:'epic' },
     { weaponId:'ring_void',name:'获得武器: 虚空环刃', icon:'weapons/ring_void', rarity:'epic' },
     { weaponId:'ring_steel',name:'获得武器: 钢铁环刃', icon:'weapons/ring_steel', rarity:'rare' },
