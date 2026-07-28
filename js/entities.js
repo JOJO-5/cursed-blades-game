@@ -1256,6 +1256,8 @@ class Enemy {
     this.phase = 1;
     this.enraged = false;
     this.contactCooldown = 0;
+    this.avoidTimer = 0;
+    this.avoidSide = Math.random() < 0.5 ? -1 : 1;
 
     // assign behavior strategy
     this.behavior = ENEMY_BEHAVIORS[def.behavior] || ENEMY_BEHAVIORS.chase;
@@ -1430,12 +1432,43 @@ class Enemy {
       this.vy = this.chargeVy;
     }
 
+    // Simple local obstacle avoidance. Enemies normally chase in a straight line;
+    // after a prop collision that did not make progress toward the player, add a
+    // short lateral component so they slide around tombstones/walls instead of
+    // endlessly pushing into the same obstacle.
+    if (!this.isBoss && this.avoidTimer > 0) {
+      const speed = Math.hypot(this.vx, this.vy);
+      if (speed > 0.1) {
+        const sideX = -this.vy / speed;
+        const sideY = this.vx / speed;
+        this.vx += sideX * this.speed * 0.8 * this.avoidSide;
+        this.vy += sideY * this.speed * 0.8 * this.avoidSide;
+        const newSpeed = Math.hypot(this.vx, this.vy);
+        const maxSpeed = this.speed * 1.15;
+        if (newSpeed > maxSpeed) {
+          this.vx = this.vx / newSpeed * maxSpeed;
+          this.vy = this.vy / newSpeed * maxSpeed;
+        }
+      }
+      this.avoidTimer = Math.max(0, this.avoidTimer - dt);
+    }
+
+    const beforeMoveX = this.x;
+    const beforeMoveY = this.y;
+    const beforePlayerDist = d;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
     // resolve collision with solid props (enemies too)
-    Game.resolvePropCollision(this);
+    const hitProp = Game.resolvePropCollision(this);
     this.clampToLevelBounds();
+    const afterPlayerDist = dist(this.x, this.y, player.x, player.y);
+    const moved = dist(beforeMoveX, beforeMoveY, this.x, this.y);
+    if (!this.isBoss && hitProp && beforePlayerDist > 80 &&
+        (afterPlayerDist >= beforePlayerDist - moved * 0.25)) {
+      this.avoidTimer = Math.max(this.avoidTimer, 0.6);
+      if (Math.random() < 0.25) this.avoidSide *= -1;
+    }
 
     // boss state machine
     if (this.isBoss) {

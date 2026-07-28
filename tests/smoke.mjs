@@ -158,21 +158,31 @@ assert.ok(typeof game.getPropCollisionFootprint === 'function', 'Game should exp
 const stoneworkRadius = game.getPropCollisionRadius('stonework', 'props/stone_wall_doorway');
 assert.ok(stoneworkRadius > config.PROP_COLLISION.stonework,
   'large props should derive a larger collision radius from sprite dimensions');
-assert.ok(stoneworkRadius >= 30, 'stone doorway collision radius should cover its visible footprint');
+assert.ok(stoneworkRadius >= 28 && stoneworkRadius <= 34,
+  'stone doorway collision should cover its solid base without blocking the whole sprite');
 const tombstoneFootprint = game.getPropCollisionFootprint('tombstones', 'props/tombstone_single_rounded');
-assert.ok(tombstoneFootprint.halfW >= 24 && tombstoneFootprint.halfH >= 24,
-  'tombstone collision should use a rectangular footprint large enough to cover the sprite');
+assert.ok(tombstoneFootprint.halfW >= 12 && tombstoneFootprint.halfW <= 28 &&
+  tombstoneFootprint.halfH >= 12 && tombstoneFootprint.halfH <= 24,
+  'tombstone collision should use a compact rectangular footprint instead of the whole sprite');
+const treeFootprint = game.getPropCollisionFootprint('trees', 'props/tree_dead_gnarled_01');
+assert.ok(treeFootprint.halfW <= 28 && treeFootprint.halfH <= 26 && treeFootprint.collisionOffsetY > 0,
+  'tall tree collision should be a lowered trunk footprint, not the whole canopy');
 game.collisionProps = [{ x: 100, y: 100, ...tombstoneFootprint }];
 const entityOnTombstone = { x: 100, y: 100, radius: 14 };
-game.resolvePropCollision(entityOnTombstone);
+assert.equal(game.resolvePropCollision(entityOnTombstone), true,
+  'rectangular prop collision should report when it moves an entity');
 assert.ok(entityOnTombstone.x <= 100 - tombstoneFootprint.halfW || entityOnTombstone.x >= 100 + tombstoneFootprint.halfW ||
   entityOnTombstone.y <= 100 - tombstoneFootprint.halfH || entityOnTombstone.y >= 100 + tombstoneFootprint.halfH,
   'rectangular prop collision should push entities out of the visible prop footprint');
 game.collisionProps = [{ x: 100, y: 100, radius: stoneworkRadius }];
 const centeredEntity = { x: 100, y: 100, radius: 14 };
-game.resolvePropCollision(centeredEntity);
+assert.equal(game.resolvePropCollision(centeredEntity), true,
+  'circular prop collision should report when it moves an entity');
 assert.ok(Math.hypot(centeredEntity.x - 100, centeredEntity.y - 100) >= stoneworkRadius + centeredEntity.radius - 0.1,
   'prop collision should push entities out even when centers exactly overlap');
+game.collisionProps = [{ x: 220, y: 220, radius: 20, halfW: 24, halfH: 16, collisionX: 220, collisionY: 228 }];
+assert.ok(game.isCircleBlocked(220, 228, 14), 'spawn checks should detect blocked prop footprints');
+assert.ok(!game.isCircleBlocked(320, 320, 14), 'spawn checks should allow clear positions');
 for (const [levelId, level] of Object.entries(config.LEVELS)) {
   game.levelData = level;
   game.generateMap();
@@ -253,6 +263,16 @@ edgeEnemy.update(0.05);
 assert.ok(edgeEnemy.x >= edgeEnemy.radius, 'enemy should clamp inside the active level left edge');
 assert.ok(edgeEnemy.y <= config.LEVELS.mine.mapH * config.TILE_SIZE - edgeEnemy.radius,
   'enemy should clamp inside the active level bottom edge');
+playerContext.Game.levelData = config.LEVELS.village;
+playerContext.Game.player = { x: 200, y: 100, radius: 14, takeDamage() {} };
+playerContext.Game.resolvePropCollision = (enemy) => {
+  enemy.x = 100;
+  enemy.y = 100;
+  return true;
+};
+const stuckEnemy = new playerContext.__Enemy__('slime', 100, 100);
+stuckEnemy.update(0.1);
+assert.ok(stuckEnemy.avoidTimer > 0, 'enemy should enter a short obstacle-avoidance state after blocked chase movement');
 
 // Regression: continuing a non-village save should rebuild that level directly,
 // preserve phase trigger state, and create collision bodies for rendered walls.

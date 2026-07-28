@@ -459,14 +459,14 @@ const Game = {
     const pool = phase.enemyPool && phase.enemyPool.length > 0 ? phase.enemyPool : this.levelData.enemyPool;
     if (pool.length === 0) return;
     const type = pick(pool);
-    const pos = this.getSpawnPosition();
+    const pos = this.getSpawnPosition(CONFIG.ENEMIES[type]?.radius || 16);
     if (pos) this.enemies.push(new Enemy(type, pos.x, pos.y));
 
     // sometimes spawn ranged from phase rangedPool
     const rPool = phase.rangedPool || [];
     if (rPool.length > 0 && Math.random() < 0.3) {
       const rType = pick(rPool);
-      const pos2 = this.getSpawnPosition();
+      const pos2 = this.getSpawnPosition(CONFIG.ENEMIES[rType]?.radius || 16);
       if (pos2) this.enemies.push(new Enemy(rType, pos2.x, pos2.y));
     }
   },
@@ -518,20 +518,20 @@ const Game = {
   // ---- Spawning ----
   spawnEnemy() {
     const type = pick(this.levelData.enemyPool);
-    const pos = this.getSpawnPosition();
+    const pos = this.getSpawnPosition(CONFIG.ENEMIES[type]?.radius || 16);
     if (pos) this.enemies.push(new Enemy(type, pos.x, pos.y));
 
     // sometimes spawn ranged
     if (Math.random() < 0.3 && this.levelData.rangedPool.length > 0) {
       const rType = pick(this.levelData.rangedPool);
-      const pos2 = this.getSpawnPosition();
+      const pos2 = this.getSpawnPosition(CONFIG.ENEMIES[rType]?.radius || 16);
       if (pos2) this.enemies.push(new Enemy(rType, pos2.x, pos2.y));
     }
   },
 
   spawnElite() {
     const type = pick(this.levelData.elitePool);
-    const pos = this.getSpawnPosition();
+    const pos = this.getSpawnPosition(CONFIG.ENEMIES[type]?.radius || 20);
     if (pos) {
       this.enemies.push(new Enemy(type, pos.x, pos.y));
       this.addMessage('精英怪物出现: ' + CONFIG.ENEMIES[type].name, '#ff8030');
@@ -542,10 +542,11 @@ const Game = {
   // ---- Prop collision: push entity out of solid props ----
   // entity is { x, y, radius }. Modifies entity.x/y in place.
   resolvePropCollision(entity) {
-    if (!this.collisionProps || this.collisionProps.length === 0) return;
+    if (!this.collisionProps || this.collisionProps.length === 0) return false;
+    let collided = false;
     for (const prop of this.collisionProps) {
       if (prop.halfW && prop.halfH) {
-        this.resolveRectPropCollision(entity, prop);
+        if (this.resolveRectPropCollision(entity, prop)) collided = true;
         continue;
       }
 
@@ -566,8 +567,10 @@ const Game = {
         }
         entity.x += dx * push;
         entity.y += dy * push;
+        collided = true;
       }
     }
+    return collided;
   },
 
   resolveRectPropCollision(entity, prop) {
@@ -589,7 +592,7 @@ const Game = {
       else if (minSide === distRight) entity.x = right + entity.radius;
       else if (minSide === distTop) entity.y = top - entity.radius;
       else entity.y = bottom + entity.radius;
-      return;
+      return true;
     }
 
     const closestX = clamp(entity.x, left, right);
@@ -597,7 +600,7 @@ const Game = {
     let dx = entity.x - closestX;
     let dy = entity.y - closestY;
     let d2 = dx * dx + dy * dy;
-    if (d2 >= entity.radius * entity.radius) return;
+    if (d2 >= entity.radius * entity.radius) return false;
 
     if (d2 <= 0.001) {
       dx = 1;
@@ -608,6 +611,7 @@ const Game = {
     const push = (entity.radius - d) / d;
     entity.x += dx * push;
     entity.y += dy * push;
+    return true;
   },
 
   clampEntityToMap(entity, marginOverride) {
@@ -643,23 +647,40 @@ const Game = {
     const img = Assets.get(type);
     if (!img || !img.width || !img.height) return { radius: base };
 
-    const visualScale = 0.8;
-    const halfW = Math.max(base, Math.min(64, Math.round(img.width * visualScale * 0.42)));
-    const halfH = Math.max(base, Math.min(56, Math.round(img.height * visualScale * 0.42)));
-    const radius = Math.max(base, Math.min(56, Math.max(halfW, halfH)));
-    return { radius, halfW, halfH };
+    const shape = (CONFIG.PROP_COLLISION_SHAPES && CONFIG.PROP_COLLISION_SHAPES[categoryKey]) || {};
+    const scaleX = shape.scaleX ?? 0.18;
+    const scaleY = shape.scaleY ?? 0.14;
+    const maxHalfW = shape.maxHalfW ?? 34;
+    const maxHalfH = shape.maxHalfH ?? 26;
+    const halfW = Math.max(base, Math.min(maxHalfW, Math.round(img.width * scaleX)));
+    const halfH = Math.max(base, Math.min(maxHalfH, Math.round(img.height * scaleY)));
+    const radius = Math.max(base, Math.max(halfW, halfH));
+    return {
+      radius,
+      halfW,
+      halfH,
+      collisionOffsetX: shape.offsetX || 0,
+      collisionOffsetY: shape.offsetY || 0,
+    };
   },
 
   footprintOverlapsCircle(propX, propY, footprint, circleX, circleY, circleRadius) {
     if (!footprint || footprint.radius <= 0) return false;
+    const cx = footprint.collisionX ?? (propX + (footprint.collisionOffsetX || 0));
+    const cy = footprint.collisionY ?? (propY + (footprint.collisionOffsetY || 0));
 
     if (footprint.halfW && footprint.halfH) {
-      const closestX = clamp(circleX, propX - footprint.halfW, propX + footprint.halfW);
-      const closestY = clamp(circleY, propY - footprint.halfH, propY + footprint.halfH);
+      const closestX = clamp(circleX, cx - footprint.halfW, cx + footprint.halfW);
+      const closestY = clamp(circleY, cy - footprint.halfH, cy + footprint.halfH);
       return dist(closestX, closestY, circleX, circleY) < circleRadius;
     }
 
-    return dist(propX, propY, circleX, circleY) < footprint.radius + circleRadius;
+    return dist(cx, cy, circleX, circleY) < footprint.radius + circleRadius;
+  },
+
+  isCircleBlocked(x, y, radius) {
+    if (!this.collisionProps || this.collisionProps.length === 0) return false;
+    return this.collisionProps.some(prop => this.footprintOverlapsCircle(prop.x, prop.y, prop, x, y, radius));
   },
 
   spawnBoss() {
@@ -683,8 +704,9 @@ const Game = {
     this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => { this.state = 'playing'; });
   },
 
-  getSpawnPosition() {
+  getSpawnPosition(radius) {
     const player = this.player;
+    const spawnRadius = radius || 16;
     const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
     const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
     for (let attempt = 0; attempt < 20; attempt++) {
@@ -693,7 +715,7 @@ const Game = {
       const x = clamp(player.x + Math.cos(ang) * r, 30, mapW - 30);
       const y = clamp(player.y + Math.sin(ang) * r, 30, mapH - 30);
       // make sure not too close to player
-      if (dist(x, y, player.x, player.y) > 300) {
+      if (dist(x, y, player.x, player.y) > 300 && !this.isCircleBlocked(x, y, spawnRadius)) {
         return { x, y };
       }
     }
@@ -1421,7 +1443,10 @@ const Game = {
           tries < 12 &&
           (dist(px, py, cx, cy) < 120 || this.footprintOverlapsCircle(px, py, footprint, cx, cy, 90))
         );
-        propList.push({ type, x: px, y: py, category: categoryKey, ...footprint });
+        const prop = { type, x: px, y: py, category: categoryKey, ...footprint };
+        prop.collisionX = px + (footprint.collisionOffsetX || 0);
+        prop.collisionY = py + (footprint.collisionOffsetY || 0);
+        propList.push(prop);
       }
     };
 

@@ -340,6 +340,29 @@ const CONFIG = {
     gallows: 18,     // wooden gallows - large obstacle
   },
 
+  // Fine-tuned collision footprints. These describe the solid "feet" of a prop,
+  // not the whole rendered sprite. Large sprites often include transparent air,
+  // shadows, flames or tall art that should not block movement.
+  PROP_COLLISION_SHAPES: {
+    trees:       { scaleX: 0.18, scaleY: 0.14, maxHalfW: 28, maxHalfH: 26, offsetY: 24 },
+    tombstones:  { scaleX: 0.16, scaleY: 0.20, maxHalfW: 28, maxHalfH: 24, offsetY: 8 },
+    fences:      { scaleX: 0.20, scaleY: 0.10, maxHalfW: 32, maxHalfH: 12 },
+    barrels:     { scaleX: 0.18, scaleY: 0.18, maxHalfW: 26, maxHalfH: 24, offsetY: 4 },
+    braziers:    { scaleX: 0.14, scaleY: 0.14, maxHalfW: 20, maxHalfH: 20, offsetY: 8 },
+    ruins:       { scaleX: 0.18, scaleY: 0.16, maxHalfW: 36, maxHalfH: 26, offsetY: 10 },
+    houses:      { scaleX: 0.18, scaleY: 0.15, maxHalfW: 34, maxHalfH: 26, offsetY: 14 },
+    caves:       { scaleX: 0.20, scaleY: 0.15, maxHalfW: 38, maxHalfH: 30, offsetY: 12 },
+    campfires:   { scaleX: 0.12, scaleY: 0.12, maxHalfW: 18, maxHalfH: 16 },
+    spikes:      { scaleX: 0.18, scaleY: 0.08, maxHalfW: 22, maxHalfH: 10 },
+    rocks:       { scaleX: 0.17, scaleY: 0.13, maxHalfW: 24, maxHalfH: 18 },
+    platforms:   { scaleX: 0.14, scaleY: 0.08, maxHalfW: 24, maxHalfH: 14 },
+    watchtowers: { scaleX: 0.18, scaleY: 0.16, maxHalfW: 30, maxHalfH: 26, offsetY: 18 },
+    furniture:   { scaleX: 0.16, scaleY: 0.12, maxHalfW: 24, maxHalfH: 20, offsetY: 6 },
+    stonework:   { scaleX: 0.18, scaleY: 0.14, maxHalfW: 34, maxHalfH: 24, offsetY: 8 },
+    bones:       { scaleX: 0.12, scaleY: 0.08, maxHalfW: 18, maxHalfH: 12 },
+    gallows:     { scaleX: 0.18, scaleY: 0.12, maxHalfW: 30, maxHalfH: 20, offsetY: 14 },
+  },
+
   // ---- Upgrade pool (20 upgrades with rarity/weight/maxLevel) ----
   UPGRADES: [
     // --- Common (high weight, frequent) ---
