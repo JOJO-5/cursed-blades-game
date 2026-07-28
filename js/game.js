@@ -650,6 +650,18 @@ const Game = {
     return { radius, halfW, halfH };
   },
 
+  footprintOverlapsCircle(propX, propY, footprint, circleX, circleY, circleRadius) {
+    if (!footprint || footprint.radius <= 0) return false;
+
+    if (footprint.halfW && footprint.halfH) {
+      const closestX = clamp(circleX, propX - footprint.halfW, propX + footprint.halfW);
+      const closestY = clamp(circleY, propY - footprint.halfH, propY + footprint.halfH);
+      return dist(closestX, closestY, circleX, circleY) < circleRadius;
+    }
+
+    return dist(propX, propY, circleX, circleY) < footprint.radius + circleRadius;
+  },
+
   spawnBoss() {
     this.bossSpawned = true;
     // clear normal enemies when boss appears (design: "清理普通敌人")
@@ -1398,14 +1410,17 @@ const Game = {
     // helper: scatter a prop category, avoid spawning on top of player spawn
     const scatter = (count, categoryKey, categoryArr) => {
       for (let i = 0; i < count; i++) {
+        const type = pick(categoryArr);
+        const footprint = this.getPropCollisionFootprint(categoryKey, type);
         let px, py, tries = 0;
         do {
           px = rng() * mapW * ts;
           py = rng() * mapH * ts;
           tries++;
-        } while (tries < 5 && dist(px, py, cx, cy) < 80);
-        const type = pick(categoryArr);
-        const footprint = this.getPropCollisionFootprint(categoryKey, type);
+        } while (
+          tries < 12 &&
+          (dist(px, py, cx, cy) < 120 || this.footprintOverlapsCircle(px, py, footprint, cx, cy, 90))
+        );
         propList.push({ type, x: px, y: py, category: categoryKey, ...footprint });
       }
     };
@@ -1829,29 +1844,26 @@ const Game = {
     // draw pickups
     for (const p of this.pickups) p.draw(ctx);
 
-    const worldDrawables = [];
     if (this.mapData) {
       for (const prop of this.mapData.props) {
         if (prop.x < viewL || prop.x > viewR || prop.y < viewT || prop.y > viewB) continue;
-        worldDrawables.push({
-          y: prop.y,
-          draw: () => Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1),
-        });
+        Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1);
       }
     }
 
+    const actorDrawables = [];
     for (const e of this.enemies) {
-      if (this.isOnScreen(e.x, e.y, 80)) worldDrawables.push({ y: e.y, draw: () => e.draw(ctx) });
+      if (this.isOnScreen(e.x, e.y, 80)) actorDrawables.push({ y: e.y, draw: () => e.draw(ctx) });
     }
 
-    if (this.player) worldDrawables.push({ y: this.player.y, draw: () => this.player.draw(ctx) });
+    if (this.player) actorDrawables.push({ y: this.player.y, draw: () => this.player.draw(ctx) });
 
     for (const m of this.minions) {
-      if (this.isOnScreen(m.x, m.y, 40)) worldDrawables.push({ y: m.y, draw: () => m.draw(ctx) });
+      if (this.isOnScreen(m.x, m.y, 40)) actorDrawables.push({ y: m.y, draw: () => m.draw(ctx) });
     }
 
-    worldDrawables.sort((a, b) => a.y - b.y);
-    for (const item of worldDrawables) item.draw();
+    actorDrawables.sort((a, b) => a.y - b.y);
+    for (const item of actorDrawables) item.draw();
 
     // draw projectiles
     for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }

@@ -86,10 +86,36 @@ const gameContext = {
   window: { innerWidth: 390, innerHeight: 844 },
   Math,
   clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
+  dist: (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay),
+  TAU: Math.PI * 2,
   pick: (items) => items[0],
+  makeRNG: (seed) => {
+    let s = seed;
+    return () => {
+      s = (s * 1103515245 + 12345) & 0x7fffffff;
+      return s / 0x7fffffff;
+    };
+  },
 };
 vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
 const game = gameContext.__GAME__;
+gameContext.document = {
+  createElement: () => ({
+    width: 0,
+    height: 0,
+    getContext: () => ({
+      imageSmoothingEnabled: false,
+      globalAlpha: 1,
+      fillStyle: '',
+      fillRect() {},
+      drawImage() {},
+      beginPath() {},
+      ellipse() {},
+      fill() {},
+      createLinearGradient() { return { addColorStop() {} }; },
+    }),
+  }),
+};
 gameContext.Assets = {
   get: (key) => {
     const entry = manifest[key];
@@ -140,12 +166,25 @@ const centeredEntity = { x: 100, y: 100, radius: 14 };
 game.resolvePropCollision(centeredEntity);
 assert.ok(Math.hypot(centeredEntity.x - 100, centeredEntity.y - 100) >= stoneworkRadius + centeredEntity.radius - 0.1,
   'prop collision should push entities out even when centers exactly overlap');
-assert.ok(gameSource.includes('worldDrawables.sort((a, b) => a.y - b.y)'),
-  'renderWorld should depth-sort props and actors together by y');
+for (const [levelId, level] of Object.entries(config.LEVELS)) {
+  game.levelData = level;
+  game.generateMap();
+  const spawnX = level.mapW * config.TILE_SIZE / 2;
+  const spawnY = level.mapH * config.TILE_SIZE / 2;
+  for (const prop of game.collisionProps.filter(p => p.category !== 'wall')) {
+    assert.ok(!game.footprintOverlapsCircle(prop.x, prop.y, prop, spawnX, spawnY, 90),
+      `level ${levelId} prop ${prop.type} should not overlap the spawn safe zone`);
+  }
+}
+assert.ok(gameSource.includes('actorDrawables.sort((a, b) => a.y - b.y)'),
+  'renderWorld should depth-sort actors together by y');
+assert.ok(!gameSource.includes('worldDrawables.sort((a, b) => a.y - b.y)'),
+  'renderWorld should not depth-sort props over the player');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
 const entitiesSource = readFileSync(path.join(jsDir, 'entities.js'), 'utf8');
+assert.ok(entitiesSource.includes('drawFallback(ctx'), 'Player.draw should have a fallback when the hero sprite is unavailable');
 const entityGame = { player: { x: 0, y: 0, stats: { pickupRangeBonus: 140 } } };
 const entityContext = {
   CONFIG: config,
@@ -479,4 +518,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, prop/actor depth sorting, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, spawn safe zone, actor depth sorting, player fallback drawing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);

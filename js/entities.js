@@ -221,7 +221,12 @@ class Player {
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
     const spriteKey = 'player/hero';
-    Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
+    const spriteImg = Assets.get(spriteKey);
+    if (spriteImg && spriteImg.complete && spriteImg.width > 0) {
+      Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
+    } else {
+      this.drawFallback(ctx, this.x + sx, this.y + bob + sy, alpha);
+    }
 
     // hit flash overlay (red tint on sprite)
     if (this.hitFlash > 0) {
@@ -240,6 +245,22 @@ class Player {
 
     // draw weapons (always fully visible)
     for (const w of this.weapons) w.draw(ctx);
+  }
+
+  drawFallback(ctx, x, y, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#7a2a22';
+    ctx.fillRect(x - 8, y - 10, 16, 22);
+    ctx.fillStyle = '#f0b078';
+    ctx.beginPath();
+    ctx.arc(x, y - 18, 8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#301018';
+    ctx.fillRect(x - 6, y - 24, 12, 5);
+    ctx.fillStyle = '#f0d0a0';
+    ctx.fillRect(x + 9, y - 8, 4, 14);
+    ctx.restore();
   }
 }
 
