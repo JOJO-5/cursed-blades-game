@@ -1001,7 +1001,7 @@ const Game = {
       choices.push({
         weaponId,
         name: '强化武器: ' + weapon.name,
-        icon: weapon.icon,
+        icon: weapon.hudIcon || weapon.icon,
         rarity: fallbackRarity || 'rare',
         desc: `${weapon.name} Lv.${currentLevel} → Lv.${nextLevel}，提升伤害、范围或武器效果`,
         currentLevel,
@@ -2550,7 +2550,7 @@ const Game = {
       // bg
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillRect(wx-2, wY-2, 36, 36);
-      Assets.drawCentered(ctx, w.def.icon, wx + 16, wY + 16, 0.8, 0, 1);
+      this.drawChoiceIcon(ctx, w.def.hudIcon || w.def.icon, wx + 16, wY + 16, 30, 30);
       // level
       ctx.fillStyle = '#ffd040';
       ctx.font = '10px Courier New';

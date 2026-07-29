@@ -35,35 +35,35 @@ const CONFIG = {
   // ---- Weapon definitions ----
   WEAPONS: {
     sword: {
-      name: '铁剑', type: 'orbit', icon: 'weapons/ring_steel',
+      name: '铁剑', type: 'orbit', icon: 'weapons/ring_steel', hudIcon: 'weapons/sword',
       damage: 16, range: 75, rotateSpeed: 2.8, knockback: 100,
       pierce: 0, critChance: 0.05, critMult: 2.0,
       color: '#c8c8d0', size: 48,
       desc: '环绕近战·基础均衡',
     },
     hammer: {
-      name: '战锤', type: 'orbit', icon: 'weapons/ring_fire_awakened',
+      name: '战锤', type: 'orbit', icon: 'weapons/ring_fire_awakened', hudIcon: 'weapons/hammer',
       damage: 24, range: 60, rotateSpeed: 1.6, knockback: 160,
       pierce: 0, critChance: 0.05, critMult: 2.0,
       color: '#a0a0b0', size: 56,
       desc: '环绕近战·高伤慢速',
     },
     scythe: {
-      name: '镰刀', type: 'orbit', icon: 'weapons/sword_slash_wind',
+      name: '镰刀', type: 'orbit', icon: 'weapons/sword_slash_wind', hudIcon: 'weapons/scythe',
       damage: 10, range: 85, rotateSpeed: 3.0, knockback: 40,
       pierce: 3, critChance: 0.08, critMult: 2.0,
       color: '#d0d0e0', size: 52,
       desc: '环绕近战·穿透大范围',
     },
     bow: {
-      name: '弓箭', type: 'ranged', icon: 'weapons/sword_slash_wind',
+      name: '弓箭', type: 'ranged', icon: 'weapons/sword_slash_wind', hudIcon: 'weapons/bow',
       damage: 10, range: 320, cooldown: 1.0, projectileSpeed: 300,
       pierce: 1, critChance: 0.1, critMult: 2.0,
       color: '#d4a850', size: 40,
       desc: '远程发射·直线穿透',
     },
     fireball: {
-      name: '火球', type: 'ranged', icon: 'weapons/ring_fire',
+      name: '火球', type: 'ranged', icon: 'weapons/ring_fire', hudIcon: 'weapons/fireball',
       damage: 18, range: 280, cooldown: 1.4, projectileSpeed: 220,
       pierce: 0, critChance: 0.05, critMult: 2.0, splash: 40,
       color: '#ff8030', size: 44,
@@ -71,14 +71,14 @@ const CONFIG = {
       desc: '远程发射·范围爆炸',
     },
     knife: {
-      name: '飞刀', type: 'ranged', icon: 'weapons/sword_slash_wind',
+      name: '飞刀', type: 'ranged', icon: 'weapons/sword_slash_wind', hudIcon: 'weapons/knife',
       damage: 6, range: 260, cooldown: 0.35, projectileSpeed: 400,
       pierce: 0, critChance: 0.15, critMult: 2.5,
       color: '#c0c0d0', size: 32,
       desc: '远程发射·高频低伤',
     },
     soul: {
-      name: '灵魂弹', type: 'homing', icon: 'weapons/ring_void',
+      name: '灵魂弹', type: 'homing', icon: 'weapons/ring_void', hudIcon: 'weapons/soul',
       damage: 14, range: 300, cooldown: 1.2, projectileSpeed: 180,
       pierce: 0, critChance: 0.08, critMult: 2.0, homingStrength: 8,
       color: '#78dcff', size: 44,
@@ -86,7 +86,7 @@ const CONFIG = {
       desc: '自动追踪·灵能制导',
     },
     shield: {
-      name: '盾牌', type: 'orbit', icon: 'weapons/ring_target',
+      name: '盾牌', type: 'orbit', icon: 'weapons/ring_target', hudIcon: 'weapons/shield',
       damage: 5, range: 55, rotateSpeed: 1.2, knockback: 120,
       pierce: 0, critChance: 0.0, critMult: 1.5,
       color: '#7896c8', size: 52,
@@ -108,7 +108,7 @@ const CONFIG = {
       desc: '诅咒环刃·虚空多穿',
     },
     holy_cross: {
-      name: '圣光十字', type: 'projectile', icon: 'weapons/ring_steel',
+      name: '圣光十字', type: 'projectile', icon: 'weapons/ring_steel', hudIcon: 'weapons/holy_cross',
       damage: 12, range: 280, cooldown: 0.8, projectileSpeed: 280,
       pierce: 1, critChance: 0.08, critMult: 2.0,
       color: '#ffe8a0', size: 44,
@@ -116,7 +116,7 @@ const CONFIG = {
       desc: '旋转弹幕·十字方向发射',
     },
     poison_aura: {
-      name: '剧毒光环', type: 'aura', icon: 'weapons/ring_fire_double',
+      name: '剧毒光环', type: 'aura', icon: 'weapons/ring_fire_double', hudIcon: 'weapons/poison_aura',
       damage: 5, range: 90, cooldown: 0.5,
       pierce: 0, critChance: 0.05, critMult: 2.0,
       color: '#60c040', size: 48,
@@ -483,14 +483,14 @@ const CONFIG = {
 
   // ---- Weapon unlock upgrades (rare, from mimics/chests) ----
   WEAPON_UNLOCKS: [
-    { weaponId:'hammer',  name:'获得武器: 战锤', icon:'weapons/ring_fire_awakened', rarity:'rare' },
-    { weaponId:'scythe',  name:'获得武器: 镰刀', icon:'weapons/sword_slash_wind',   rarity:'rare' },
-    { weaponId:'bow',     name:'获得武器: 弓箭', icon:'weapons/sword_slash_wind',   rarity:'rare' },
-    { weaponId:'fireball',name:'获得武器: 火球', icon:'weapons/ring_fire',          rarity:'rare' },
-    { weaponId:'knife',   name:'获得武器: 飞刀', icon:'weapons/sword_slash_wind',   rarity:'rare' },
-    { weaponId:'soul',    name:'获得武器: 灵魂弹', icon:'weapons/ring_void',        rarity:'rare' },
+    { weaponId:'hammer',  name:'获得武器: 战锤', icon:'weapons/hammer', rarity:'rare' },
+    { weaponId:'scythe',  name:'获得武器: 镰刀', icon:'weapons/scythe',   rarity:'rare' },
+    { weaponId:'bow',     name:'获得武器: 弓箭', icon:'weapons/bow',   rarity:'rare' },
+    { weaponId:'fireball',name:'获得武器: 火球', icon:'weapons/fireball',          rarity:'rare' },
+    { weaponId:'knife',   name:'获得武器: 飞刀', icon:'weapons/knife',   rarity:'rare' },
+    { weaponId:'soul',    name:'获得武器: 灵魂弹', icon:'weapons/soul',        rarity:'rare' },
     { weaponId:'shadow_imp',name:'获得武器: 暗影小鬼', icon:'weapons/shadow_imp', rarity:'rare' },
-    { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/ring_target',        rarity:'rare' },
+    { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/shield',        rarity:'rare' },
     { weaponId:'ring_fire',name:'获得武器: 炎之环刃', icon:'weapons/ring_fire', rarity:'epic' },
     { weaponId:'ring_void',name:'获得武器: 虚空环刃', icon:'weapons/ring_void', rarity:'epic' },
     { weaponId:'ring_steel',name:'获得武器: 钢铁环刃', icon:'weapons/ring_steel', rarity:'rare' },

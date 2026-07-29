@@ -75,6 +75,26 @@ for (const [id, enemy] of Object.entries(config.ENEMIES)) {
 assert.ok(config.WEAPONS.shadow_imp.icon === 'weapons/shadow_imp' &&
   config.WEAPONS.shadow_imp.minionSprite === 'enemies/demon_bat',
   'shadow_imp should keep its card icon but summon a high-contrast visible minion sprite');
+{
+  const expectedHudIcons = {
+    sword: 'weapons/sword',
+    hammer: 'weapons/hammer',
+    scythe: 'weapons/scythe',
+    bow: 'weapons/bow',
+    fireball: 'weapons/fireball',
+    knife: 'weapons/knife',
+    soul: 'weapons/soul',
+    shield: 'weapons/shield',
+    holy_cross: 'weapons/holy_cross',
+    poison_aura: 'weapons/poison_aura',
+  };
+  for (const [weaponId, icon] of Object.entries(expectedHudIcons)) {
+    assert.equal(config.WEAPONS[weaponId].hudIcon, icon,
+      `weapon ${weaponId} should define a dedicated HUD/card icon separate from combat art`);
+    const unlock = config.WEAPON_UNLOCKS.find(u => u.weaponId === weaponId);
+    if (unlock) assert.equal(unlock.icon, icon, `unlock ${weaponId} should use the dedicated HUD/card icon`);
+  }
+}
 assert.ok(config.WEAPONS.shadow_imp.summonCount >= 2 && config.WEAPONS.shadow_imp.summonLifetime >= 12,
   'shadow_imp should summon visible companions long enough to notice');
 assert.ok(config.WEAPON_UNLOCKS.some(u => u.weaponId === 'shadow_imp'),
@@ -293,6 +313,13 @@ assert.ok(renderWorldSource.includes('Summons are gameplay-critical companions')
   renderWorldSource.includes('particle clutter so orbit/projectile effects do not') &&
   renderWorldSource.indexOf('for (const p of this.particles)') < renderWorldSource.indexOf('for (const m of this.minions)'),
   'renderWorld should draw summons above particles and the player weapon layer');
+const weaponHudRenderStart = gameSource.indexOf('renderHUD() {');
+const weaponHudRenderEnd = gameSource.indexOf('renderRotateButton()', weaponHudRenderStart);
+assert.ok(weaponHudRenderStart >= 0 && weaponHudRenderEnd > weaponHudRenderStart, 'renderHUD source should be locatable');
+const renderHudSource = gameSource.slice(weaponHudRenderStart, weaponHudRenderEnd);
+assert.ok(renderHudSource.includes('drawChoiceIcon(ctx, w.def.hudIcon || w.def.icon') &&
+  !renderHudSource.includes('Assets.drawCentered(ctx, w.def.icon'),
+  'weapon HUD should use the same cropped icon drawing path as upgrade cards');
 assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
   'phase events should support ambush pacing events');
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
