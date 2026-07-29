@@ -1253,6 +1253,8 @@ class DeathBehavior {
       Game.pickups.push(Game.pickupPool.obtain(enemy.x + Math.cos(ang) * r, enemy.y + Math.sin(ang) * r, 'xp', gemType, enemy.xp / gemCount));
     }
 
+    this.maybeDropGlobalXpMagnet(enemy);
+
     // death particles (boss bursts more)
     const pCount = enemy.isBoss ? 30 : 8;
     for (let i = 0; i < pCount; i++) {
@@ -1273,6 +1275,14 @@ class DeathBehavior {
 
     // screen shake (heavier for boss)
     Game.shakeScreen(enemy.isBoss ? 15 : 3, enemy.isBoss ? 0.5 : 0.1);
+  }
+
+  maybeDropGlobalXpMagnet(enemy) {
+    const drop = CONFIG.DROPS && CONFIG.DROPS.globalXpMagnet;
+    if (!drop || enemy.isMimic) return;
+    const chance = enemy.isBoss ? drop.bossChance : (enemy.isElite ? drop.eliteChance : drop.normalChance);
+    if (!chance || Math.random() >= chance) return;
+    Game.pickups.push(Game.pickupPool.obtain(enemy.x, enemy.y, 'magnet', drop.sprite || 'xp_gem_large', 0));
   }
 }
 
@@ -2526,7 +2536,7 @@ class Pickup {
   // Reinitialize all fields for pool reuse
   reset(x, y, type, sprite, value) {
     this.x = x; this.y = y;
-    this.type = type; // 'xp', 'heart', 'chest'
+    this.type = type; // 'xp', 'heart', 'chest', 'magnet'
     this.sprite = sprite;
     this.value = value || 0;
     this.alive = true;
@@ -2595,6 +2605,9 @@ class Pickup {
       Game.player.heal(20);
       Audio2.pickup();
       Game.addMessage('+20 生命', '#40ff40');
+    } else if (this.type === 'magnet') {
+      Audio2.pickup();
+      if (Game.collectAllXpPickups) Game.collectAllXpPickups(this.x, this.y);
     } else if (this.type === 'chest') {
       Game.openChest(this.x, this.y, this.value);
     }
@@ -2623,6 +2636,28 @@ class Pickup {
       Assets.drawCentered(ctx, 'items/' + this.sprite, this.x, this.y + bobY, 1, 0, 1);
     } else if (this.type === 'heart') {
       Assets.drawCentered(ctx, 'items/heart', this.x, this.y + bobY, 1.2, 0, 1);
+    } else if (this.type === 'magnet') {
+      const pulse = 1 + Math.sin(this.bob * 1.6) * 0.12;
+      ctx.fillStyle = 'rgba(80,220,255,0.28)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y + bobY, 26 * pulse, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(180,255,255,0.75)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y + bobY, 18 * pulse, 0, TAU);
+      ctx.stroke();
+      const orb = Assets.get('effects/mana_orb_small');
+      if (orb && orb.complete) {
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(orb, this.x - 20, this.y + bobY - 18, 40, 36);
+        ctx.globalAlpha = 1;
+      }
+      Assets.drawCentered(ctx, 'items/' + (this.sprite || 'xp_gem_large'), this.x, this.y + bobY, 1.25, 0, 1);
+      ctx.fillStyle = '#d8ffff';
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('EXP', this.x, this.y + bobY + 24);
     } else if (this.type === 'chest') {
       // chest types: 0=normal, 1=rare(golden glow), 2=suspicious(purple, trembles)
       const isRare = this.value === 1;

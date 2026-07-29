@@ -861,6 +861,51 @@ const Game = {
     this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', isRare ? isRare : 0));
   },
 
+  collectAllXpPickups(originX, originY) {
+    if (!this.player || !Array.isArray(this.pickups)) return 0;
+    let totalXp = 0;
+    let count = 0;
+    const visualLimit = 32;
+
+    for (const pickup of this.pickups) {
+      if (!pickup.alive || pickup.type !== 'xp') continue;
+      totalXp += pickup.value || 0;
+      pickup.alive = false;
+      if (count < visualLimit && this.particlePool && this.particles.length < 800) {
+        const ox = originX ?? this.player.x;
+        const oy = originY ?? this.player.y;
+        const ang = angleTo(pickup.x, pickup.y, ox, oy);
+        this.particles.push(this.particlePool.obtain(
+          pickup.x,
+          pickup.y,
+          Math.cos(ang) * 180,
+          Math.sin(ang) * 180,
+          '#80ffff',
+          0.45,
+          3
+        ));
+      }
+      count++;
+    }
+
+    if (totalXp <= 0) {
+      this.addMessage('没有可吸收的经验', '#80c0ff');
+      return 0;
+    }
+
+    const leveled = this.player.gainXp(totalXp);
+    this.addMessage('全图经验吸收 +' + Math.round(totalXp) + ' XP', '#80ffff');
+    if (this.spawnDamageNumber && this.damageNumberPool) {
+      this.spawnDamageNumber(this.player.x, this.player.y - 34, '+' + Math.round(totalXp) + 'XP', '#80ffff');
+    }
+    this.shakeScreen(3, 0.12);
+    if (typeof Audio2 !== 'undefined' && Audio2.play) {
+      Audio2.play('triangle', 780, 0.12, 0.05);
+    }
+    if (leveled) this.onLevelUp();
+    return totalXp;
+  },
+
   // ---- Level up ----
   onLevelUp() {
     Audio2.levelup();

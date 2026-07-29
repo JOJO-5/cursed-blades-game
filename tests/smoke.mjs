@@ -122,7 +122,9 @@ const gameContext = {
   Math,
   clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
   dist: (ax, ay, bx, by) => Math.hypot(bx - ax, by - ay),
+  angleTo: (ax, ay, bx, by) => Math.atan2(by - ay, bx - ax),
   TAU: Math.PI * 2,
+  Audio2: { pickup() {}, play() {} },
   pick: (items) => items[0],
   makeRNG: (seed) => {
     let s = seed;
@@ -134,6 +136,30 @@ const gameContext = {
 };
 vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
 const game = gameContext.__GAME__;
+assert.ok(typeof game.collectAllXpPickups === 'function',
+  'Game should expose a full-map XP collection helper for magnet pickups');
+{
+  let gainedXp = 0;
+  game.player = { x: 0, y: 0, gainXp: (amount) => { gainedXp += amount; return amount >= 5; } };
+  game.pickups = [
+    { type: 'xp', value: 2, alive: true, x: 120, y: 40 },
+    { type: 'xp', value: 3, alive: true, x: 320, y: 220 },
+    { type: 'heart', value: 0, alive: true, x: 80, y: 80 },
+    { type: 'chest', value: 0, alive: true, x: 160, y: 160 },
+  ];
+  game.particles = [];
+  game.particlePool = { obtain: () => ({ alive: true }) };
+  let levelUpTriggered = false;
+  game.onLevelUp = () => { levelUpTriggered = true; };
+  game.addMessage = () => {};
+  game.collectAllXpPickups(0, 0);
+  assert.equal(gainedXp, 5, 'full-map XP collection should grant the total value of all live XP gems');
+  assert.equal(game.pickups.filter(p => p.type === 'xp' && p.alive).length, 0,
+    'full-map XP collection should consume all live XP gems');
+  assert.equal(game.pickups.filter(p => p.type !== 'xp' && p.alive).length, 2,
+    'full-map XP collection should not consume hearts or chests');
+  assert.equal(levelUpTriggered, true, 'full-map XP collection should trigger level-up when total XP crosses the threshold');
+}
 gameContext.document = {
   createElement: () => ({
     width: 0,
@@ -249,6 +275,10 @@ assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
   gameSource.includes('orbitPulse') && gameSource.includes('guardRetaliation'),
   'Game should apply synergy hit effects');
+assert.ok(config.DROPS && config.DROPS.globalXpMagnet &&
+  config.DROPS.globalXpMagnet.normalChance > 0 &&
+  config.DROPS.globalXpMagnet.eliteChance > config.DROPS.globalXpMagnet.normalChance,
+  'config should define a rare random full-map XP magnet drop');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
@@ -291,6 +321,10 @@ pickup.vx = 0;
 pickup.vy = 0;
 pickup.update(0.1);
 assert.ok(pickup.x < 200, 'expanded pickup range should move a distant gem toward the player');
+assert.ok(entitiesSource.includes("this.type === 'magnet'") &&
+  entitiesSource.includes('collectAllXpPickups') &&
+  entitiesSource.includes('maybeDropGlobalXpMagnet'),
+  'magnet pickups should trigger full-map XP collection and be randomly dropped by deaths');
 
 // Regression: player bounds must use the active level dimensions, not only the
 // original global village map dimensions.
