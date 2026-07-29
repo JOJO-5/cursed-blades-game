@@ -317,6 +317,22 @@ const CONFIG = {
     epic:    { name: '史诗', color: '#c060e0', glow: '#e080ff' },
   },
 
+  BUILD_TAG_LABELS: {
+    orbit: '环绕',
+    ranged: '远程',
+    projectile: '弹幕',
+    homing: '追踪',
+    aura: '光环',
+    summon: '召唤',
+    fire: '火焰',
+    poison: '剧毒',
+    crit: '暴击',
+    guard: '防御',
+    area: '范围',
+    pierce: '穿透',
+    arcane: '奥术',
+  },
+
   // ---- Prop collision radii (0 = no collision) ----
   // Map prop category to collision radius in pixels. Props not listed here are non-solid.
   PROP_COLLISION: {
@@ -363,7 +379,7 @@ const CONFIG = {
     gallows:     { scaleX: 0.18, scaleY: 0.12, maxHalfW: 30, maxHalfH: 20, offsetY: 14 },
   },
 
-  // ---- Upgrade pool (20 upgrades with rarity/weight/maxLevel) ----
+  // ---- Upgrade pool (26 upgrades with rarity/weight/maxLevel) ----
   UPGRADES: [
     // --- Common (high weight, frequent) ---
     { id:'damage', name:'伤害提升', icon:'ui/upgrade_damage', desc:'武器伤害 +25%',
@@ -421,6 +437,25 @@ const CONFIG = {
     { id:'armor', name:'护甲提升', icon:'ui/upgrade_armor', desc:'固定减伤 +2',
       rarity:'rare', weight:35, maxLevel:5,
       apply:(p)=>{ p.stats.armor += 2; } },
+    // --- Build synergy upgrades: appear more often when current weapons match their tags ---
+    { id:'orbit_mastery', name:'环刃共振', icon:'ui/upgrade_rotatespeed', desc:'环绕武器伤害 +12%，命中有概率震荡周围敌人',
+      rarity:'rare', weight:32, maxLevel:4, prerequisite:'rotatespeed', buildTags:['orbit'],
+      apply:(p)=>{ p.stats.orbitDamageMult *= 1.12; p.stats.orbitPulseChance += 0.06; } },
+    { id:'projectile_barrage', name:'弹幕校准', icon:'ui/upgrade_projspeed', desc:'远程/弹幕伤害 +10%，命中有概率连锁到附近敌人',
+      rarity:'rare', weight:32, maxLevel:4, prerequisite:'projspeed', buildTags:['ranged','projectile','homing'],
+      apply:(p)=>{ p.stats.projectileDamageMult *= 1.10; p.stats.chainLightningChance += 0.045; } },
+    { id:'fire_affinity', name:'余烬亲和', icon:'ui/upgrade_damage', desc:'火焰武器命中有概率点燃敌人，燃烧伤害提高',
+      rarity:'rare', weight:28, maxLevel:4, buildTags:['fire','area'],
+      apply:(p)=>{ p.stats.burnChance += 0.10; p.stats.burnDamageMult *= 1.25; } },
+    { id:'venom_control', name:'毒雾掌控', icon:'ui/upgrade_lifesteal', desc:'剧毒武器命中有概率中毒并减速敌人',
+      rarity:'rare', weight:28, maxLevel:4, buildTags:['poison','aura'],
+      apply:(p)=>{ p.stats.poisonChance += 0.12; p.stats.poisonDamageMult *= 1.18; p.stats.poisonSlow += 0.07; } },
+    { id:'summoner_pact', name:'召唤契约', icon:'ui/upgrade_weaponcount', desc:'召唤物伤害 +20%，持续时间 +1 秒',
+      rarity:'epic', weight:18, maxLevel:3, buildTags:['summon'],
+      apply:(p)=>{ p.stats.summonDamageMult *= 1.20; p.stats.summonLifetimeBonus += 1.0; } },
+    { id:'guard_counter', name:'守势反击', icon:'ui/upgrade_armor', desc:'护甲 +1，受击时有概率释放近身反击波',
+      rarity:'epic', weight:16, maxLevel:3, prerequisite:'armor', buildTags:['guard','orbit'],
+      apply:(p)=>{ p.stats.armor += 1; p.stats.guardRetaliateChance += 0.16; } },
     // --- Epic (low weight, game-changing) ---
     { id:'luck', name:'幸运提升', icon:'ui/upgrade_luck', desc:'稀有升级出现率提升',
       rarity:'epic', weight:18, maxLevel:3,
@@ -766,9 +801,9 @@ const CONFIG = {
       // ---- Phased spawning (data-driven) ----
       phases: [
         { time: 0,   name: '初始骚扰',   enemyPool: ['villager','wild_dog','slime','bat'],                          rangedPool: [],             maxEnemies: 12, spawnInterval: 3.0, events: [] },
-        { time: 120, name: '远程加入',   enemyPool: ['villager','wild_dog','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
-        { time: 240, name: '精英登场',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','scarecrow'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '腐化加剧',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','boar','scarecrow'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 120, name: '远程加入',   enemyPool: ['villager','wild_dog','slime','bat','spider'],                 rangedPool: ['archer'],     maxEnemies: 16, spawnInterval: 2.7, events: [{type:'chest', rare:false, mimic:false}, {type:'ambush', count:4, enemyPool:['wild_dog','villager']}, {type:'message', text:'弓手出现了！', color:'#ff8030'}] },
+        { time: 240, name: '精英登场',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','scarecrow'],      rangedPool: ['archer','plague_archer'], maxEnemies: 20, spawnInterval: 2.4, events: [{type:'elite'}, {type:'ambush', count:5, enemyPool:['spider','scarecrow']}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '腐化加剧',   enemyPool: ['villager','wild_dog','slime','bat','spider','skeleton','boar','scarecrow'], rangedPool: ['archer','mage','plague_archer'], maxEnemies: 25, spawnInterval: 2.0, events: [{type:'elite'}, {type:'ambush', count:6, enemyPool:['boar','scarecrow','wild_dog']}, {type:'chest', rare:true, mimic:false}] },
         { time: 480, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
@@ -806,9 +841,9 @@ const CONFIG = {
       // ---- Phased spawning (data-driven) ----
       phases: [
         { time: 0,   name: '矿洞探索',   enemyPool: ['rat','beetle'],                          rangedPool: [],             maxEnemies: 14, spawnInterval: 2.5, events: [] },
-        { time: 120, name: '水晶法师',   enemyPool: ['rat','beetle','miner'],                   rangedPool: ['crystal'],    maxEnemies: 18, spawnInterval: 2.2, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'水晶法师出现了！', color:'#ff8030'}] },
-        { time: 240, name: '腐化蔓延',   enemyPool: ['rat','beetle','miner','spider'],          rangedPool: ['crystal'],    maxEnemies: 22, spawnInterval: 2.0, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '深渊回响',   enemyPool: ['rat','beetle','miner','spider','skeleton'], rangedPool: ['crystal','archer'], maxEnemies: 30, spawnInterval: 1.6, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 120, name: '水晶法师',   enemyPool: ['rat','beetle','miner'],                   rangedPool: ['crystal'],    maxEnemies: 18, spawnInterval: 2.2, events: [{type:'chest', rare:false, mimic:false}, {type:'ambush', count:5, enemyPool:['rat','beetle']}, {type:'message', text:'水晶法师出现了！', color:'#ff8030'}] },
+        { time: 240, name: '腐化蔓延',   enemyPool: ['rat','beetle','miner','spider'],          rangedPool: ['crystal'],    maxEnemies: 22, spawnInterval: 2.0, events: [{type:'elite'}, {type:'ambush', count:5, enemyPool:['miner','spider']}, {type:'chest', rare:false, mimic:true}] },
+        { time: 360, name: '深渊回响',   enemyPool: ['rat','beetle','miner','spider','skeleton'], rangedPool: ['crystal','archer'], maxEnemies: 30, spawnInterval: 1.6, events: [{type:'elite'}, {type:'ambush', count:7, enemyPool:['beetle','skeleton','miner']}, {type:'chest', rare:true, mimic:false}] },
         { time: 420, name: 'Boss降临',   enemyPool: [],                                         rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
@@ -852,10 +887,10 @@ const CONFIG = {
       mimicChance: 0.5,
       phases: [
         { time: 0,   name: '地狱边境',   enemyPool: ['imp','hellhound'],                     rangedPool: [],             maxEnemies: 16, spawnInterval: 2.0, events: [] },
-        { time: 90,  name: '恶魔军团',   enemyPool: ['imp','hellhound','demon_soldier'],      rangedPool: ['lava_archer'], maxEnemies: 20, spawnInterval: 1.8, events: [{type:'chest', rare:false, mimic:false}, {type:'message', text:'恶魔士兵出现了！', color:'#ff4020'}] },
-        { time: 180, name: '魅魔之歌',   enemyPool: ['imp','hellhound','demon_soldier','succubus'], rangedPool: ['lava_archer','succubus'], maxEnemies: 25, spawnInterval: 1.6, events: [{type:'elite'}, {type:'chest', rare:false, mimic:true}] },
-        { time: 300, name: '炎魔降临',   enemyPool: ['imp','hellhound','demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 30, spawnInterval: 1.4, events: [{type:'elite'}, {type:'chest', rare:true, mimic:false}] },
-        { time: 420, name: '深渊集结',   enemyPool: ['demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 35, spawnInterval: 1.2, events: [{type:'elite'}, {type:'elite'}, {type:'chest', rare:true, mimic:true}] },
+        { time: 90,  name: '恶魔军团',   enemyPool: ['imp','hellhound','demon_soldier'],      rangedPool: ['lava_archer'], maxEnemies: 20, spawnInterval: 1.8, events: [{type:'chest', rare:false, mimic:false}, {type:'ambush', count:6, enemyPool:['imp','hellhound']}, {type:'message', text:'恶魔士兵出现了！', color:'#ff4020'}] },
+        { time: 180, name: '魅魔之歌',   enemyPool: ['imp','hellhound','demon_soldier','succubus'], rangedPool: ['lava_archer','succubus'], maxEnemies: 25, spawnInterval: 1.6, events: [{type:'elite'}, {type:'ambush', count:6, enemyPool:['hellhound','succubus']}, {type:'chest', rare:false, mimic:true}] },
+        { time: 300, name: '炎魔降临',   enemyPool: ['imp','hellhound','demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 30, spawnInterval: 1.4, events: [{type:'elite'}, {type:'ambush', count:8, enemyPool:['demon_soldier','lava_archer','hellhound']}, {type:'chest', rare:true, mimic:false}] },
+        { time: 420, name: '深渊集结',   enemyPool: ['demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 35, spawnInterval: 1.2, events: [{type:'elite'}, {type:'elite'}, {type:'ambush', count:8, enemyPool:['demon_soldier','succubus','flame_mage']}, {type:'chest', rare:true, mimic:true}] },
         { time: 540, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {

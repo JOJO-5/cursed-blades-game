@@ -52,6 +52,19 @@ class Player {
       luck: 0,                  // 幸运 (影响稀有升级出现率)
       xpMult: 1.0,              // 经验获取乘数
       lifesteal: 0,             // 生命偷取比例
+      orbitDamageMult: 1.0,     // 环绕武器构筑伤害
+      projectileDamageMult: 1.0,// 远程/弹幕构筑伤害
+      auraDamageMult: 1.0,      // 光环构筑伤害
+      summonDamageMult: 1.0,    // 召唤物构筑伤害
+      summonLifetimeBonus: 0,   // 召唤物持续时间加成
+      orbitPulseChance: 0,      // 环绕命中共振概率
+      chainLightningChance: 0,  // 弹幕连锁概率
+      burnChance: 0,            // 火焰命中点燃概率
+      burnDamageMult: 1.0,      // 燃烧伤害倍率
+      poisonChance: 0,          // 剧毒命中概率
+      poisonDamageMult: 1.0,    // 中毒伤害倍率
+      poisonSlow: 0,            // 中毒减速强度
+      guardRetaliateChance: 0,  // 受击反击概率
     };
 
     // track upgrade levels for maxLevel enforcement
@@ -107,6 +120,11 @@ class Player {
     Game.spawnDamageNumber(this.x, this.y - 20, amount, '#ff4040');
     Game.shakeScreen(6, 0.2);
     Game.damageVignette = 0.6;
+    if (this.stats.guardRetaliateChance > 0 &&
+        Math.random() < this.stats.guardRetaliateChance &&
+        Game.guardRetaliation) {
+      Game.guardRetaliation(this);
+    }
     // red hit particles
     for (let i = 0; i < 6; i++) {
       const ang = Math.random() * TAU;
@@ -278,7 +296,13 @@ class Weapon {
   }
 
   getDamage() {
-    return this.def.damage * Game.player.stats.damageMult * (1 + (this.level - 1) * 0.15);
+    const stats = Game.player.stats;
+    let buildMult = 1;
+    if (this.def.type === 'orbit') buildMult *= stats.orbitDamageMult || 1;
+    else if (this.def.type === 'ranged' || this.def.type === 'homing' || this.def.type === 'projectile') buildMult *= stats.projectileDamageMult || 1;
+    else if (this.def.type === 'aura') buildMult *= stats.auraDamageMult || 1;
+    else if (this.def.type === 'summon') buildMult *= stats.summonDamageMult || 1;
+    return this.def.damage * stats.damageMult * buildMult * (1 + (this.level - 1) * 0.15);
   }
   getRange() {
     return this.def.range * Game.player.stats.rangeMult * (1 + (this.level - 1) * 0.05);
@@ -330,6 +354,9 @@ class Weapon {
               if (isCrit) damage *= this.getCritMult();
               const kb = (this.def.knockback || 0) * player.stats.knockbackMult;
               e.takeDamage(damage, isCrit, kb, player.x, player.y);
+              if (Game.applyPlayerHitEffects) {
+                Game.applyPlayerHitEffects(e, damage, this, player, isCrit);
+              }
               if (player.stats.lifesteal > 0) {
                 player.heal(damage * player.stats.lifesteal);
               }
@@ -378,6 +405,9 @@ class Weapon {
                   if (sd < splashR) {
                     const splashDmg = damage * 0.5;
                     e2.takeDamage(splashDmg, false, kb * 0.5, e.x, e.y);
+                    if (Game.applyPlayerHitEffects) {
+                      Game.applyPlayerHitEffects(e2, splashDmg, this, player, false, { secondary: true });
+                    }
                   }
                 }
                 if (Game.particles.length < 800) {
@@ -428,6 +458,9 @@ class Weapon {
             let isCrit = Math.random() < crit;
             if (isCrit) damage *= this.getCritMult();
             e.takeDamage(damage, isCrit, kb, player.x, player.y);
+            if (Game.applyPlayerHitEffects) {
+              Game.applyPlayerHitEffects(e, damage, this, player, isCrit);
+            }
             if (player.stats.lifesteal > 0) {
               player.heal(damage * player.stats.lifesteal);
             }
@@ -453,7 +486,7 @@ class Weapon {
             player.y + Math.sin(ang) * r,
             this.getDamage(),
             this.def.projectileSpeed * player.stats.projectileSpeedMult,
-            this.def.summonLifetime || 8,
+            (this.def.summonLifetime || 8) + (player.stats.summonLifetimeBonus || 0),
             this.def.color,
             this.def.size
           );
@@ -1258,6 +1291,13 @@ class Enemy {
     this.contactCooldown = 0;
     this.avoidTimer = 0;
     this.avoidSide = Math.random() < 0.5 ? -1 : 1;
+    this.burnTimer = 0;
+    this.burnDps = 0;
+    this.burnTickTimer = 0;
+    this.poisonTimer = 0;
+    this.poisonDps = 0;
+    this.poisonTickTimer = 0;
+    this.poisonSlowMult = 1;
 
     // assign behavior strategy
     this.behavior = ENEMY_BEHAVIORS[def.behavior] || ENEMY_BEHAVIORS.chase;
@@ -1354,6 +1394,59 @@ class Enemy {
     if (this.hp <= 0) this.die();
   }
 
+  applyStatusEffect(type, duration, power, slowMult) {
+    if (!this.alive || this.isBoss) return;
+    if (type === 'burn') {
+      this.burnTimer = Math.max(this.burnTimer, duration);
+      this.burnDps = Math.max(this.burnDps, power);
+      this.burnTickTimer = Math.min(this.burnTickTimer || 0.5, 0.2);
+    } else if (type === 'poison') {
+      this.poisonTimer = Math.max(this.poisonTimer, duration);
+      this.poisonDps = Math.max(this.poisonDps, power);
+      this.poisonSlowMult = Math.min(this.poisonSlowMult || 1, slowMult || 0.88);
+      this.poisonTickTimer = Math.min(this.poisonTickTimer || 0.5, 0.2);
+    }
+  }
+
+  updateStatusEffects(dt) {
+    if (this.burnTimer > 0) {
+      this.burnTimer = Math.max(0, this.burnTimer - dt);
+      this.burnTickTimer -= dt;
+      if (this.burnTickTimer <= 0) {
+        this.burnTickTimer += 0.5;
+        this.takeDamage(this.burnDps * 0.5, false, 0, this.x, this.y);
+        Game.spawnDamageNumber(this.x, this.y - this.radius - 16, '燃烧', '#ff8030');
+        if (Game.particles.length < 800) {
+          Game.particles.push(Game.particlePool.obtain(this.x, this.y, rand(-20, 20), rand(-35, -10), '#ff8030', 0.25, 3));
+        }
+      }
+    } else {
+      this.burnDps = 0;
+    }
+
+    if (!this.alive) return;
+
+    if (this.poisonTimer > 0) {
+      this.poisonTimer = Math.max(0, this.poisonTimer - dt);
+      this.poisonTickTimer -= dt;
+      if (this.poisonTickTimer <= 0) {
+        this.poisonTickTimer += 0.65;
+        this.takeDamage(this.poisonDps * 0.65, false, 0, this.x, this.y);
+        Game.spawnDamageNumber(this.x, this.y - this.radius - 16, '中毒', '#60d060');
+        if (Game.particles.length < 800) {
+          Game.particles.push(Game.particlePool.obtain(this.x, this.y, rand(-15, 15), rand(-20, 5), '#60d060', 0.35, 3));
+        }
+      }
+    } else {
+      this.poisonDps = 0;
+      this.poisonSlowMult = 1;
+    }
+  }
+
+  getStatusSpeedMult() {
+    return this.poisonTimer > 0 ? clamp(this.poisonSlowMult || 1, 0.55, 1) : 1;
+  }
+
   die() {
     this.alive = false;
     Game.player.kills++;
@@ -1412,6 +1505,8 @@ class Enemy {
     this.animTime += dt;
     this.hitFlash = Math.max(0, this.hitFlash - dt);
     this.contactCooldown = Math.max(0, this.contactCooldown - dt);
+    this.updateStatusEffects(dt);
+    if (!this.alive) return;
 
     const player = Game.player;
 
@@ -1425,6 +1520,11 @@ class Enemy {
 
     // delegate movement + attack to behavior strategy
     this.behavior.update(this, dt, player, d);
+    const statusSpeedMult = this.getStatusSpeedMult();
+    if (statusSpeedMult < 1) {
+      this.vx *= statusSpeedMult;
+      this.vy *= statusSpeedMult;
+    }
 
     // charge velocity overrides normal movement
     if (this.isBoss && this.bossState === 'charging') {
@@ -1839,6 +1939,26 @@ class Enemy {
     }
     ctx.restore();
 
+    // status readability: show small elemental rings without covering the sprite
+    if (this.burnTimer > 0 || this.poisonTimer > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.lineWidth = 2;
+      if (this.burnTimer > 0) {
+        ctx.strokeStyle = '#ff8030';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + 2, this.radius + 4 + Math.sin(this.animTime * 12) * 2, 0, TAU);
+        ctx.stroke();
+      }
+      if (this.poisonTimer > 0) {
+        ctx.strokeStyle = '#60d060';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + 4, this.radius + 8 + Math.sin(this.animTime * 9) * 2, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     // health bar (for elites/boss/damaged — mimic shows bar only after reveal)
     const showHpBar = (this.isBoss || this.isElite || this.hp < this.maxHp)
       && !(this.isMimic && this.mimicState === 'disguise');
@@ -2049,6 +2169,15 @@ class Projectile {
         let isCrit = Math.random() < this.critChance;
         if (isCrit) dmg *= this.critMult;
         e.takeDamage(dmg, isCrit, 0, this.x, this.y);
+        if (Game.applyPlayerHitEffects) {
+          Game.applyPlayerHitEffects(
+            e,
+            dmg,
+            { id: this.weaponId, def: CONFIG.WEAPONS[this.weaponId] },
+            Game.player,
+            isCrit
+          );
+        }
         // lifesteal
         if (Game.player.stats.lifesteal > 0) {
           Game.player.heal(dmg * Game.player.stats.lifesteal);
@@ -2061,6 +2190,16 @@ class Projectile {
             const sd = dist(this.x, this.y, e2.x, e2.y);
             if (sd < this.splash) {
               e2.takeDamage(dmg * 0.5, false, 0, this.x, this.y);
+              if (Game.applyPlayerHitEffects) {
+                Game.applyPlayerHitEffects(
+                  e2,
+                  dmg * 0.5,
+                  { id: this.weaponId, def: CONFIG.WEAPONS[this.weaponId] },
+                  Game.player,
+                  false,
+                  { secondary: true }
+                );
+              }
             }
           }
           // splash particles
@@ -2249,6 +2388,15 @@ class Minion {
         const d = dist(this.x, this.y, e.x, e.y);
         if (d < e.radius + this.radius) {
           e.takeDamage(this.damage, false, 20, this.x, this.y);
+          if (Game.applyPlayerHitEffects) {
+            Game.applyPlayerHitEffects(
+              e,
+              this.damage,
+              { id: 'shadow_imp', def: CONFIG.WEAPONS.shadow_imp },
+              Game.player,
+              false
+            );
+          }
           this.contactCooldown = 0.4;
           break; // only hit one enemy per tick
         }

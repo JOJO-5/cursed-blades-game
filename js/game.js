@@ -447,12 +447,33 @@ const Game = {
         }
       } else if (ev.type === 'elite') {
         this.spawnElite();
+      } else if (ev.type === 'ambush') {
+        const count = this.spawnEnemyGroup(ev.enemyPool || phase.enemyPool || [], ev.count || 4);
+        if (count > 0) {
+          this.addMessage(ev.text || '怪物突袭！', ev.color || '#ff6040');
+          this.shakeScreen(4, 0.2);
+        }
       } else if (ev.type === 'boss') {
         this.spawnBoss();
       } else if (ev.type === 'message') {
         this.addMessage(ev.text || '', ev.color || '#ffffff');
       }
     }
+  },
+
+  spawnEnemyGroup(pool, count) {
+    if (!pool || pool.length === 0 || !this.player) return 0;
+    let spawned = 0;
+    const maxExtra = Math.max(0, (this.getActivePhase()?.maxEnemies || this.levelData.maxEnemies || 30) - this.enemies.length);
+    const targetCount = Math.min(count, Math.max(maxExtra, Math.ceil(count * 0.5)));
+    for (let i = 0; i < targetCount; i++) {
+      const type = pick(pool);
+      const pos = this.getSpawnPosition(CONFIG.ENEMIES[type]?.radius || 16);
+      if (!pos) continue;
+      this.enemies.push(new Enemy(type, pos.x, pos.y));
+      spawned++;
+    }
+    return spawned;
   },
 
   spawnEnemyFromPhase(phase) {
@@ -683,6 +704,118 @@ const Game = {
     return this.collisionProps.some(prop => this.footprintOverlapsCircle(prop.x, prop.y, prop, x, y, radius));
   },
 
+  applyPlayerHitEffects(enemy, damage, weapon, player, isCrit, opts) {
+    if (!enemy || !enemy.alive || !player || !player.stats) return;
+    const secondary = opts && opts.secondary;
+    const weaponId = typeof weapon === 'string' ? weapon : weapon?.id;
+    const weaponDef = (weapon && weapon.def) || CONFIG.WEAPONS[weaponId] || {};
+    const tags = this.getWeaponTags(weaponId);
+    const stats = player.stats;
+
+    if (enemy.applyStatusEffect && tags.has('fire') && stats.burnChance > 0 && Math.random() < stats.burnChance) {
+      const burnDps = Math.max(2, damage * 0.18 * (stats.burnDamageMult || 1));
+      enemy.applyStatusEffect('burn', 3.0, burnDps);
+      this.spawnDamageNumber(enemy.x, enemy.y - enemy.radius - 18, '点燃', '#ff8030');
+    }
+
+    if (enemy.applyStatusEffect && tags.has('poison') && stats.poisonChance > 0 && Math.random() < stats.poisonChance) {
+      const poisonDps = Math.max(1.5, damage * 0.12 * (stats.poisonDamageMult || 1));
+      const slowMult = clamp(1 - (stats.poisonSlow || 0), 0.55, 0.95);
+      enemy.applyStatusEffect('poison', 4.0, poisonDps, slowMult);
+      this.spawnDamageNumber(enemy.x, enemy.y - enemy.radius - 18, '剧毒', '#60d060');
+    }
+
+    if (!secondary && stats.chainLightningChance > 0 &&
+        (tags.has('projectile') || tags.has('homing') || tags.has('arcane')) &&
+        Math.random() < stats.chainLightningChance) {
+      this.chainLightning(enemy, damage * 0.45, weaponDef.color || '#80c0ff', isCrit);
+    }
+
+    if (!secondary && stats.orbitPulseChance > 0 &&
+        (tags.has('orbit') || tags.has('aura')) &&
+        Math.random() < stats.orbitPulseChance) {
+      this.orbitPulse(enemy.x, enemy.y, damage * 0.32, weaponDef.color || '#ffd040');
+    }
+  },
+
+  chainLightning(sourceEnemy, damage, color, fromCrit) {
+    if (!sourceEnemy || !this.enemyGrid) return;
+    const candidates = this.enemyGrid.query(sourceEnemy.x, sourceEnemy.y, 150)
+      .filter(e => e.alive && e.id !== sourceEnemy.id)
+      .sort((a, b) => dist(sourceEnemy.x, sourceEnemy.y, a.x, a.y) - dist(sourceEnemy.x, sourceEnemy.y, b.x, b.y))
+      .slice(0, fromCrit ? 3 : 2);
+    if (!candidates.length) return;
+    let fromX = sourceEnemy.x;
+    let fromY = sourceEnemy.y;
+    for (const target of candidates) {
+      target.takeDamage(damage, false, 20, fromX, fromY);
+      if (this.particles.length < 800) {
+        for (let i = 0; i < 6; i++) {
+          const t = i / 5;
+          this.particles.push(this.particlePool.obtain(
+            fromX + (target.x - fromX) * t,
+            fromY + (target.y - fromY) * t,
+            rand(-20, 20), rand(-20, 20),
+            color || '#80c0ff',
+            0.25,
+            3
+          ));
+        }
+      }
+      fromX = target.x;
+      fromY = target.y;
+    }
+    this.spawnDamageNumber(sourceEnemy.x, sourceEnemy.y - sourceEnemy.radius - 20, '连锁', color || '#80c0ff');
+    Audio2.play('triangle', 520, 0.08, 0.04);
+  },
+
+  orbitPulse(x, y, damage, color) {
+    if (!this.enemyGrid) return;
+    const radius = 85;
+    let hits = 0;
+    for (const enemy of this.enemyGrid.query(x, y, radius)) {
+      if (!enemy.alive) continue;
+      const d = dist(x, y, enemy.x, enemy.y);
+      if (d > radius + enemy.radius) continue;
+      enemy.takeDamage(damage, false, 35, x, y);
+      hits++;
+    }
+    if (hits > 0) {
+      this.spawnDamageNumber(x, y - 24, '共振', color || '#ffd040');
+      for (let i = 0; i < 14 && this.particles.length < 800; i++) {
+        const a = (i / 14) * TAU;
+        this.particles.push(this.particlePool.obtain(
+          x, y,
+          Math.cos(a) * 120,
+          Math.sin(a) * 120,
+          color || '#ffd040',
+          0.28,
+          4
+        ));
+      }
+      this.shakeScreen(3, 0.12);
+    }
+  },
+
+  guardRetaliation(player) {
+    if (!player || !this.enemyGrid) return;
+    const radius = 95;
+    const damage = 14 + (player.stats.armor || 0) * 4;
+    let hits = 0;
+    for (const enemy of this.enemyGrid.query(player.x, player.y, radius)) {
+      if (!enemy.alive) continue;
+      if (dist(player.x, player.y, enemy.x, enemy.y) > radius + enemy.radius) continue;
+      enemy.takeDamage(damage, false, 90, player.x, player.y);
+      hits++;
+    }
+    if (hits > 0) {
+      this.spawnDamageNumber(player.x, player.y - 36, '反击', '#80c0ff');
+      this.addMessage('守势反击!', '#80c0ff');
+      Audio2.play('square', 180, 0.12, 0.06);
+      this.shakeScreen(5, 0.18);
+    }
+  },
+
   spawnBoss() {
     this.bossSpawned = true;
     // clear normal enemies when boss appears (design: "清理普通敌人")
@@ -739,24 +872,22 @@ const Game = {
     const available = CONFIG.UPGRADES.filter(u => {
       const currentLevel = this.player.upgradeLevels[u.id] || 0;
       if (currentLevel >= u.maxLevel) return false;
-      // check prerequisite: player must have at least 1 level in the prerequisite upgrade
-      if (u.prerequisite) {
-        const prereqLevel = this.player.upgradeLevels[u.prerequisite] || 0;
-        if (prereqLevel < 1) return false;
-      }
-      return true;
+      return this.upgradePrerequisiteMet(u);
     });
 
     const pool = available;
 
     // Luck increases the weight of rare/epic upgrades
     const luckMult = 1 + this.player.stats.luck * 0.15;
+    const buildTags = this.getPlayerBuildTags();
 
     // Build weighted list
     const weighted = pool.map(u => {
       let w = u.weight || 50;
       if (u.rarity === 'rare') w *= luckMult;
       if (u.rarity === 'epic') w *= luckMult * 1.5;
+      const synergy = this.getChoiceSynergyScore(u, buildTags);
+      if (synergy > 0) w *= 1 + synergy * 0.45;
       return { upgrade: u, weight: w };
     });
 
@@ -775,11 +906,17 @@ const Game = {
       tempPool.splice(idx, 1);
     }
 
+    this.ensureBuildChoice(choices, available, buildTags);
+
     // 20% chance to include a weapon unlock (replaces one choice)
     const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
     const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
     if (availableUnlocks.length > 0 && Math.random() < 0.2) {
-      const unlock = pick(availableUnlocks);
+      const unlock = this.pickWeightedChoice(availableUnlocks.map(u => {
+        const rarityBonus = u.rarity === 'epic' ? 15 : 0;
+        const synergy = this.getChoiceSynergyScore(u, buildTags);
+        return { upgrade: u, weight: 35 + rarityBonus + synergy * 30 };
+      }));
       // Replace the last choice with the weapon unlock
       if (choices.length) choices[choices.length - 1] = unlock;
       else choices.push(unlock);
@@ -788,6 +925,169 @@ const Game = {
     if (!choices.length) choices.push(this.createRecoveryChoice());
 
     this.upgradeChoices = choices;
+  },
+
+  upgradePrerequisiteMet(upgrade) {
+    if (!upgrade || !upgrade.prerequisite) return true;
+    const prereqLevel = this.player.upgradeLevels[upgrade.prerequisite] || 0;
+    return prereqLevel >= (upgrade.prerequisiteLevel || 1);
+  },
+
+  pickWeightedChoice(weighted) {
+    if (!weighted || weighted.length === 0) return null;
+    const totalW = weighted.reduce((sum, item) => sum + Math.max(0, item.weight || 0), 0);
+    if (totalW <= 0) return weighted[0].upgrade;
+    let r = Math.random() * totalW;
+    for (const item of weighted) {
+      r -= Math.max(0, item.weight || 0);
+      if (r <= 0) return item.upgrade;
+    }
+    return weighted[weighted.length - 1].upgrade;
+  },
+
+  ensureBuildChoice(choices, available, buildTags) {
+    if (!choices.length || buildTags.size === 0) return;
+    const hasSynergy = choices.some(choice => this.getChoiceSynergyScore(choice, buildTags) > 0);
+    if (hasSynergy) return;
+    const candidates = available
+      .filter(u => this.getChoiceSynergyScore(u, buildTags) > 0)
+      .filter(u => !choices.some(choice => choice.id === u.id));
+    if (!candidates.length) return;
+    const replacement = this.pickWeightedChoice(candidates.map(u => ({
+      upgrade: u,
+      weight: (u.weight || 50) * (1 + this.getChoiceSynergyScore(u, buildTags) * 0.6),
+    })));
+    if (replacement) choices[choices.length - 1] = replacement;
+  },
+
+  getPlayerBuildTags() {
+    const tags = new Set();
+    if (!this.player || !this.player.weapons) return tags;
+    for (const weapon of this.player.weapons) {
+      for (const tag of this.getWeaponTags(weapon.id)) tags.add(tag);
+    }
+    return tags;
+  },
+
+  getWeaponTags(weaponId) {
+    const def = CONFIG.WEAPONS[weaponId];
+    const tags = new Set();
+    if (!def) return tags;
+    if (def.type) tags.add(def.type);
+    if (def.type === 'ranged' || def.type === 'homing') tags.add('projectile');
+    if (def.type === 'projectile') tags.add('ranged');
+    if (def.blockReduction) tags.add('guard');
+    if (def.splash) tags.add('area');
+    if ((def.pierce || 0) >= 2) tags.add('pierce');
+    if ((def.critChance || 0) >= 0.12) tags.add('crit');
+    if (def.homingStrength) tags.add('arcane');
+    const key = `${weaponId} ${def.icon || ''} ${def.color || ''}`.toLowerCase();
+    if (key.includes('fire') || key.includes('torch') || key.includes('flame') || key.includes('#ff')) tags.add('fire');
+    if (key.includes('poison') || key.includes('toxic') || key.includes('#60c040')) tags.add('poison');
+    if (key.includes('void') || key.includes('soul') || key.includes('arcane') || key.includes('crystal')) tags.add('arcane');
+    if (def.evolved) tags.add('evolved');
+    return tags;
+  },
+
+  getChoiceBuildTags(choice) {
+    if (!choice) return new Set();
+    if (choice.weaponId) return this.getWeaponTags(choice.weaponId);
+    const tags = new Set(choice.buildTags || []);
+    const idTags = {
+      damage: ['orbit','ranged','projectile','aura','summon'],
+      attackspeed: ['orbit','ranged','projectile','aura','summon'],
+      rotatespeed: ['orbit'],
+      range: ['orbit','ranged','projectile','aura','homing'],
+      projspeed: ['ranged','projectile','homing'],
+      pierce: ['ranged','projectile','pierce'],
+      weaponcount: ['orbit','summon'],
+      cooldown: ['ranged','projectile','aura','summon'],
+      crit: ['crit','ranged','projectile','orbit'],
+      critdamage: ['crit'],
+      armor: ['guard'],
+      lifesteal: ['guard','aura'],
+      knockback: ['orbit','guard'],
+    };
+    for (const tag of idTags[choice.id] || []) tags.add(tag);
+    return tags;
+  },
+
+  getChoiceSynergyScore(choice, buildTags) {
+    if (!buildTags || buildTags.size === 0) return 0;
+    const choiceTags = this.getChoiceBuildTags(choice);
+    let score = 0;
+    for (const tag of choiceTags) {
+      if (buildTags.has(tag)) score++;
+    }
+    return score;
+  },
+
+  getTagLabel(tag) {
+    return (CONFIG.BUILD_TAG_LABELS && CONFIG.BUILD_TAG_LABELS[tag]) || tag;
+  },
+
+  getEvolutionHintForChoice(choice) {
+    if (!choice || !this.player) return '';
+    const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
+    if (choice.weaponId) {
+      const evo = CONFIG.WEAPON_EVOLUTIONS.find(e => e.baseWeapon === choice.weaponId);
+      if (!evo) return '';
+      const relic = CONFIG.UPGRADES.find(u => u.id === evo.relic);
+      return `进化线: ${relic ? relic.name : evo.relic} Lv.${evo.relicMinLevel}`;
+    }
+    const evo = CONFIG.WEAPON_EVOLUTIONS.find(e =>
+      e.relic === choice.id &&
+      ownedWeaponIds.has(e.baseWeapon) &&
+      !ownedWeaponIds.has(e.resultWeapon)
+    );
+    if (!evo) return '';
+    const baseName = CONFIG.WEAPONS[evo.baseWeapon]?.name || evo.baseWeapon;
+    const nextLevel = (this.player.upgradeLevels[choice.id] || 0) + 1;
+    return `进化材料: ${baseName} ${nextLevel}/${evo.relicMinLevel}`;
+  },
+
+  getChoiceDescription(choice) {
+    const base = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
+    const parts = base ? [base] : [];
+    const buildTags = this.getPlayerBuildTags();
+    const synergy = this.getChoiceSynergyScore(choice, buildTags);
+    if (synergy > 0) {
+      const labels = [...this.getChoiceBuildTags(choice)]
+        .filter(tag => buildTags.has(tag))
+        .slice(0, 3)
+        .map(tag => this.getTagLabel(tag));
+      if (labels.length) parts.push(`适配: ${labels.join('/')}`);
+    }
+    const evoHint = this.getEvolutionHintForChoice(choice);
+    if (evoHint) parts.push(evoHint);
+    return parts.join('  |  ');
+  },
+
+  drawChoiceBadges(ctx, choice, cardX, cardY, cardW) {
+    const buildTags = this.getPlayerBuildTags();
+    const labels = [];
+    if (this.getChoiceSynergyScore(choice, buildTags) > 0) labels.push({ text: '适配', color: '#40d080' });
+    if (this.getEvolutionHintForChoice(choice)) labels.push({ text: '进化线', color: '#e080ff' });
+    const tagLabels = [...this.getChoiceBuildTags(choice)]
+      .filter(tag => !['ranged'].includes(tag))
+      .slice(0, 2)
+      .map(tag => this.getTagLabel(tag));
+    if (tagLabels.length) labels.push({ text: tagLabels.join('/'), color: '#80c0ff' });
+    let x = cardX + 8;
+    ctx.font = 'bold 10px Courier New';
+    ctx.textAlign = 'left';
+    for (const label of labels.slice(0, 3)) {
+      const w = ctx.measureText(label.text).width + 10;
+      if (x + w > cardX + cardW - 8) break;
+      ctx.fillStyle = label.color + '33';
+      ctx.fillRect(x, cardY + 7, w, 14);
+      ctx.strokeStyle = label.color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, cardY + 7, w, 14);
+      ctx.fillStyle = label.color;
+      ctx.fillText(label.text, x + 5, cardY + 18);
+      x += w + 4;
+    }
   },
 
   selectUpgrade(idx) {
@@ -873,7 +1173,7 @@ const Game = {
     // add stat upgrades (respect maxLevel)
     const availableUpgrades = CONFIG.UPGRADES.filter(u => {
       const currentLevel = this.player.upgradeLevels[u.id] || 0;
-      return currentLevel < u.maxLevel;
+      return currentLevel < u.maxLevel && this.upgradePrerequisiteMet(u);
     });
     const upgradePool = availableUpgrades;
     // rare chest: bias toward rare/epic upgrades
@@ -2471,6 +2771,7 @@ const Game = {
       ctx.font = 'bold 10px Courier New';
       ctx.textAlign = 'center';
       ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
+      this.drawChoiceBadges(ctx, choice, cardX, cardY, cardW);
 
       // Evolution badge (top right) for evolution choices
       if (choice.type === 'evolution') {
@@ -2490,7 +2791,7 @@ const Game = {
       }
 
       // Desc with fallback for weapon unlocks (fixes crash)
-      const descText = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
+      const descText = this.getChoiceDescription(choice);
 
       if (portrait) {
         // Horizontal card layout: icon on left, text on right
@@ -2571,6 +2872,7 @@ const Game = {
       ctx.font = 'bold 10px Courier New';
       ctx.textAlign = 'center';
       ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
+      this.drawChoiceBadges(ctx, choice, cardX, cardY, cardW);
 
       // Level indicator (top right) for stat upgrades
       if (!choice.weaponId && choice.maxLevel) {
@@ -2581,7 +2883,7 @@ const Game = {
         ctx.fillText(`Lv.${curLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
       }
 
-      const descText = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
+      const descText = this.getChoiceDescription(choice);
       // Auto-fit icon scale based on actual image dimensions and available card space
       const iconImg = Assets.images[choice.icon];
 

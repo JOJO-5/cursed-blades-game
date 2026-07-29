@@ -26,7 +26,7 @@ vm.runInNewContext(`${configSource}\nglobalThis.__CONFIG__ = CONFIG;`, context, 
 const config = context.__CONFIG__;
 
 assert.equal(Object.keys(config.WEAPONS).length, 38, 'expected 38 weapons (13 original + 22 new + 3 evolved)');
-assert.equal(config.UPGRADES.length, 20, 'expected 20 upgrades');
+assert.equal(config.UPGRADES.length, 26, 'expected 26 upgrades');
 assert.equal(Object.keys(config.ENEMIES).length, 31, 'expected 31 enemies');
 assert.ok(config.LEVELS.village && config.LEVELS.mine && config.LEVELS.hell, 'expected village, mine and hell levels');
 
@@ -60,6 +60,15 @@ for (const [id, weapon] of Object.entries(config.WEAPONS)) {
 for (const upgrade of config.UPGRADES) {
   assert.ok(upgrade.id && upgrade.icon && upgrade.rarity && upgrade.maxLevel > 0, `upgrade ${upgrade.id ?? '<unknown>'} is incomplete`);
 }
+assert.ok(config.BUILD_TAG_LABELS && config.BUILD_TAG_LABELS.orbit && config.BUILD_TAG_LABELS.fire,
+  'build tag labels should exist for synergy UI');
+assert.ok(config.UPGRADES.filter(u => Array.isArray(u.buildTags) && u.buildTags.length > 0).length >= 6,
+  'expected build-tagged synergy upgrades');
+for (const upgrade of config.UPGRADES.filter(u => u.buildTags)) {
+  for (const tag of upgrade.buildTags) {
+    assert.ok(config.BUILD_TAG_LABELS[tag], `synergy upgrade ${upgrade.id} references unknown build tag ${tag}`);
+  }
+}
 for (const [id, enemy] of Object.entries(config.ENEMIES)) {
   assert.ok(enemy.name && enemy.sprite && enemy.hp > 0, `enemy ${id} is incomplete`);
 }
@@ -67,6 +76,15 @@ for (const [id, level] of Object.entries(config.LEVELS)) {
   for (const tile of level.groundTiles || []) {
     assert.ok(!tile.includes('wall'), `level ${id} groundTiles should not contain wall art: ${tile}`);
     assert.ok(!tile.includes('grass_strip'), `level ${id} groundTiles should not contain strip overlay art: ${tile}`);
+  }
+  const ambushEvents = level.phases.flatMap(phase => phase.events || []).filter(ev => ev.type === 'ambush');
+  assert.ok(ambushEvents.length >= 3, `level ${id} should include recurring ambush events for pacing`);
+  for (const ev of ambushEvents) {
+    assert.ok(ev.count > 0 && Array.isArray(ev.enemyPool) && ev.enemyPool.length > 0,
+      `ambush event in ${id} should define count and enemyPool`);
+    for (const enemyId of ev.enemyPool) {
+      assert.ok(config.ENEMIES[enemyId], `ambush event in ${id} references unknown enemy ${enemyId}`);
+    }
   }
 }
 
@@ -197,11 +215,26 @@ assert.ok(gameSource.includes('actorDrawables.sort((a, b) => a.y - b.y)'),
   'renderWorld should depth-sort actors together by y');
 assert.ok(!gameSource.includes('worldDrawables.sort((a, b) => a.y - b.y)'),
   'renderWorld should not depth-sort props over the player');
+assert.ok(gameSource.includes('getPlayerBuildTags') && gameSource.includes('getChoiceSynergyScore'),
+  'Game should support build-tag-aware upgrade choices');
+assert.ok(gameSource.includes('drawChoiceBadges') && gameSource.includes('getEvolutionHintForChoice'),
+  'upgrade cards should show build fit and evolution hints');
+assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
+  'phase events should support ambush pacing events');
+assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
+  gameSource.includes('orbitPulse') && gameSource.includes('guardRetaliation'),
+  'Game should apply synergy hit effects');
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
 const entitiesSource = readFileSync(path.join(jsDir, 'entities.js'), 'utf8');
 assert.ok(entitiesSource.includes('drawFallback(ctx'), 'Player.draw should have a fallback when the hero sprite is unavailable');
+assert.ok(entitiesSource.includes('burnChance') && entitiesSource.includes('poisonChance') &&
+  entitiesSource.includes('chainLightningChance') && entitiesSource.includes('orbitPulseChance'),
+  'Player stats should include synergy effect fields');
+assert.ok(entitiesSource.includes('applyStatusEffect') && entitiesSource.includes('updateStatusEffects') &&
+  entitiesSource.includes('getStatusSpeedMult'),
+  'Enemy should support burn/poison status effects');
 const entityGame = { player: { x: 0, y: 0, stats: { pickupRangeBonus: 140 } } };
 const entityContext = {
   CONFIG: config,
@@ -551,4 +584,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 20 upgrades, 31 enemies, 3 levels with phased spawning, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, spawn safe zone, actor depth sorting, player fallback drawing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 26 upgrades with build synergies, 31 enemies, 3 levels with phased spawning + ambush events, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, spawn safe zone, actor depth sorting, player fallback drawing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
