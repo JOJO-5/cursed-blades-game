@@ -223,6 +223,10 @@ assert.ok(gameSource.includes('getPlayerBuildTags') && gameSource.includes('getC
   'Game should support build-tag-aware upgrade choices');
 assert.ok(gameSource.includes('drawChoiceBadges') && gameSource.includes('getEvolutionHintForChoice'),
   'upgrade cards should show build fit and evolution hints');
+assert.ok(gameSource.includes('row 1 is reserved for rarity') &&
+  gameSource.includes('fitChoiceBadgeText') &&
+  gameSource.includes('const maxBadgeW = Math.min(92, cardW * 0.42)'),
+  'choice badges should avoid colliding with rarity and level labels');
 assert.ok(gameSource.includes('drawChoiceIcon') && gameSource.includes('findDominantOpaqueCrop') &&
   gameSource.includes('_choiceIconCropCache'),
   'choice cards should crop composite weapon sprites to their dominant icon');

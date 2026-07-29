@@ -1074,21 +1074,49 @@ const Game = {
       .slice(0, 2)
       .map(tag => this.getTagLabel(tag));
     if (tagLabels.length) labels.push({ text: tagLabels.join('/'), color: '#80c0ff' });
-    let x = cardX + 8;
+
+    // Keep the card header readable:
+    // row 1 is reserved for rarity (center) and level/evolution (right).
+    // Build badges live on row 2 with strict width limits, so labels never
+    // collide with "稀有"/"普通" or "Lv.x/y".
+    let x = cardX + 10;
+    let y = cardY + 26;
+    const maxRight = cardX + cardW - 10;
+    const maxBadgeW = Math.min(92, cardW * 0.42);
+    const rowH = 15;
+    const maxRows = cardW < 180 ? 1 : 2;
+    let row = 0;
+
     ctx.font = 'bold 10px Courier New';
     ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
     for (const label of labels.slice(0, 3)) {
-      const w = ctx.measureText(label.text).width + 10;
-      if (x + w > cardX + cardW - 8) break;
+      const text = this.fitChoiceBadgeText(ctx, label.text, maxBadgeW - 10);
+      const w = Math.min(maxBadgeW, ctx.measureText(text).width + 10);
+      if (x + w > maxRight) {
+        row++;
+        if (row >= maxRows) break;
+        x = cardX + 10;
+        y += rowH + 3;
+      }
       ctx.fillStyle = label.color + '33';
-      ctx.fillRect(x, cardY + 7, w, 14);
+      ctx.fillRect(x, y - 11, w, 14);
       ctx.strokeStyle = label.color;
       ctx.lineWidth = 1;
-      ctx.strokeRect(x, cardY + 7, w, 14);
+      ctx.strokeRect(x, y - 11, w, 14);
       ctx.fillStyle = label.color;
-      ctx.fillText(label.text, x + 5, cardY + 18);
-      x += w + 4;
+      ctx.fillText(text, x + 5, y);
+      x += w + 7;
     }
+  },
+
+  fitChoiceBadgeText(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let out = text;
+    while (out.length > 1 && ctx.measureText(out + '…').width > maxW) {
+      out = out.slice(0, -1);
+    }
+    return out + '…';
   },
 
   drawChoiceIcon(ctx, iconKey, cx, cy, maxW, maxH) {
