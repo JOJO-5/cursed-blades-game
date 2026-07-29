@@ -207,6 +207,29 @@ assert.ok(weaponHud.x > landscapeVisible.x + 180,
   'landscape weapon HUD should avoid the left joystick zone');
 assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible.w - 180,
   'landscape weapon HUD should avoid the right dash zone');
+
+{
+  const originalPickWeightedChoice = game.pickWeightedChoice;
+  const originalRandom = gameContext.Math.random;
+  gameContext.Math.random = () => 0.1;
+  game.pickWeightedChoice = (weighted) =>
+    weighted.find(item => item.upgrade.weaponId === 'sword')?.upgrade || weighted[0].upgrade;
+  game.player = {
+    weapons: [{ id: 'sword', level: 1, def: config.WEAPONS.sword }],
+    upgradeLevels: {},
+    stats: { luck: 0 },
+  };
+  game.generateUpgradeChoices();
+  assert.ok(game.upgradeChoices.some(choice =>
+    choice.weaponId === 'sword' &&
+    choice.currentLevel === 1 &&
+    choice.nextLevel === 2 &&
+    choice.name.includes('强化')
+  ), 'level-up choices should offer owned weapon upgrades instead of only new weapon unlocks');
+  game.pickWeightedChoice = originalPickWeightedChoice;
+  gameContext.Math.random = originalRandom;
+}
+
 assert.ok(typeof game.getPropCollisionRadius === 'function', 'Game should expose prop collision radius helper');
 assert.ok(typeof game.getPropCollisionFootprint === 'function', 'Game should expose prop collision footprint helper');
 const stoneworkRadius = game.getPropCollisionRadius('stonework', 'props/stone_wall_doorway');

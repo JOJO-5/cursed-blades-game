@@ -954,18 +954,13 @@ const Game = {
 
     this.ensureBuildChoice(choices, available, buildTags);
 
-    // 20% chance to include a weapon unlock (replaces one choice)
-    const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
-    const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
-    if (availableUnlocks.length > 0 && Math.random() < 0.2) {
-      const unlock = this.pickWeightedChoice(availableUnlocks.map(u => {
-        const rarityBonus = u.rarity === 'epic' ? 15 : 0;
-        const synergy = this.getChoiceSynergyScore(u, buildTags);
-        return { upgrade: u, weight: 35 + rarityBonus + synergy * 30 };
-      }));
-      // Replace the last choice with the weapon unlock
-      if (choices.length) choices[choices.length - 1] = unlock;
-      else choices.push(unlock);
+    // Always reserve one card for weapons when possible:
+    // unowned weapons unlock new play styles, owned weapons upgrade from Lv1+.
+    const weaponChoices = this.getAvailableWeaponChoices(buildTags);
+    if (weaponChoices.length > 0) {
+      const weaponChoice = this.pickWeightedChoice(this.weightWeaponChoices(weaponChoices, buildTags));
+      if (choices.length) choices[choices.length - 1] = weaponChoice;
+      else choices.push(weaponChoice);
     }
 
     if (!choices.length) choices.push(this.createRecoveryChoice());
@@ -989,6 +984,70 @@ const Game = {
       if (r <= 0) return item.upgrade;
     }
     return weighted[weighted.length - 1].upgrade;
+  },
+
+  getAvailableWeaponChoices(buildTags) {
+    if (!this.player || !Array.isArray(this.player.weapons)) return [];
+    const maxLevel = CONFIG.WEAPON_MAX_LEVEL || 6;
+    const owned = new Map(this.player.weapons.map(w => [w.id, w]));
+    const listedWeaponIds = new Set();
+    const choices = [];
+
+    const pushOwnedWeaponUpgrade = (weaponId, ownedWeapon, fallbackRarity) => {
+      const weapon = CONFIG.WEAPONS[weaponId];
+      if (!weapon || !ownedWeapon || ownedWeapon.level >= maxLevel) return;
+      const currentLevel = ownedWeapon.level || 1;
+      const nextLevel = currentLevel + 1;
+      choices.push({
+        weaponId,
+        name: '强化武器: ' + weapon.name,
+        icon: weapon.icon,
+        rarity: fallbackRarity || 'rare',
+        desc: `${weapon.name} Lv.${currentLevel} → Lv.${nextLevel}，提升伤害、范围或武器效果`,
+        currentLevel,
+        nextLevel,
+        maxLevel,
+        isWeaponUpgrade: true,
+      });
+    };
+
+    for (const unlock of CONFIG.WEAPON_UNLOCKS) {
+      const weapon = CONFIG.WEAPONS[unlock.weaponId];
+      if (!weapon) continue;
+      listedWeaponIds.add(unlock.weaponId);
+      const ownedWeapon = owned.get(unlock.weaponId);
+      if (ownedWeapon) {
+        pushOwnedWeaponUpgrade(unlock.weaponId, ownedWeapon, unlock.rarity);
+      } else {
+        choices.push({
+          ...unlock,
+          currentLevel: 0,
+          nextLevel: 1,
+          maxLevel,
+          isWeaponUnlock: true,
+        });
+      }
+    }
+
+    for (const ownedWeapon of this.player.weapons) {
+      if (listedWeaponIds.has(ownedWeapon.id)) continue;
+      pushOwnedWeaponUpgrade(ownedWeapon.id, ownedWeapon, 'rare');
+    }
+
+    return choices;
+  },
+
+  weightWeaponChoices(weaponChoices, buildTags) {
+    const ownedCount = this.player && this.player.weapons ? this.player.weapons.length : 0;
+    return weaponChoices.map(choice => {
+      const rarityBonus = choice.rarity === 'epic' ? 15 : 0;
+      const synergy = this.getChoiceSynergyScore(choice, buildTags || this.getPlayerBuildTags());
+      const upgradeBonus = choice.isWeaponUpgrade ? 45 : Math.max(0, 25 - ownedCount * 2);
+      return {
+        upgrade: choice,
+        weight: 25 + rarityBonus + upgradeBonus + synergy * 30,
+      };
+    });
   },
 
   ensureBuildChoice(choices, available, buildTags) {
@@ -1284,8 +1343,12 @@ const Game = {
     const choice = this.upgradeChoices[idx];
     if (!choice) return;
     if (choice.weaponId) {
+      const before = this.player.weapons.find(w => w.id === choice.weaponId);
       this.player.addWeapon(choice.weaponId);
-      this.addMessage('获得武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#40c0ff');
+      const after = this.player.weapons.find(w => w.id === choice.weaponId);
+      const prefix = before ? '强化武器: ' : '获得武器: ';
+      const levelText = after ? ` Lv.${after.level}` : '';
+      this.addMessage(prefix + CONFIG.WEAPONS[choice.weaponId].name + levelText, '#40c0ff');
       // record unlocked weapon
       if (!this.meta.unlockedWeapons.includes(choice.weaponId)) {
         this.meta.unlockedWeapons.push(choice.weaponId);
@@ -1338,8 +1401,8 @@ const Game = {
   },
 
   generateChestReward(isRare) {
-    const ownedWeaponIds = new Set(this.player.weapons.map(w => w.id));
-    const availableUnlocks = CONFIG.WEAPON_UNLOCKS.filter(u => !ownedWeaponIds.has(u.weaponId));
+    const buildTags = this.getPlayerBuildTags();
+    const weaponChoices = this.getAvailableWeaponChoices(buildTags);
     const rewards = [];
 
     // ---- Weapon evolution check: if player has base weapon + relic at required level ----
@@ -1357,8 +1420,8 @@ const Game = {
       });
     }
 
-    if (availableUnlocks.length > 0) {
-      rewards.push(pick(availableUnlocks));
+    if (weaponChoices.length > 0) {
+      rewards.push(this.pickWeightedChoice(this.weightWeaponChoices(weaponChoices, buildTags)));
     }
     // add stat upgrades (respect maxLevel)
     const availableUpgrades = CONFIG.UPGRADES.filter(u => {
@@ -1439,8 +1502,12 @@ const Game = {
         ));
       }
     } else if (choice.weaponId) {
+      const before = this.player.weapons.find(w => w.id === choice.weaponId);
       this.player.addWeapon(choice.weaponId);
-      this.addMessage('获得新武器: ' + CONFIG.WEAPONS[choice.weaponId].name, '#ffd040');
+      const after = this.player.weapons.find(w => w.id === choice.weaponId);
+      const prefix = before ? '强化武器: ' : '获得新武器: ';
+      const levelText = after ? ` Lv.${after.level}` : '';
+      this.addMessage(prefix + CONFIG.WEAPONS[choice.weaponId].name + levelText, '#ffd040');
       if (!this.meta.unlockedWeapons.includes(choice.weaponId)) {
         this.meta.unlockedWeapons.push(choice.weaponId);
         this.saveMeta();
@@ -2974,8 +3041,13 @@ const Game = {
         ctx.fillText('★进化', cardX + cardW - 8, cardY + 16);
       }
 
-      // Level indicator (top right) for stat upgrades
-      if (!choice.weaponId && !choice.type && choice.maxLevel) {
+      // Level indicator (top right) for weapon/stat upgrades
+      if (choice.weaponId && choice.isWeaponUpgrade) {
+        ctx.fillStyle = choice.nextLevel >= choice.maxLevel ? '#ffd040' : '#8a7a5a';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Lv.${choice.currentLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
+      } else if (!choice.weaponId && !choice.type && choice.maxLevel) {
         const curLevel = this.player.upgradeLevels[choice.id] || 0;
         ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
         ctx.font = '10px Courier New';
@@ -3063,8 +3135,13 @@ const Game = {
       ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
       this.drawChoiceBadges(ctx, choice, cardX, cardY, cardW);
 
-      // Level indicator (top right) for stat upgrades
-      if (!choice.weaponId && choice.maxLevel) {
+      // Level indicator (top right) for weapon/stat upgrades
+      if (choice.weaponId && choice.isWeaponUpgrade) {
+        ctx.fillStyle = choice.nextLevel >= choice.maxLevel ? '#ffd040' : '#8a7a5a';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Lv.${choice.currentLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
+      } else if (!choice.weaponId && choice.maxLevel) {
         const curLevel = this.player.upgradeLevels[choice.id] || 0;
         ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
         ctx.font = '10px Courier New';

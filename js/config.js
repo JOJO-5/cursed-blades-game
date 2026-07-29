@@ -30,6 +30,8 @@ const CONFIG = {
 
   XP_CURVE: [5, 12, 22, 35, 52, 74, 101, 134, 173, 219, 273, 336, 409, 493, 589, 699, 824, 966, 1126, 1306],
 
+  WEAPON_MAX_LEVEL: 6,
+
   // ---- Weapon definitions ----
   WEAPONS: {
     sword: {
