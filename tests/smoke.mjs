@@ -72,6 +72,10 @@ for (const upgrade of config.UPGRADES.filter(u => u.buildTags)) {
 for (const [id, enemy] of Object.entries(config.ENEMIES)) {
   assert.ok(enemy.name && enemy.sprite && enemy.hp > 0, `enemy ${id} is incomplete`);
 }
+assert.ok(config.WEAPONS.shadow_imp.minionSprite === 'weapons/shadow_imp',
+  'shadow_imp summon should use a dedicated visible minion sprite');
+assert.ok(config.WEAPONS.shadow_imp.summonCount >= 2 && config.WEAPONS.shadow_imp.summonLifetime >= 12,
+  'shadow_imp should summon visible companions long enough to notice');
 for (const [id, level] of Object.entries(config.LEVELS)) {
   for (const tile of level.groundTiles || []) {
     assert.ok(!tile.includes('wall'), `level ${id} groundTiles should not contain wall art: ${tile}`);
@@ -222,6 +226,9 @@ assert.ok(gameSource.includes('drawChoiceBadges') && gameSource.includes('getEvo
 assert.ok(gameSource.includes('drawChoiceIcon') && gameSource.includes('findDominantOpaqueCrop') &&
   gameSource.includes('_choiceIconCropCache'),
   'choice cards should crop composite weapon sprites to their dominant icon');
+assert.ok(gameSource.includes('Summons are gameplay-critical companions') &&
+  gameSource.includes('weapon layer so orbit effects do not hide them'),
+  'renderWorld should draw summons above the player weapon layer');
 assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
   'phase events should support ambush pacing events');
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
@@ -238,6 +245,13 @@ assert.ok(entitiesSource.includes('burnChance') && entitiesSource.includes('pois
 assert.ok(entitiesSource.includes('applyStatusEffect') && entitiesSource.includes('updateStatusEffects') &&
   entitiesSource.includes('getStatusSpeedMult'),
   'Enemy should support burn/poison status effects');
+assert.ok(entitiesSource.includes('this.orbitRadius') && entitiesSource.includes('this.sprite = sprite') &&
+  entitiesSource.includes('this.hasTarget') &&
+  entitiesSource.includes('召唤物加入战斗'),
+  'Minion summons should be visible, labeled, and announced');
+assert.ok(entitiesSource.includes('const trailSegments = count > 2 ? 2 : 3') &&
+  entitiesSource.includes('const trailAlphaBase = count > 2 ? 0.12 : 0.18'),
+  'orbit weapon visuals should reduce clutter when multiple copies are active');
 const entityGame = { player: { x: 0, y: 0, stats: { pickupRangeBonus: 140 } } };
 const entityContext = {
   CONFIG: config,

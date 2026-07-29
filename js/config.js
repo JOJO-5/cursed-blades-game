@@ -113,12 +113,13 @@ const CONFIG = {
     },
     shadow_imp: {
       name: '暗影小鬼', type: 'summon', icon: 'weapons/ring_void',
-      damage: 8, range: 300, cooldown: 3.0, projectileSpeed: 100,
+      damage: 8, range: 300, cooldown: 2.4, projectileSpeed: 115,
       pierce: 0, critChance: 0.0, critMult: 1.5,
       color: '#8040a0', size: 40,
-      summonCount: 1,
-      summonLifetime: 8,
-      desc: '召唤小鬼·自动追击敌人',
+      summonCount: 2,
+      summonLifetime: 14,
+      minionSprite: 'weapons/shadow_imp',
+      desc: '召唤小鬼·会围绕你并自动追击敌人',
     },
     // ---- New weapons (using previously unused + new sprite assets) ----
     ring_steel: {

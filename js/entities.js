@@ -488,11 +488,14 @@ class Weapon {
             this.def.projectileSpeed * player.stats.projectileSpeedMult,
             (this.def.summonLifetime || 8) + (player.stats.summonLifetimeBonus || 0),
             this.def.color,
-            this.def.size
+            this.def.size,
+            this.def.minionSprite || this.def.icon,
+            this.def.name
           );
           Game.minions.push(minion);
         }
         if (spawnCount > 0) {
+          Game.addMessage('召唤物加入战斗: ' + this.def.name, '#c080ff');
           Audio2.play('sawtooth', 180, 0.1, 0.04);
         }
       }
@@ -599,7 +602,9 @@ class Weapon {
     const range = this.getRange();
     const count = 1 + player.stats.weaponCountBonus;
     const levelScale = 1 + (this.level - 1) * 0.15;
-    const sz = this.def.size * levelScale;
+    const sz = Math.min(this.def.size * levelScale, 42);
+    const trailSegments = count > 2 ? 2 : 3;
+    const trailAlphaBase = count > 2 ? 0.12 : 0.18;
 
     for (let i = 0; i < count; i++) {
       const offset = (i / count) * TAU;
@@ -611,10 +616,10 @@ class Weapon {
       ctx.rotate(this.angle + offset + Math.PI / 4);
 
       // glow effect
-      const glowSize = sz * 1.8;
+      const glowSize = sz * 1.25;
       const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
-      glowGradient.addColorStop(0, this.def.color + '60');
-      glowGradient.addColorStop(0.4, this.def.color + '20');
+      glowGradient.addColorStop(0, this.def.color + '2e');
+      glowGradient.addColorStop(0.45, this.def.color + '12');
       glowGradient.addColorStop(1, this.def.color + '00');
       ctx.fillStyle = glowGradient;
       ctx.beginPath();
@@ -622,8 +627,8 @@ class Weapon {
       ctx.fill();
 
       // secondary glow ring
-      ctx.strokeStyle = this.def.color + '40';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = this.def.color + '22';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(0, 0, sz * 0.8, 0, TAU);
       ctx.stroke();
@@ -639,23 +644,23 @@ class Weapon {
       }
 
       // animated edge highlight - 降低不透明度避免遮挡素材
-      ctx.strokeStyle = this.def.color + '40';
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.3 + Math.sin(Date.now() / 150 + offset) * 0.2;
+      ctx.strokeStyle = this.def.color + '30';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.18 + Math.sin(Date.now() / 150 + offset) * 0.08;
       ctx.strokeRect(-sz/2 - 1, -sz/2 - 1, sz + 2, sz + 2);
 
       ctx.restore();
 
       // enhanced motion trail - multiple segments with fading
-      const trailLength = 0.5;
-      for (let t = 0; t < 4; t++) {
-        const tOffset = trailLength * ((t + 1) / 4);
+      const trailLength = 0.38;
+      for (let t = 0; t < trailSegments; t++) {
+        const tOffset = trailLength * ((t + 1) / trailSegments);
         const tAng = this.angle + offset - tOffset;
         const tX = player.x + Math.cos(tAng) * range;
         const tY = player.y + Math.sin(tAng) * range;
-        const alpha = (1 - t / 4) * 0.3;
+        const alpha = (1 - t / trailSegments) * trailAlphaBase;
         ctx.strokeStyle = this.def.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
-        ctx.lineWidth = (3 - t) * 1.5;
+        ctx.lineWidth = Math.max(1, (trailSegments - t) * 1.1);
         ctx.beginPath();
         if (t === 0) {
           ctx.moveTo(tX, tY);
@@ -2336,7 +2341,7 @@ class EnemyProjectile {
 
 // ==================== MINION ====================
 class Minion {
-  constructor(x, y, damage, speed, lifetime, color, size) {
+  constructor(x, y, damage, speed, lifetime, color, size, sprite, name) {
     this.x = x;
     this.y = y;
     this.damage = damage;
@@ -2344,18 +2349,26 @@ class Minion {
     this.lifetime = lifetime;
     this.maxLifetime = lifetime;
     this.color = color;
-    this.size = size || 10;
-    this.radius = this.size * 0.5;
+    this.size = Math.max(24, Math.min(size || 28, 34));
+    this.radius = Math.max(12, this.size * 0.45);
+    this.sprite = sprite || 'weapons/shadow_imp';
+    this.name = name || '召唤物';
     this.alive = true;
     this.vx = 0;
     this.vy = 0;
     this.contactCooldown = 0;
+    this.animTime = Math.random() * TAU;
+    this.orbitAngle = Math.random() * TAU;
+    this.orbitRadius = 46 + Math.random() * 16;
+    this.targetId = null;
+    this.hasTarget = false;
   }
 
   update(dt) {
     this.lifetime -= dt;
     if (this.lifetime <= 0) { this.alive = false; return; }
     this.contactCooldown -= dt;
+    this.animTime += dt;
 
     // Find nearest enemy
     let target = null;
@@ -2367,19 +2380,37 @@ class Minion {
     }
 
     if (target) {
+      this.targetId = target.id;
+      this.hasTarget = true;
       const ang = angleTo(this.x, this.y, target.x, target.y);
       this.vx = Math.cos(ang) * this.speed;
       this.vy = Math.sin(ang) * this.speed;
     } else {
-      // Idle: orbit slowly around player
+      this.targetId = null;
+      this.hasTarget = false;
+      // Idle: keep a clear escort orbit around the player instead of collapsing
+      // under the player's orbiting weapon effects.
       const player = Game.player;
-      const ang = angleTo(this.x, this.y, player.x, player.y) + 0.02;
-      this.vx = Math.cos(ang) * this.speed * 0.3;
-      this.vy = Math.sin(ang) * this.speed * 0.3;
+      this.orbitAngle += dt * 1.6;
+      const targetX = player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+      const targetY = player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+      const ang = angleTo(this.x, this.y, targetX, targetY);
+      const d = dist(this.x, this.y, targetX, targetY);
+      const escortSpeed = clamp(d * 4, 45, this.speed * 0.9);
+      this.vx = Math.cos(ang) * escortSpeed;
+      this.vy = Math.sin(ang) * escortSpeed;
     }
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+
+    // Keep companions close enough to remain visible and useful.
+    const player = Game.player;
+    if (player && dist(this.x, this.y, player.x, player.y) > 460) {
+      const ang = Math.random() * TAU;
+      this.x = player.x + Math.cos(ang) * this.orbitRadius;
+      this.y = player.y + Math.sin(ang) * this.orbitRadius;
+    }
 
     // Contact damage to enemies
     if (this.contactCooldown <= 0) {
@@ -2405,18 +2436,58 @@ class Minion {
   }
 
   draw(ctx) {
-    const alpha = Math.min(1, this.lifetime / 0.5); // fade out near death
+    const alpha = Math.min(1, this.lifetime / 0.5);
+    const fadeOut = clamp(this.lifetime / Math.max(0.1, this.maxLifetime), 0, 1);
+    const bob = Math.sin(this.animTime * 6) * 2;
+    const pulse = 1 + Math.sin(this.animTime * 8) * 0.08;
+
+    ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = this.color;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, TAU);
+    ctx.ellipse(this.x, this.y + this.radius * 0.8, this.radius * 0.8, this.radius * 0.35, 0, 0, TAU);
     ctx.fill();
-    // inner glow
-    ctx.fillStyle = this.color + '80';
+
+    // readable summon aura
+    ctx.strokeStyle = this.hasTarget ? '#ff80ff' : '#c080ff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = alpha * 0.7;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 0.5, 0, TAU);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.arc(this.x, this.y + bob, this.radius * 1.35 * pulse, 0, TAU);
+    ctx.stroke();
+
+    // lifetime ring
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.strokeStyle = '#c080ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y + bob, this.radius + 6, -Math.PI / 2, -Math.PI / 2 + TAU * fadeOut);
+    ctx.stroke();
+
+    const img = Assets.get(this.sprite);
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = alpha;
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, this.x - this.size/2, this.y + bob - this.size/2, this.size, this.size);
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y + bob, this.radius, 0, TAU);
+      ctx.fill();
+    }
+
+    // small label while idle so the player can identify the summon.
+    if (!this.hasTarget) {
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fillStyle = '#e0b0ff';
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('召唤物', this.x, this.y - this.radius - 12);
+    }
+
+    ctx.restore();
   }
 }
 

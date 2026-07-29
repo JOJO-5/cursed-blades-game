@@ -2300,12 +2300,14 @@ const Game = {
 
     if (this.player) actorDrawables.push({ y: this.player.y, draw: () => this.player.draw(ctx) });
 
-    for (const m of this.minions) {
-      if (this.isOnScreen(m.x, m.y, 40)) actorDrawables.push({ y: m.y, draw: () => m.draw(ctx) });
-    }
-
     actorDrawables.sort((a, b) => a.y - b.y);
     for (const item of actorDrawables) item.draw();
+
+    // Summons are gameplay-critical companions. Draw them after the player
+    // weapon layer so orbit effects do not hide them.
+    for (const m of this.minions) {
+      if (this.isOnScreen(m.x, m.y, 60)) m.draw(ctx);
+    }
 
     // draw projectiles
     for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
