@@ -2331,18 +2331,19 @@ const Game = {
     actorDrawables.sort((a, b) => a.y - b.y);
     for (const item of actorDrawables) item.draw();
 
-    // Summons are gameplay-critical companions. Draw them after the player
-    // weapon layer so orbit effects do not hide them.
-    for (const m of this.minions) {
-      if (this.isOnScreen(m.x, m.y, 60)) m.draw(ctx);
-    }
-
     // draw projectiles
     for (const p of this.projectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
     for (const p of this.enemyProjectiles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
 
     // draw particles
     for (const p of this.particles) { if (this.isOnScreen(p.x, p.y, 50)) p.draw(ctx); }
+
+    // Summons are gameplay-critical companions. Draw them after the player
+    // weapon layer and particle clutter so orbit/projectile effects do not
+    // hide the small imp companions.
+    for (const m of this.minions) {
+      if (this.isOnScreen(m.x, m.y, 80)) m.draw(ctx);
+    }
 
     // draw damage numbers
     for (const d of this.damageNumbers) d.draw(ctx);

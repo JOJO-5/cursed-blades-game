@@ -112,13 +112,13 @@ const CONFIG = {
       desc: '持续光环·范围毒伤',
     },
     shadow_imp: {
-      name: '暗影小鬼', type: 'summon', icon: 'weapons/ring_void',
+      name: '暗影小鬼', type: 'summon', icon: 'weapons/shadow_imp',
       damage: 8, range: 300, cooldown: 2.4, projectileSpeed: 115,
       pierce: 0, critChance: 0.0, critMult: 1.5,
       color: '#8040a0', size: 40,
       summonCount: 2,
       summonLifetime: 14,
-      minionSprite: 'weapons/shadow_imp',
+      minionSprite: 'enemies/demon_bat',
       desc: '召唤小鬼·会围绕你并自动追击敌人',
     },
     // ---- New weapons (using previously unused + new sprite assets) ----
@@ -453,7 +453,11 @@ const CONFIG = {
       apply:(p)=>{ p.stats.poisonChance += 0.12; p.stats.poisonDamageMult *= 1.18; p.stats.poisonSlow += 0.07; } },
     { id:'summoner_pact', name:'召唤契约', icon:'ui/upgrade_weaponcount', desc:'召唤物伤害 +20%，持续时间 +1 秒',
       rarity:'epic', weight:18, maxLevel:3, buildTags:['summon'],
-      apply:(p)=>{ p.stats.summonDamageMult *= 1.20; p.stats.summonLifetimeBonus += 1.0; } },
+      apply:(p)=>{
+        p.stats.summonDamageMult *= 1.20;
+        p.stats.summonLifetimeBonus += 1.0;
+        if (!p.weapons.some(w => w.id === 'shadow_imp')) p.addWeapon('shadow_imp');
+      } },
     { id:'guard_counter', name:'守势反击', icon:'ui/upgrade_armor', desc:'护甲 +1，受击时有概率释放近身反击波',
       rarity:'epic', weight:16, maxLevel:3, prerequisite:'armor', buildTags:['guard','orbit'],
       apply:(p)=>{ p.stats.armor += 1; p.stats.guardRetaliateChance += 0.16; } },
@@ -474,6 +478,7 @@ const CONFIG = {
     { weaponId:'fireball',name:'获得武器: 火球', icon:'weapons/ring_fire',          rarity:'rare' },
     { weaponId:'knife',   name:'获得武器: 飞刀', icon:'weapons/sword_slash_wind',   rarity:'rare' },
     { weaponId:'soul',    name:'获得武器: 灵魂弹', icon:'weapons/ring_void',        rarity:'rare' },
+    { weaponId:'shadow_imp',name:'获得武器: 暗影小鬼', icon:'weapons/shadow_imp', rarity:'rare' },
     { weaponId:'shield',  name:'获得武器: 盾牌', icon:'weapons/ring_target',        rarity:'rare' },
     { weaponId:'ring_fire',name:'获得武器: 炎之环刃', icon:'weapons/ring_fire', rarity:'epic' },
     { weaponId:'ring_void',name:'获得武器: 虚空环刃', icon:'weapons/ring_void', rarity:'epic' },

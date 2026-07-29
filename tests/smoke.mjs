@@ -72,10 +72,16 @@ for (const upgrade of config.UPGRADES.filter(u => u.buildTags)) {
 for (const [id, enemy] of Object.entries(config.ENEMIES)) {
   assert.ok(enemy.name && enemy.sprite && enemy.hp > 0, `enemy ${id} is incomplete`);
 }
-assert.ok(config.WEAPONS.shadow_imp.minionSprite === 'weapons/shadow_imp',
-  'shadow_imp summon should use a dedicated visible minion sprite');
+assert.ok(config.WEAPONS.shadow_imp.icon === 'weapons/shadow_imp' &&
+  config.WEAPONS.shadow_imp.minionSprite === 'enemies/demon_bat',
+  'shadow_imp should keep its card icon but summon a high-contrast visible minion sprite');
 assert.ok(config.WEAPONS.shadow_imp.summonCount >= 2 && config.WEAPONS.shadow_imp.summonLifetime >= 12,
   'shadow_imp should summon visible companions long enough to notice');
+assert.ok(config.WEAPON_UNLOCKS.some(u => u.weaponId === 'shadow_imp'),
+  'shadow_imp should be available as a visible weapon unlock');
+const summonerPact = config.UPGRADES.find(u => u.id === 'summoner_pact');
+assert.ok(summonerPact && String(summonerPact.apply).includes("addWeapon('shadow_imp')"),
+  'summoner_pact should grant shadow_imp when the player has no summon weapon');
 for (const [id, level] of Object.entries(config.LEVELS)) {
   for (const tile of level.groundTiles || []) {
     assert.ok(!tile.includes('wall'), `level ${id} groundTiles should not contain wall art: ${tile}`);
@@ -230,9 +236,14 @@ assert.ok(gameSource.includes('row 1 is reserved for rarity') &&
 assert.ok(gameSource.includes('drawChoiceIcon') && gameSource.includes('findDominantOpaqueCrop') &&
   gameSource.includes('_choiceIconCropCache'),
   'choice cards should crop composite weapon sprites to their dominant icon');
-assert.ok(gameSource.includes('Summons are gameplay-critical companions') &&
-  gameSource.includes('weapon layer so orbit effects do not hide them'),
-  'renderWorld should draw summons above the player weapon layer');
+const renderWorldStart = gameSource.indexOf('renderWorld() {');
+const renderHudStart = gameSource.indexOf('renderHUD() {', renderWorldStart);
+assert.ok(renderWorldStart >= 0 && renderHudStart > renderWorldStart, 'renderWorld source should be locatable');
+const renderWorldSource = gameSource.slice(renderWorldStart, renderHudStart);
+assert.ok(renderWorldSource.includes('Summons are gameplay-critical companions') &&
+  renderWorldSource.includes('particle clutter so orbit/projectile effects do not') &&
+  renderWorldSource.indexOf('for (const p of this.particles)') < renderWorldSource.indexOf('for (const m of this.minions)'),
+  'renderWorld should draw summons above particles and the player weapon layer');
 assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
   'phase events should support ambush pacing events');
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
@@ -253,6 +264,15 @@ assert.ok(entitiesSource.includes('this.orbitRadius') && entitiesSource.includes
   entitiesSource.includes('this.hasTarget') &&
   entitiesSource.includes('召唤物加入战斗'),
   'Minion summons should be visible, labeled, and announced');
+assert.ok(entitiesSource.includes('ensureSummonPactWeapon') &&
+  entitiesSource.includes('召唤契约唤来了暗影小鬼') &&
+  entitiesSource.includes("this.cooldown = def.type === 'summon' ? -0.1 : 0"),
+  'existing summon-pact saves should auto-grant and immediately spawn shadow_imp');
+assert.ok(entitiesSource.includes('const r = 58 + Math.random() * 18') &&
+  entitiesSource.includes('dist(player.x, player.y, e.x, e.y) > 220') &&
+  entitiesSource.includes('dist(this.x, this.y, player.x, player.y) > 280') &&
+  entitiesSource.includes("const label = '小鬼'"),
+  'summons should stay near the player instead of chasing too far away');
 assert.ok(entitiesSource.includes('const trailSegments = count > 2 ? 2 : 3') &&
   entitiesSource.includes('const trailAlphaBase = count > 2 ? 0.12 : 0.18'),
   'orbit weapon visuals should reduce clutter when multiple copies are active');

@@ -145,6 +145,7 @@ class Player {
   update(dt) {
     if (!this.alive) return;
 
+    this.ensureSummonPactWeapon();
     this.animTime += dt;
     this.invuln = Math.max(0, this.invuln - dt);
     this.hitFlash = Math.max(0, this.hitFlash - dt);
@@ -215,6 +216,16 @@ class Player {
 
     // update weapons
     for (const w of this.weapons) w.update(dt, this);
+  }
+
+  ensureSummonPactWeapon() {
+    if ((this.upgradeLevels.summoner_pact || 0) <= 0) return;
+    if (this.weapons.some(w => w.id === 'shadow_imp')) return;
+    this.addWeapon('shadow_imp');
+    if (!this._summonPactGrantedMessage && Game && Game.addMessage) {
+      Game.addMessage('召唤契约唤来了暗影小鬼', '#c080ff');
+      this._summonPactGrantedMessage = true;
+    }
   }
 
   draw(ctx) {
@@ -290,7 +301,7 @@ class Weapon {
     this.def = def;
     this.level = 1;
     this.angle = Math.random() * TAU;
-    this.cooldown = 0;
+    this.cooldown = def.type === 'summon' ? -0.1 : 0;
     this.hitSet = new Set(); // track enemies hit this rotation (for orbit)
     this.lastHitAngle = 0;
   }
@@ -480,7 +491,10 @@ class Weapon {
         const spawnCount = Math.min(maxMinions - current, this.def.summonCount || 1);
         for (let i = 0; i < spawnCount; i++) {
           const ang = Math.random() * TAU;
-          const r = 20 + Math.random() * 20;
+          // Spawn companions outside the player's weapon orbit instead of
+          // directly under the hero, otherwise the first visible frame is
+          // easily hidden by rings, particles, and the player sprite.
+          const r = 58 + Math.random() * 18;
           const minion = new Minion(
             player.x + Math.cos(ang) * r,
             player.y + Math.sin(ang) * r,
@@ -2349,8 +2363,8 @@ class Minion {
     this.lifetime = lifetime;
     this.maxLifetime = lifetime;
     this.color = color;
-    this.size = Math.max(24, Math.min(size || 28, 34));
-    this.radius = Math.max(12, this.size * 0.45);
+    this.size = Math.max(30, Math.min(size || 36, 46));
+    this.radius = Math.max(14, Math.min(20, this.size * 0.42));
     this.sprite = sprite || 'weapons/shadow_imp';
     this.name = name || '召唤物';
     this.alive = true;
@@ -2359,7 +2373,7 @@ class Minion {
     this.contactCooldown = 0;
     this.animTime = Math.random() * TAU;
     this.orbitAngle = Math.random() * TAU;
-    this.orbitRadius = 46 + Math.random() * 16;
+    this.orbitRadius = 64 + Math.random() * 18;
     this.targetId = null;
     this.hasTarget = false;
   }
@@ -2370,11 +2384,15 @@ class Minion {
     this.contactCooldown -= dt;
     this.animTime += dt;
 
-    // Find nearest enemy
+    const player = Game.player;
+
+    // Find nearest enemy, but keep summons near the player so they remain
+    // readable as companions instead of disappearing into off-screen fights.
     let target = null;
     let minD = 300;
     for (const e of Game.enemyGrid.query(this.x, this.y, 300)) {
       if (!e.alive) continue;
+      if (player && dist(player.x, player.y, e.x, e.y) > 220) continue;
       const d = dist(this.x, this.y, e.x, e.y);
       if (d < minD) { minD = d; target = e; }
     }
@@ -2390,7 +2408,6 @@ class Minion {
       this.hasTarget = false;
       // Idle: keep a clear escort orbit around the player instead of collapsing
       // under the player's orbiting weapon effects.
-      const player = Game.player;
       this.orbitAngle += dt * 1.6;
       const targetX = player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
       const targetY = player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
@@ -2405,8 +2422,7 @@ class Minion {
     this.y += this.vy * dt;
 
     // Keep companions close enough to remain visible and useful.
-    const player = Game.player;
-    if (player && dist(this.x, this.y, player.x, player.y) > 460) {
+    if (player && dist(this.x, this.y, player.x, player.y) > 280) {
       const ang = Math.random() * TAU;
       this.x = player.x + Math.cos(ang) * this.orbitRadius;
       this.y = player.y + Math.sin(ang) * this.orbitRadius;
@@ -2470,7 +2486,13 @@ class Minion {
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = alpha;
     if (img && img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, this.x - this.size/2, this.y + bob - this.size/2, this.size, this.size);
+      const iw = img.naturalWidth || img.width || this.size;
+      const ih = img.naturalHeight || img.height || this.size;
+      const longest = Math.max(iw, ih);
+      const targetLong = this.size * (iw > ih ? 1.7 : 1.1);
+      const drawW = Math.max(this.size * 0.8, iw / longest * targetLong);
+      const drawH = Math.max(this.size * 0.8, ih / longest * targetLong);
+      ctx.drawImage(img, this.x - drawW/2, this.y + bob - drawH/2, drawW, drawH);
     } else {
       ctx.fillStyle = this.color;
       ctx.beginPath();
@@ -2478,14 +2500,18 @@ class Minion {
       ctx.fill();
     }
 
-    // small label while idle so the player can identify the summon.
-    if (!this.hasTarget) {
-      ctx.globalAlpha = alpha * 0.85;
-      ctx.fillStyle = '#e0b0ff';
-      ctx.font = 'bold 10px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText('召唤物', this.x, this.y - this.radius - 12);
-    }
+    // Persistent small label so the player can identify the summon in effect clutter.
+    ctx.font = 'bold 10px Courier New';
+    ctx.textAlign = 'center';
+    const label = '小鬼';
+    const labelY = this.y - this.radius - 14;
+    const labelW = ctx.measureText(label).width + 8;
+    ctx.globalAlpha = alpha * 0.65;
+    ctx.fillStyle = 'rgba(20, 0, 30, 0.8)';
+    ctx.fillRect(this.x - labelW/2, labelY - 10, labelW, 13);
+    ctx.globalAlpha = alpha * 0.95;
+    ctx.fillStyle = '#f0c0ff';
+    ctx.fillText(label, this.x, labelY);
 
     ctx.restore();
   }
