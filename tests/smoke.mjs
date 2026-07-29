@@ -219,6 +219,9 @@ assert.ok(gameSource.includes('getPlayerBuildTags') && gameSource.includes('getC
   'Game should support build-tag-aware upgrade choices');
 assert.ok(gameSource.includes('drawChoiceBadges') && gameSource.includes('getEvolutionHintForChoice'),
   'upgrade cards should show build fit and evolution hints');
+assert.ok(gameSource.includes('drawChoiceIcon') && gameSource.includes('findDominantOpaqueCrop') &&
+  gameSource.includes('_choiceIconCropCache'),
+  'choice cards should crop composite weapon sprites to their dominant icon');
 assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
   'phase events should support ambush pacing events');
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&

@@ -37,6 +37,7 @@ const Game = {
 
   upgradeChoices: [],
   chestRewardChoices: [],
+  _choiceIconCropCache: {},
 
   // settings overlay state
   _settingsOverlay: false,
@@ -1087,6 +1088,122 @@ const Game = {
       ctx.fillStyle = label.color;
       ctx.fillText(label.text, x + 5, cardY + 18);
       x += w + 4;
+    }
+  },
+
+  drawChoiceIcon(ctx, iconKey, cx, cy, maxW, maxH) {
+    const img = Assets.get(iconKey);
+    if (!img || !img.complete || img.width <= 0 || img.height <= 0) return;
+
+    const crop = iconKey && iconKey.startsWith('weapons/')
+      ? this.getChoiceIconCrop(iconKey, img)
+      : null;
+    const srcW = crop ? crop.w : img.width;
+    const srcH = crop ? crop.h : img.height;
+    const scale = Math.min(3.0, maxW / srcW, maxH / srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    if (crop) {
+      ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, cx - drawW/2, cy - drawH/2, drawW, drawH);
+    } else {
+      ctx.drawImage(img, cx - drawW/2, cy - drawH/2, drawW, drawH);
+    }
+    ctx.restore();
+  },
+
+  getChoiceIconCrop(iconKey, img) {
+    if (Object.prototype.hasOwnProperty.call(this._choiceIconCropCache, iconKey)) {
+      return this._choiceIconCropCache[iconKey];
+    }
+    const crop = this.findDominantOpaqueCrop(img);
+    this._choiceIconCropCache[iconKey] = crop;
+    return crop;
+  },
+
+  findDominantOpaqueCrop(img) {
+    const w = img.width || 0;
+    const h = img.height || 0;
+    if (w <= 0 || h <= 0 || w * h > 20000) return null;
+
+    let canvas;
+    try {
+      canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const cctx = canvas.getContext('2d');
+      cctx.drawImage(img, 0, 0);
+      const alpha = cctx.getImageData(0, 0, w, h).data;
+      const seen = new Uint8Array(w * h);
+      let best = null;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const start = y * w + x;
+          if (seen[start] || alpha[start * 4 + 3] < 24) continue;
+
+          const queue = [start];
+          seen[start] = 1;
+          let count = 0;
+          let minX = x, maxX = x, minY = y, maxY = y;
+
+          while (queue.length) {
+            const idx = queue.pop();
+            const px = idx % w;
+            const py = Math.floor(idx / w);
+            count++;
+            if (px < minX) minX = px;
+            if (px > maxX) maxX = px;
+            if (py < minY) minY = py;
+            if (py > maxY) maxY = py;
+
+            for (let oy = -1; oy <= 1; oy++) {
+              for (let ox = -1; ox <= 1; ox++) {
+                if (ox === 0 && oy === 0) continue;
+                const nx = px + ox;
+                const ny = py + oy;
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                const nidx = ny * w + nx;
+                if (seen[nidx] || alpha[nidx * 4 + 3] < 24) continue;
+                seen[nidx] = 1;
+                queue.push(nidx);
+              }
+            }
+          }
+
+          if (count < 12) continue;
+          const bw = maxX - minX + 1;
+          const bh = maxY - minY + 1;
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          const centerPenalty = Math.hypot(centerX - w / 2, centerY - h / 2) / Math.hypot(w / 2, h / 2);
+          const score = count * (1.15 - Math.min(0.45, centerPenalty * 0.35)) + Math.min(bw * bh, count * 1.8) * 0.08;
+          if (!best || score > best.score) {
+            best = { x: minX, y: minY, w: bw, h: bh, count, score };
+          }
+        }
+      }
+
+      if (!best) return null;
+      const visibleRatio = (best.w * best.h) / (w * h);
+      const hasMeaningfulCrop = visibleRatio < 0.78 || best.x > 3 || best.y > 3 || best.x + best.w < w - 3 || best.y + best.h < h - 3;
+      if (!hasMeaningfulCrop) return null;
+
+      const pad = 2;
+      const x0 = Math.max(0, best.x - pad);
+      const y0 = Math.max(0, best.y - pad);
+      const x1 = Math.min(w, best.x + best.w + pad);
+      const y1 = Math.min(h, best.y + best.h + pad);
+      return {
+        x: x0,
+        y: y0,
+        w: Math.max(1, x1 - x0),
+        h: Math.max(1, y1 - y0),
+      };
+    } catch (err) {
+      return null;
     }
   },
 
@@ -2797,9 +2914,7 @@ const Game = {
         // Horizontal card layout: icon on left, text on right
         // Auto-fit icon scale to fit within available space (max 48px wide, cardH - 10px tall)
         const iconMaxW = 48, iconMaxH = cardH - 10;
-        const iconImg = Assets.images[choice.icon];
-        const baseIconScale = Math.min(3.0, iconMaxW / (iconImg ? iconImg.width : 16), iconMaxH / (iconImg ? iconImg.height : 16));
-        Assets.drawCentered(ctx, choice.icon, cardX + 30, cardY + cardH/2, baseIconScale, 0, 1);
+        this.drawChoiceIcon(ctx, choice.icon, cardX + 30, cardY + cardH/2, iconMaxW, iconMaxH);
 
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 14px Courier New';
@@ -2813,9 +2928,7 @@ const Game = {
         // Vertical card layout: icon on top, text below
         // Auto-fit icon scale to fit within card (max 90% of cardW wide, 55px tall to leave room for text)
         const iconMaxW = cardW * 0.9, iconMaxH = 55;
-        const iconImg = Assets.images[choice.icon];
-        const baseIconScale = Math.min(3.0, iconMaxW / (iconImg ? iconImg.width : 16), iconMaxH / (iconImg ? iconImg.height : 16));
-        Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, baseIconScale, 0, 1);
+        this.drawChoiceIcon(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, iconMaxW, iconMaxH);
 
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 15px Courier New';
@@ -2884,13 +2997,10 @@ const Game = {
       }
 
       const descText = this.getChoiceDescription(choice);
-      // Auto-fit icon scale based on actual image dimensions and available card space
-      const iconImg = Assets.images[choice.icon];
 
       if (portrait) {
         const iconMaxW = 48, iconMaxH = cardH - 10;
-        const autoScale = Math.min(3.0, iconMaxW / (iconImg ? iconImg.width : 16), iconMaxH / (iconImg ? iconImg.height : 16));
-        Assets.drawCentered(ctx, choice.icon, cardX + 30, cardY + cardH/2, autoScale, 0, 1);
+        this.drawChoiceIcon(ctx, choice.icon, cardX + 30, cardY + cardH/2, iconMaxW, iconMaxH);
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 14px Courier New';
         ctx.textAlign = 'left';
@@ -2902,8 +3012,7 @@ const Game = {
         }
       } else {
         const iconMaxW = cardW * 0.9, iconMaxH = 55;
-        const autoScale = Math.min(3.0, iconMaxW / (iconImg ? iconImg.width : 16), iconMaxH / (iconImg ? iconImg.height : 16));
-        Assets.drawCentered(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, autoScale, 0, 1);
+        this.drawChoiceIcon(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, iconMaxW, iconMaxH);
         ctx.fillStyle = '#ffd040';
         ctx.font = 'bold 15px Courier New';
         ctx.textAlign = 'center';
