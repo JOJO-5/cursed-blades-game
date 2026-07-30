@@ -156,6 +156,34 @@ const gameContext = {
 };
 vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
 const game = gameContext.__GAME__;
+
+assert.ok(config.LEVEL_VISUALS && config.LEVEL_VISUALS.village && config.LEVEL_VISUALS.mine && config.LEVEL_VISUALS.hell,
+  'each level should define a distinct visual profile');
+assert.ok(typeof game.getLevelVisualProfile === 'function',
+  'Game should expose level visual profile helper for themed map generation');
+assert.ok(typeof game.getThemePropScatterCount === 'function',
+  'Game should expose themed prop scatter count helper');
+{
+  const villageVisual = game.getLevelVisualProfile('village');
+  const mineVisual = game.getLevelVisualProfile('mine');
+  const hellVisual = game.getLevelVisualProfile('hell');
+  assert.notEqual(villageVisual.baseColor, mineVisual.baseColor,
+    'village and mine should not share the same ground base color');
+  assert.notEqual(mineVisual.baseColor, hellVisual.baseColor,
+    'mine and hell should not share the same ground base color');
+  assert.ok((villageVisual.propScatterCounts.tombstones || 0) > (mineVisual.propScatterCounts.tombstones || 0),
+    'village should visually lean into graveyard props more than mine');
+  assert.ok((mineVisual.propScatterCounts.caves || 0) > (villageVisual.propScatterCounts.caves || 0),
+    'mine should visually lean into cave props more than village');
+  assert.ok(mineVisual.interiorWallSegments > villageVisual.interiorWallSegments,
+    'mine should have denser interior cave-wall segmentation than village');
+  assert.ok(hellVisual.patchColor !== mineVisual.patchColor,
+    'hell should have a distinct patch tint from mine');
+  assert.ok(villageVisual.sceneUnderlayAlpha > 0 && mineVisual.sceneUnderlayAlpha > 0 && hellVisual.sceneUnderlayAlpha > 0,
+    'combat maps should use configured scene backgrounds as subtle biome underlays');
+  assert.equal(game.getThemePropScatterCount('tombstones', mineVisual), 0,
+    'mine visual profile should be able to suppress off-theme graveyard scatter');
+}
 assert.ok(typeof game.collectAllXpPickups === 'function',
   'Game should expose a full-map XP collection helper for magnet pickups');
 {

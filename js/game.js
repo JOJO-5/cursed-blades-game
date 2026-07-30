@@ -1870,11 +1870,41 @@ const Game = {
     return triggered;
   },
 
+  getDefaultPropScatterCounts() {
+    return {
+      trees: 25, tombstones: 15, fences: 12, barrels: 8, braziers: 10,
+      ruins: 10, houses: 3,
+      // Mine-specific
+      caves: 4, campfires: 8, spikes: 10, rocks: 15, platforms: 6,
+      watchtowers: 2, furniture: 8, stonework: 10,
+      // Shared decorative props
+      bones: 6, gallows: 2,
+    };
+  },
+
+  getLevelVisualProfile(theme) {
+    const fallbackTheme = theme || (this.levelData && this.levelData.theme) || 'village';
+    return (CONFIG.LEVEL_VISUALS && CONFIG.LEVEL_VISUALS[fallbackTheme]) || {};
+  },
+
+  getThemePropScatterCount(categoryKey, visualProfile) {
+    const visual = visualProfile || this.getLevelVisualProfile();
+    if (
+      visual.propScatterCounts &&
+      Object.prototype.hasOwnProperty.call(visual.propScatterCounts, categoryKey)
+    ) {
+      return visual.propScatterCounts[categoryKey];
+    }
+    const defaults = this.getDefaultPropScatterCounts();
+    return defaults[categoryKey] || 8;
+  },
+
   // ---- Map generation ----
   generateMap() {
     // Use a theme-based seed so each level has a unique random pattern
     let seed = 0;
     const theme = this.levelData.theme || 'default';
+    const visual = this.getLevelVisualProfile(theme);
     for (let i = 0; i < theme.length; i++) seed = seed * 31 + theme.charCodeAt(i);
     const rng = makeRNG(seed);
     const mapW = this.levelData.mapW, mapH = this.levelData.mapH, ts = CONFIG.TILE_SIZE;
@@ -1889,11 +1919,34 @@ const Game = {
 
     // fill ground with theme-specific base colour
     const baseColors = { village: '#2a2218', mine: '#1a1520', hell: '#201010' };
-    gctx.fillStyle = baseColors[theme] || '#2a2218';
+    gctx.fillStyle = visual.baseColor || baseColors[theme] || '#2a2218';
     gctx.fillRect(0, 0, mapW * ts, mapH * ts);
+
+    // Blend one level scene background into the combat map so biome art is
+    // visible beyond props and ground tiles.
+    const sceneUnderlayAlpha = visual.sceneUnderlayAlpha || 0;
+    const sceneBgs = this.levelData.sceneBgs || [];
+    if (sceneUnderlayAlpha > 0 && sceneBgs.length > 0) {
+      const sceneKey = sceneBgs[Math.floor(rng() * sceneBgs.length)];
+      const sceneImg = Assets.get(sceneKey);
+      if (sceneImg && sceneImg.complete) {
+        const canvasW = mapW * ts;
+        const canvasH = mapH * ts;
+        const iw = sceneImg.naturalWidth || sceneImg.width || canvasW;
+        const ih = sceneImg.naturalHeight || sceneImg.height || canvasH;
+        const scale = Math.max(canvasW / iw, canvasH / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        gctx.globalAlpha = sceneUnderlayAlpha;
+        gctx.drawImage(sceneImg, (canvasW - dw) / 2, (canvasH - dh) / 2, dw, dh);
+        gctx.globalAlpha = 1;
+      }
+    }
 
     // draw ground tiles with larger organic patches instead of pure random
     const groundTiles = this.levelData.groundTiles;
+    const groundAlphaMin = visual.groundAlphaMin ?? 0.6;
+    const groundAlphaMax = visual.groundAlphaMax ?? 1.0;
     // Pre-generate a low-res noise map so adjacent tiles tend to be similar
     const patchW = Math.ceil(mapW / 4), patchH = Math.ceil(mapH / 4);
     const patchMap = new Array(patchH);
@@ -1918,7 +1971,7 @@ const Game = {
         const img = Assets.get(tileName);
         if (img && img.complete) {
           // draw with slight random offset and alpha for variation
-          gctx.globalAlpha = 0.6 + rng() * 0.4;
+          gctx.globalAlpha = groundAlphaMin + rng() * Math.max(0, groundAlphaMax - groundAlphaMin);
           const ox = (rng() - 0.5) * 6;
           const oy = (rng() - 0.5) * 6;
           gctx.drawImage(img, tx * ts + ox, ty * ts + oy, ts + 4, ts + 4);
@@ -1950,9 +2003,10 @@ const Game = {
     }
 
     // add some dark patches / paths (theme-tinted)
-    const patchColor = theme === 'mine' ? 'rgba(8,5,12,0.35)' : 'rgba(15,10,5,0.3)';
+    const patchColor = visual.patchColor || (theme === 'mine' ? 'rgba(8,5,12,0.35)' : 'rgba(15,10,5,0.3)');
+    const patchCount = visual.patchCount ?? 30;
     gctx.fillStyle = patchColor;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < patchCount; i++) {
       const x = rng() * mapW * ts;
       const y = rng() * mapH * ts;
       gctx.beginPath();
@@ -1970,7 +2024,7 @@ const Game = {
     // draw wall tiles around map border and as interior wall segments (mine/cave themes)
     const wallTiles = this.levelData.wallTiles;
     if (wallTiles && wallTiles.length > 0) {
-      const borderThick = 2; // tiles thick border
+      const borderThick = visual.wallBorderThick ?? 2; // tiles thick border
       // top and bottom borders
       for (let by = 0; by < borderThick; by++) {
         for (let tx = 0; tx < mapW; tx++) {
@@ -2000,7 +2054,7 @@ const Game = {
         }
       }
       // scatter interior wall segments as broken cave walls
-      const wallSegments = 8;
+      const wallSegments = visual.interiorWallSegments ?? 8;
       for (let i = 0; i < wallSegments; i++) {
         const segLen = 2 + Math.floor(rng() * 4);
         const horiz = rng() > 0.5;
@@ -2028,7 +2082,7 @@ const Game = {
     // draw ground decoration overlays (e.g. ground cracks for mine level)
     const groundDecorations = this.levelData.groundDecorations;
     if (groundDecorations && groundDecorations.length > 0) {
-      const decoCount = 20;
+      const decoCount = visual.decorationCount ?? 20;
       for (let i = 0; i < decoCount; i++) {
         const dx = rng() * mapW * ts;
         const dy = rng() * mapH * ts;
@@ -2068,20 +2122,10 @@ const Game = {
       }
     };
 
-    // Dynamic scatter counts based on category type
-    const scatterCounts = {
-      trees: 25, tombstones: 15, fences: 12, barrels: 8, braziers: 10,
-      ruins: 10, houses: 3,
-      // Mine-specific
-      caves: 4, campfires: 8, spikes: 10, rocks: 15, platforms: 6,
-      watchtowers: 2, furniture: 8, stonework: 10,
-      // Shared decorative props
-      bones: 6, gallows: 2,
-    };
-
     // Scatter all categories defined in the level's props config
     for (const [categoryKey, categoryArr] of Object.entries(props)) {
-      const count = scatterCounts[categoryKey] || 8;
+      const count = this.getThemePropScatterCount(categoryKey, visual);
+      if (count <= 0) continue;
       scatter(count, categoryKey, categoryArr);
     }
 
