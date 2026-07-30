@@ -455,15 +455,15 @@ const Game = {
           this.addMessage(ev.text || '怪物突袭！', ev.color || '#ff6040');
           this.shakeScreen(4, 0.2);
         }
-      } else if (ev.type === 'veinAmbush') {
+      } else if (ev.type === 'veinAmbush' || ev.type === 'riftAmbush') {
         const count = this.spawnEnemyGroupAtMapFeatures(
-          ev.featureType || 'crystalVein',
+          ev.featureType || (ev.type === 'riftAmbush' ? 'demonRift' : 'crystalVein'),
           ev.enemyPool || phase.enemyPool || [],
           ev.count || 4,
           ev.radius || 90
         );
         if (count > 0) {
-          this.addMessage(ev.text || '矿脉惊动了敌人！', ev.color || '#80e8ff');
+          this.addMessage(ev.text || (ev.type === 'riftAmbush' ? '恶魔裂隙涌出敌人！' : '矿脉惊动了敌人！'), ev.color || '#80e8ff');
           this.shakeScreen(5, 0.25);
         }
       } else if (ev.type === 'boss') {
@@ -2021,6 +2021,52 @@ const Game = {
       }
     }
 
+    if (theme === 'hell' && featureConfig.lavaFissures) {
+      const cfg = featureConfig.lavaFissures;
+      const count = cfg.count || 0;
+      for (let i = 0; i < count; i++) {
+        const angle = (i % 2 === 0 ? 0.12 : -0.75) + (rng() - 0.5) * 0.45;
+        const x = clamp(worldW * (0.18 + rng() * 0.64), ts * 4, worldW - ts * 4);
+        const y = clamp(worldH * ((i + 1) / (count + 1)) + (rng() - 0.5) * ts * 3, ts * 4, worldH - ts * 4);
+        features.push({
+          type: 'lavaFissure',
+          x,
+          y,
+          length: ts * (4.5 + rng() * 3),
+          width: cfg.width || 34,
+          angle,
+          glowColor: cfg.glowColor || 'rgba(255,80,20,0.24)',
+          coreColor: cfg.coreColor || 'rgba(255,185,45,0.42)',
+        });
+      }
+    }
+
+    if (theme === 'hell' && featureConfig.demonRifts) {
+      const cfg = featureConfig.demonRifts;
+      const count = cfg.count || 0;
+      const minRing = Math.min(worldW, worldH) * 0.26;
+      const maxRing = Math.min(worldW, worldH) * 0.44;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / Math.max(1, count)) * TAU + rng() * 0.55;
+        const ring = minRing + rng() * (maxRing - minRing);
+        let x = clamp(cx + Math.cos(angle) * ring, ts * 4, worldW - ts * 4);
+        let y = clamp(cy + Math.sin(angle) * ring, ts * 4, worldH - ts * 4);
+        if (dist(x, y, cx, cy) <= 190) {
+          x = clamp(cx + Math.cos(angle) * 245, ts * 4, worldW - ts * 4);
+          y = clamp(cy + Math.sin(angle) * 245, ts * 4, worldH - ts * 4);
+        }
+        features.push({
+          type: 'demonRift',
+          x,
+          y,
+          radius: cfg.radius || 96,
+          glowColor: cfg.glowColor || 'rgba(255,45,25,0.20)',
+          coreColor: cfg.coreColor || 'rgba(255,105,20,0.36)',
+          enemyPool: cfg.enemyPool || ['imp','hellhound'],
+        });
+      }
+    }
+
     return features;
   },
 
@@ -2078,6 +2124,48 @@ const Game = {
         );
         ctx.fill();
       }
+      ctx.globalAlpha = oldAlpha;
+    }
+
+    if (feature.type === 'lavaFissure') {
+      const oldAlpha = ctx.globalAlpha;
+      const segments = 7;
+      const dx = Math.cos(feature.angle || 0);
+      const dy = Math.sin(feature.angle || 0);
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < segments; i++) {
+        const t = i / Math.max(1, segments - 1) - 0.5;
+        const px = feature.x + dx * feature.length * t;
+        const py = feature.y + dy * feature.length * t;
+        const taper = 1 - Math.abs(t) * 0.9;
+        ctx.fillStyle = feature.glowColor || 'rgba(255,80,20,0.24)';
+        ctx.beginPath();
+        ctx.ellipse(px, py, feature.width * taper, feature.width * 0.55 * taper, feature.angle || 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = feature.coreColor || 'rgba(255,185,45,0.42)';
+        ctx.beginPath();
+        ctx.ellipse(px, py, feature.width * 0.42 * taper, feature.width * 0.16 * taper, feature.angle || 0, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = oldAlpha;
+      return;
+    }
+
+    if (feature.type === 'demonRift') {
+      const oldAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = feature.glowColor || 'rgba(255,45,25,0.20)';
+      ctx.beginPath();
+      ctx.ellipse(feature.x, feature.y, feature.radius * 1.1, feature.radius * 0.78, 0.35, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = feature.coreColor || 'rgba(255,105,20,0.36)';
+      ctx.beginPath();
+      ctx.ellipse(feature.x, feature.y, feature.radius * 0.46, feature.radius * 0.22, 0.35, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(90,0,0,0.34)';
+      ctx.beginPath();
+      ctx.ellipse(feature.x, feature.y, feature.radius * 0.26, feature.radius * 0.12, 0.35, 0, TAU);
+      ctx.fill();
       ctx.globalAlpha = oldAlpha;
     }
   },

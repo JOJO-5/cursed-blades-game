@@ -108,7 +108,7 @@ for (const [id, level] of Object.entries(config.LEVELS)) {
     assert.ok(!tile.includes('grass_strip'), `level ${id} groundTiles should not contain strip overlay art: ${tile}`);
   }
   const ambushEvents = level.phases.flatMap(phase => phase.events || [])
-    .filter(ev => ev.type === 'ambush' || ev.type === 'veinAmbush');
+    .filter(ev => ev.type === 'ambush' || ev.type === 'veinAmbush' || ev.type === 'riftAmbush');
   assert.ok(ambushEvents.length >= 3, `level ${id} should include recurring ambush events for pacing`);
   for (const ev of ambushEvents) {
     assert.ok(ev.count > 0 && Array.isArray(ev.enemyPool) && ev.enemyPool.length > 0,
@@ -240,6 +240,62 @@ assert.ok(typeof game.spawnEnemyGroupAtMapFeatures === 'function',
   assert.equal(spawned, 3, 'feature ambush should spawn the requested group when space is clear');
   assert.ok(game.enemies.every(e => e.type === 'crystal' && gameContext.dist(e.x, e.y, 360, 420) <= 140),
     'feature ambush enemies should spawn near the selected crystal vein');
+}
+assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.lavaFissures?.count >= 3,
+  'hell should define visible lava-fissure map features');
+assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.demonRifts?.count >= 3,
+  'hell should define demon-rift map features');
+assert.ok(!config.LEVEL_VISUALS.mine.mapFeatures?.demonRifts,
+  'mine should not inherit hell demon-rift features');
+assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev => ev.type === 'riftAmbush')),
+  'hell phases should include demon-rift ambush events for distinct pacing');
+{
+  const hellLevel = config.LEVELS.hell;
+  const hellVisual = game.getLevelVisualProfile('hell');
+  const cx = hellLevel.mapW * config.TILE_SIZE / 2;
+  const cy = hellLevel.mapH * config.TILE_SIZE / 2;
+  const features = game.generateThemeMapFeatures(
+    'hell',
+    hellVisual,
+    gameContext.makeRNG(99),
+    hellLevel.mapW,
+    hellLevel.mapH,
+    config.TILE_SIZE,
+    cx,
+    cy
+  );
+  assert.ok(features.filter(f => f.type === 'lavaFissure').length >= 3,
+    'hell feature generation should create visible lava fissures');
+  const rifts = features.filter(f => f.type === 'demonRift');
+  assert.ok(rifts.length >= 3, 'hell feature generation should create demon rifts');
+  assert.ok(rifts.every(f => gameContext.dist(f.x, f.y, cx, cy) > 190),
+    'demon rifts should avoid the player spawn safe zone');
+
+  gameContext.Enemy = class {
+    constructor(type, x, y) {
+      this.type = type;
+      this.x = x;
+      this.y = y;
+      this.alive = true;
+      this.radius = config.ENEMIES[type]?.radius || 16;
+    }
+  };
+  game.levelData = hellLevel;
+  game.levelTime = 90;
+  game.currentPhase = 0;
+  game.triggeredPhases = {};
+  game.player = { x: 800, y: 800 };
+  game.enemies = [];
+  game.collisionProps = [];
+  game.mapData = { features: [{ type: 'demonRift', x: 420, y: 460, radius: 100 }] };
+  game.addMessage = () => {};
+  game.shakeScreen = () => {};
+  game.triggerPhaseEvents({
+    events: [{ type: 'riftAmbush', featureType: 'demonRift', count: 4, enemyPool: ['imp'], radius: 100 }],
+  });
+  assert.equal(game.enemies.length, 4, 'rift ambush should spawn the requested group around a demon rift');
+  assert.ok(game.enemies.every(e => e.type === 'imp' && gameContext.dist(e.x, e.y, 420, 460) <= 155),
+    'rift ambush enemies should spawn near the selected demon rift');
 }
 assert.ok(typeof game.collectAllXpPickups === 'function',
   'Game should expose a full-map XP collection helper for magnet pickups');
@@ -835,4 +891,4 @@ for (const asset of previouslyUnused) {
   assert.ok(existsSync(pngPath), `previously unused asset ${asset} PNG should exist`);
 }
 
-console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 26 upgrades with build synergies, 31 enemies, 3 levels with phased spawning + ambush events, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, spawn safe zone, actor depth sorting, player fallback drawing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration (wall tiles, ground decorations, projectile sprites, unused props).`);
+console.log(`Smoke checks passed: ${resources.size} configured resources, 38 weapons (13 original + 22 new + 3 evolved), 26 upgrades with build synergies, 31 enemies, 3 levels with phased spawning + ambush events, portrait layout, landscape weapon HUD safe zone, ground tile hygiene, rectangular prop collision footprints, spawn safe zone, actor depth sorting, player fallback drawing, pickup attraction, prerequisite system, settings overlay, story UI separation, off-screen culling, BGM tracks, object pools, mimic state machine, expanded asset manifest (${assetCount} assets), weapon evolution system, spatial grid collision, active-level bounds, enemy edge clamping, save/continue restoration, wall collision bodies, mine-level asset integration, and hell-specific rift/fissure map pacing.`);

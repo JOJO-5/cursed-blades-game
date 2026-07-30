@@ -884,6 +884,21 @@ const CONFIG = {
       sceneUnderlayAlpha: 0.18,
       wallBorderThick: 2,
       interiorWallSegments: 6,
+      mapFeatures: {
+        lavaFissures: {
+          count: 5,
+          width: 34,
+          glowColor: 'rgba(255,80,20,0.24)',
+          coreColor: 'rgba(255,185,45,0.42)',
+        },
+        demonRifts: {
+          count: 4,
+          radius: 96,
+          glowColor: 'rgba(255,45,25,0.20)',
+          coreColor: 'rgba(255,105,20,0.36)',
+          enemyPool: ['imp','hellhound','demon_soldier'],
+        },
+      },
       propScatterCounts: {
         spikes: 16,
         rocks: 16,
@@ -1013,10 +1028,10 @@ const CONFIG = {
       mimicChance: 0.5,
       phases: [
         { time: 0,   name: '地狱边境',   enemyPool: ['imp','hellhound'],                     rangedPool: [],             maxEnemies: 16, spawnInterval: 2.0, events: [] },
-        { time: 90,  name: '恶魔军团',   enemyPool: ['imp','hellhound','demon_soldier'],      rangedPool: ['lava_archer'], maxEnemies: 20, spawnInterval: 1.8, events: [{type:'chest', rare:false, mimic:false}, {type:'ambush', count:6, enemyPool:['imp','hellhound']}, {type:'message', text:'恶魔士兵出现了！', color:'#ff4020'}] },
+        { time: 90,  name: '恶魔军团',   enemyPool: ['imp','hellhound','demon_soldier'],      rangedPool: ['lava_archer'], maxEnemies: 20, spawnInterval: 1.8, events: [{type:'chest', rare:false, mimic:false}, {type:'riftAmbush', featureType:'demonRift', count:6, enemyPool:['imp','hellhound'], radius:95, text:'恶魔裂隙撕开，地狱犬涌出！', color:'#ff7040'}, {type:'message', text:'恶魔士兵出现了！', color:'#ff4020'}] },
         { time: 180, name: '魅魔之歌',   enemyPool: ['imp','hellhound','demon_soldier','succubus'], rangedPool: ['lava_archer','succubus'], maxEnemies: 25, spawnInterval: 1.6, events: [{type:'elite'}, {type:'ambush', count:6, enemyPool:['hellhound','succubus']}, {type:'chest', rare:false, mimic:true}] },
-        { time: 300, name: '炎魔降临',   enemyPool: ['imp','hellhound','demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 30, spawnInterval: 1.4, events: [{type:'elite'}, {type:'ambush', count:8, enemyPool:['demon_soldier','lava_archer','hellhound']}, {type:'chest', rare:true, mimic:false}] },
-        { time: 420, name: '深渊集结',   enemyPool: ['demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 35, spawnInterval: 1.2, events: [{type:'elite'}, {type:'elite'}, {type:'ambush', count:8, enemyPool:['demon_soldier','succubus','flame_mage']}, {type:'chest', rare:true, mimic:true}] },
+        { time: 300, name: '炎魔降临',   enemyPool: ['imp','hellhound','demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 30, spawnInterval: 1.4, events: [{type:'elite'}, {type:'riftAmbush', featureType:'demonRift', count:8, enemyPool:['demon_soldier','lava_archer','hellhound'], radius:115, text:'熔岩裂隙喷涌，恶魔军团压近！', color:'#ff6040'}, {type:'chest', rare:true, mimic:false}] },
+        { time: 420, name: '深渊集结',   enemyPool: ['demon_soldier','succubus','lava_archer'], rangedPool: ['lava_archer','succubus','flame_mage'], maxEnemies: 35, spawnInterval: 1.2, events: [{type:'elite'}, {type:'elite'}, {type:'riftAmbush', featureType:'demonRift', count:8, enemyPool:['demon_soldier','succubus','flame_mage'], radius:125, text:'深渊裂隙集结，远程恶魔加入！', color:'#ff4070'}, {type:'chest', rare:true, mimic:true}] },
         { time: 540, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
