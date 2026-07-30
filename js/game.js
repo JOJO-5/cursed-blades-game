@@ -37,6 +37,7 @@ const Game = {
 
   upgradeChoices: [],
   chestRewardChoices: [],
+  pendingLevelUps: 0,
   _choiceIconCropCache: {},
 
   // settings overlay state
@@ -604,6 +605,27 @@ const Game = {
     const bottom = cy + prop.halfH;
 
     if (entity.x >= left && entity.x <= right && entity.y >= top && entity.y <= bottom) {
+      const prevX = Number.isFinite(entity.prevX) ? entity.prevX : null;
+      const prevY = Number.isFinite(entity.prevY) ? entity.prevY : null;
+      if (prevX !== null && prevY !== null) {
+        if (prevX < left && entity.x >= left) {
+          entity.x = left - entity.radius;
+          return true;
+        }
+        if (prevX > right && entity.x <= right) {
+          entity.x = right + entity.radius;
+          return true;
+        }
+        if (prevY < top && entity.y >= top) {
+          entity.y = top - entity.radius;
+          return true;
+        }
+        if (prevY > bottom && entity.y <= bottom) {
+          entity.y = bottom + entity.radius;
+          return true;
+        }
+      }
+
       const distLeft = entity.x - left;
       const distRight = right - entity.x;
       const distTop = entity.y - top;
@@ -893,7 +915,7 @@ const Game = {
       return 0;
     }
 
-    const leveled = this.player.gainXp(totalXp);
+    const levelsGained = this.player.gainXp(totalXp);
     this.addMessage('全图经验吸收 +' + Math.round(totalXp) + ' XP', '#80ffff');
     if (this.spawnDamageNumber && this.damageNumberPool) {
       this.spawnDamageNumber(this.player.x, this.player.y - 34, '+' + Math.round(totalXp) + 'XP', '#80ffff');
@@ -902,15 +924,26 @@ const Game = {
     if (typeof Audio2 !== 'undefined' && Audio2.play) {
       Audio2.play('triangle', 780, 0.12, 0.05);
     }
-    if (leveled) this.onLevelUp();
+    if (levelsGained) this.onLevelUp(levelsGained);
     return totalXp;
   },
 
   // ---- Level up ----
-  onLevelUp() {
+  onLevelUp(levelsGained = 1) {
+    const count = Math.max(1, Math.floor(Number(levelsGained) || 1));
+    this.pendingLevelUps = (this.pendingLevelUps || 0) + Math.max(0, count - 1);
     Audio2.levelup();
     this.state = 'levelup';
     this.generateUpgradeChoices();
+  },
+
+  finishLevelUpSelection() {
+    if ((this.pendingLevelUps || 0) > 0) {
+      this.pendingLevelUps--;
+      this.onLevelUp(1);
+    } else {
+      this.state = 'playing';
+    }
   },
 
   generateUpgradeChoices() {
@@ -954,10 +987,10 @@ const Game = {
 
     this.ensureBuildChoice(choices, available, buildTags);
 
-    // Always reserve one card for weapons when possible:
-    // unowned weapons unlock new play styles, owned weapons upgrade from Lv1+.
+    // Offer weapons often, but not on every level: stat/relic choices still
+    // need room so builds can reach evolution prerequisites and utility picks.
     const weaponChoices = this.getAvailableWeaponChoices(buildTags);
-    if (weaponChoices.length > 0) {
+    if (weaponChoices.length > 0 && (!choices.length || Math.random() < this.getWeaponChoiceChance(weaponChoices, buildTags))) {
       const weaponChoice = this.pickWeightedChoice(this.weightWeaponChoices(weaponChoices, buildTags));
       if (choices.length) choices[choices.length - 1] = weaponChoice;
       else choices.push(weaponChoice);
@@ -986,6 +1019,14 @@ const Game = {
     return weighted[weighted.length - 1].upgrade;
   },
 
+  getWeaponUpgradeDescription(weapon, currentLevel, nextLevel) {
+    const parts = [`${weapon.name} Lv.${currentLevel} → Lv.${nextLevel}`];
+    parts.push('伤害 +15%');
+    parts.push('范围 +5%');
+    if (weapon.type === 'orbit') parts.push('视觉/命中体积 +15%');
+    return parts.join(' | ');
+  },
+
   getAvailableWeaponChoices(buildTags) {
     if (!this.player || !Array.isArray(this.player.weapons)) return [];
     const maxLevel = CONFIG.WEAPON_MAX_LEVEL || 6;
@@ -1003,7 +1044,7 @@ const Game = {
         name: '强化武器: ' + weapon.name,
         icon: weapon.hudIcon || weapon.icon,
         rarity: fallbackRarity || 'rare',
-        desc: `${weapon.name} Lv.${currentLevel} → Lv.${nextLevel}，提升伤害、范围或武器效果`,
+        desc: this.getWeaponUpgradeDescription(weapon, currentLevel, nextLevel),
         currentLevel,
         nextLevel,
         maxLevel,
@@ -1042,12 +1083,26 @@ const Game = {
     return weaponChoices.map(choice => {
       const rarityBonus = choice.rarity === 'epic' ? 15 : 0;
       const synergy = this.getChoiceSynergyScore(choice, buildTags || this.getPlayerBuildTags());
-      const upgradeBonus = choice.isWeaponUpgrade ? 45 : Math.max(0, 25 - ownedCount * 2);
+      const lowLevelBonus = choice.isWeaponUpgrade ? Math.max(0, 4 - (choice.currentLevel || 1)) * 8 : 0;
+      const upgradeBonus = choice.isWeaponUpgrade ? 32 + lowLevelBonus : Math.max(0, 22 - ownedCount * 3);
       return {
         upgrade: choice,
         weight: 25 + rarityBonus + upgradeBonus + synergy * 30,
       };
     });
+  },
+
+  getWeaponChoiceChance(weaponChoices, buildTags) {
+    if (!weaponChoices || weaponChoices.length === 0) return 0;
+    const ownedCount = this.player && this.player.weapons ? this.player.weapons.length : 0;
+    const hasUpgrade = weaponChoices.some(choice => choice.isWeaponUpgrade);
+    const hasLowLevelUpgrade = weaponChoices.some(choice => choice.isWeaponUpgrade && (choice.currentLevel || 1) <= 2);
+    const hasUnlock = weaponChoices.some(choice => choice.isWeaponUnlock);
+    let chance = hasUpgrade ? 0.42 : 0.28;
+    if (hasLowLevelUpgrade) chance += 0.18;
+    if (hasUnlock && ownedCount < 4) chance += 0.14;
+    if (buildTags && weaponChoices.some(choice => this.getChoiceSynergyScore(choice, buildTags) > 0)) chance += 0.10;
+    return Math.max(0.2, Math.min(0.82, chance));
   },
 
   ensureBuildChoice(choices, available, buildTags) {
@@ -1154,6 +1209,11 @@ const Game = {
   getChoiceDescription(choice) {
     const base = choice.desc || (choice.weaponId ? (CONFIG.WEAPONS[choice.weaponId] ? CONFIG.WEAPONS[choice.weaponId].desc : '') : '');
     const parts = base ? [base] : [];
+    if (choice && !choice.weaponId && choice.id && choice.maxLevel && this.player) {
+      const currentLevel = this.player.upgradeLevels[choice.id] || 0;
+      parts.push(`当前 Lv.${currentLevel}/${choice.maxLevel}`);
+      if (currentLevel < choice.maxLevel) parts.push(`下一级 Lv.${currentLevel + 1}`);
+    }
     const buildTags = this.getPlayerBuildTags();
     const synergy = this.getChoiceSynergyScore(choice, buildTags);
     if (synergy > 0) {
@@ -1367,7 +1427,7 @@ const Game = {
       this.addMessage(choice.name, '#c0c0ff');
     }
     Audio2.click();
-    this.state = 'playing';
+    this.finishLevelUpSelection();
   },
 
   // ---- Chest / Mimic ----
@@ -1730,6 +1790,7 @@ const Game = {
     this.damageNumbers = [];
     this.messages = [];
     this.minions = [];
+    this.pendingLevelUps = 0;
     this.levelTime = 0;
     this.spawnTimer = 1;
     this.eliteTimer = 0;
@@ -2201,6 +2262,7 @@ const Game = {
       this.damageNumbers = [];
       this.messages = [];
       this.minions = [];
+      this.pendingLevelUps = 0;
       this.damageVignette = 0;
       this.player.level = data.level ?? 1;
       this.player.xp = data.xp ?? 0;
@@ -2327,15 +2389,22 @@ const Game = {
   getWeaponHudLayout(count) {
     const visible = this.getVisibleCanvasRect();
     const portrait = this.isPortrait();
-    const gap = 42;
-    const iconSize = 36;
-    const itemHeight = 50;
-    const totalW = Math.max(0, count - 1) * gap + iconSize;
+    const leftSafe = portrait ? 12 : 180;
+    const rightSafe = portrait ? 12 : 180;
+    const maxWidth = Math.max(120, visible.w - leftSafe - rightSafe);
+    const iconSize = count > 16 ? 24 : (count > 10 ? 28 : 36);
+    const gap = iconSize + (iconSize <= 28 ? 8 : 6);
+    const maxColumns = portrait ? 6 : 12;
+    const columns = Math.max(1, Math.min(Math.max(1, count), maxColumns, Math.floor((maxWidth + gap - iconSize) / gap)));
+    const rows = Math.max(1, Math.ceil(Math.max(1, count) / columns));
+    const rowGap = iconSize + 14;
+    const itemHeight = rows * rowGap;
+    const totalW = Math.max(0, columns - 1) * gap + iconSize;
     const rawX = visible.x + (visible.w - totalW) / 2;
-    const x = clamp(rawX, visible.x + 12, Math.max(visible.x + 12, visible.x + visible.w - totalW - 12));
+    const x = clamp(rawX, visible.x + leftSafe, Math.max(visible.x + leftSafe, visible.x + visible.w - totalW - rightSafe));
     const rawY = portrait ? visible.y + visible.h - 165 : visible.y + visible.h - itemHeight - 12;
     const y = clamp(rawY, visible.y + 8, Math.max(visible.y + 8, visible.y + visible.h - itemHeight - 8));
-    return { x, y, gap, iconSize, itemHeight, totalW };
+    return { x, y, gap, iconSize, itemHeight, totalW, columns, rows, rowGap };
   },
 
   getChoiceLayout(count) {
@@ -2543,26 +2612,31 @@ const Game = {
     const weaponHud = this.getWeaponHudLayout(p.weapons.length);
     const weaponStartX = weaponHud.x;
     const weaponGap = weaponHud.gap;
-    const wY = weaponHud.y;
+    const iconSize = weaponHud.iconSize;
+    const rowGap = weaponHud.rowGap;
+    const columns = weaponHud.columns || Math.max(1, p.weapons.length);
     for (let i = 0; i < p.weapons.length; i++) {
       const w = p.weapons[i];
-      const wx = weaponStartX + i * weaponGap;
+      const col = i % columns;
+      const row = Math.floor(i / columns);
+      const wx = weaponStartX + col * weaponGap;
+      const wY = weaponHud.y + row * rowGap;
       // bg
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(wx-2, wY-2, 36, 36);
-      this.drawChoiceIcon(ctx, w.def.hudIcon || w.def.icon, wx + 16, wY + 16, 30, 30);
+      ctx.fillRect(wx - 2, wY - 2, iconSize, iconSize);
+      this.drawChoiceIcon(ctx, w.def.hudIcon || w.def.icon, wx + iconSize / 2 - 2, wY + iconSize / 2 - 2, iconSize - 6, iconSize - 6);
       // level
       ctx.fillStyle = '#ffd040';
-      ctx.font = '10px Courier New';
-      ctx.fillText(`Lv${w.level}`, wx, wY + 46);
+      ctx.font = iconSize <= 28 ? '9px Courier New' : '10px Courier New';
+      ctx.fillText(`Lv${w.level}`, wx - 1, wY + iconSize + 10);
     }
 
     // dash cooldown indicator
     if (p.dashCooldown > 0) {
       ctx.fillStyle = 'rgba(120,180,255,0.3)';
-      ctx.fillRect(weaponStartX, wY - 20, 100, 6);
+      ctx.fillRect(weaponStartX, weaponHud.y - 20, 100, 6);
       ctx.fillStyle = '#78b4ff';
-      ctx.fillRect(weaponStartX, wY - 20, 100 * (1 - p.dashCooldown / CONFIG.PLAYER.dashCooldown), 6);
+      ctx.fillRect(weaponStartX, weaponHud.y - 20, 100 * (1 - p.dashCooldown / CONFIG.PLAYER.dashCooldown), 6);
     }
 
     // messages

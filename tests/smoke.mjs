@@ -160,7 +160,7 @@ assert.ok(typeof game.collectAllXpPickups === 'function',
   'Game should expose a full-map XP collection helper for magnet pickups');
 {
   let gainedXp = 0;
-  game.player = { x: 0, y: 0, gainXp: (amount) => { gainedXp += amount; return amount >= 5; } };
+  game.player = { x: 0, y: 0, gainXp: (amount) => { gainedXp += amount; return amount >= 5 ? 2 : 0; } };
   game.pickups = [
     { type: 'xp', value: 2, alive: true, x: 120, y: 40 },
     { type: 'xp', value: 3, alive: true, x: 320, y: 220 },
@@ -169,8 +169,8 @@ assert.ok(typeof game.collectAllXpPickups === 'function',
   ];
   game.particles = [];
   game.particlePool = { obtain: () => ({ alive: true }) };
-  let levelUpTriggered = false;
-  game.onLevelUp = () => { levelUpTriggered = true; };
+  const levelUpBatches = [];
+  game.onLevelUp = (levelsGained = 1) => { levelUpBatches.push(levelsGained); };
   game.addMessage = () => {};
   game.collectAllXpPickups(0, 0);
   assert.equal(gainedXp, 5, 'full-map XP collection should grant the total value of all live XP gems');
@@ -178,7 +178,8 @@ assert.ok(typeof game.collectAllXpPickups === 'function',
     'full-map XP collection should consume all live XP gems');
   assert.equal(game.pickups.filter(p => p.type !== 'xp' && p.alive).length, 2,
     'full-map XP collection should not consume hearts or chests');
-  assert.equal(levelUpTriggered, true, 'full-map XP collection should trigger level-up when total XP crosses the threshold');
+  assert.deepEqual(levelUpBatches, [2],
+    'full-map XP collection should request one upgrade choice for every level gained');
 }
 gameContext.document = {
   createElement: () => ({
@@ -227,6 +228,15 @@ assert.ok(weaponHud.x > landscapeVisible.x + 180,
   'landscape weapon HUD should avoid the left joystick zone');
 assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible.w - 180,
   'landscape weapon HUD should avoid the right dash zone');
+const crowdedWeaponHud = game.getWeaponHudLayout(16);
+assert.ok(crowdedWeaponHud.rows >= 2 && crowdedWeaponHud.columns < 16,
+  'crowded weapon HUD should wrap late-game weapon lists instead of rendering a single long row');
+assert.ok(crowdedWeaponHud.x >= landscapeVisible.x + 180,
+  'crowded weapon HUD should still avoid the left joystick zone');
+assert.ok(crowdedWeaponHud.x + crowdedWeaponHud.totalW <= landscapeVisible.x + landscapeVisible.w - 180,
+  'crowded weapon HUD should still avoid the right dash zone');
+assert.ok(crowdedWeaponHud.y + crowdedWeaponHud.itemHeight <= landscapeVisible.y + landscapeVisible.h,
+  'crowded weapon HUD should stay vertically visible');
 
 {
   const originalPickWeightedChoice = game.pickWeightedChoice;
@@ -249,6 +259,27 @@ assert.ok(weaponHud.x + weaponHud.totalW < landscapeVisible.x + landscapeVisible
   game.pickWeightedChoice = originalPickWeightedChoice;
   gameContext.Math.random = originalRandom;
 }
+{
+  const originalRandom = gameContext.Math.random;
+  gameContext.Math.random = () => 0.99;
+  game.player = {
+    weapons: [{ id: 'sword', level: 2, def: config.WEAPONS.sword }],
+    upgradeLevels: {},
+    stats: { luck: 0 },
+  };
+  game.generateUpgradeChoices();
+  assert.ok(!game.upgradeChoices.some(choice => choice.weaponId),
+    'level-up choices should weight weapon cards instead of forcing one every level');
+  const swordUpgrade = game.getAvailableWeaponChoices(new Set()).find(choice => choice.weaponId === 'sword');
+  const swordDesc = game.getChoiceDescription(swordUpgrade);
+  assert.ok(swordUpgrade && swordDesc.includes('伤害 +15%') && swordDesc.includes('范围 +5%'),
+    'weapon upgrade descriptions should show concrete per-level stat gains');
+  game.player.upgradeLevels = { damage: 2 };
+  const damageDesc = game.getChoiceDescription(config.UPGRADES.find(upgrade => upgrade.id === 'damage'));
+  assert.ok(damageDesc.includes('当前 Lv.2/8') && damageDesc.includes('下一级 Lv.3'),
+    'stat upgrade descriptions should show current and next level progress');
+  gameContext.Math.random = originalRandom;
+}
 
 assert.ok(typeof game.getPropCollisionRadius === 'function', 'Game should expose prop collision radius helper');
 assert.ok(typeof game.getPropCollisionFootprint === 'function', 'Game should expose prop collision footprint helper');
@@ -265,6 +296,11 @@ const treeFootprint = game.getPropCollisionFootprint('trees', 'props/tree_dead_g
 assert.ok(treeFootprint.halfW <= 28 && treeFootprint.halfH <= 26 && treeFootprint.collisionOffsetY > 0,
   'tall tree collision should be a lowered trunk footprint, not the whole canopy');
 game.collisionProps = [{ x: 100, y: 100, ...tombstoneFootprint }];
+const playerSlidingIntoRect = { x: 100, y: 84, prevX: 70, prevY: 84, radius: 14 };
+assert.equal(game.resolveRectPropCollision(playerSlidingIntoRect, { x: 100, y: 100, halfW: 20, halfH: 20 }), true,
+  'rectangular prop collision should resolve an entity that moved into the rectangle');
+assert.ok(playerSlidingIntoRect.x <= 80 - playerSlidingIntoRect.radius && Math.abs(playerSlidingIntoRect.y - 84) < 0.1,
+  'rectangular prop collision should use previous position to push back through the crossed side');
 const entityOnTombstone = { x: 100, y: 100, radius: 14 };
 assert.equal(game.resolvePropCollision(entityOnTombstone), true,
   'rectangular prop collision should report when it moves an entity');
@@ -404,6 +440,9 @@ const playerContext = {
 vm.runInNewContext(`${entitiesSource}\nglobalThis.__Player__ = Player;\nglobalThis.__Enemy__ = Enemy;`, playerContext, { filename: 'js/entities.js' });
 const player = new playerContext.__Player__(9999, 9999);
 assert.equal(player.radius, config.PLAYER.radius, 'player should expose a collision radius for prop collision');
+const burstXpPlayer = new playerContext.__Player__(0, 0);
+assert.equal(burstXpPlayer.gainXp(config.XP_CURVE[0] + config.XP_CURVE[1]), 2,
+  'Player.gainXp should report the exact number of levels gained from a large XP burst');
 const playerNearRectProp = new playerContext.__Player__(200, 200);
 game.collisionProps = [{ x: 100, y: 100, radius: 24, halfW: 24, halfH: 24 }];
 game.resolvePropCollision(playerNearRectProp);
@@ -429,8 +468,10 @@ playerContext.Game.resolvePropCollision = (enemy) => {
   return true;
 };
 const stuckEnemy = new playerContext.__Enemy__('slime', 100, 100);
-stuckEnemy.update(0.1);
+for (let i = 0; i < 5; i++) stuckEnemy.update(0.15);
 assert.ok(stuckEnemy.avoidTimer > 0, 'enemy should enter a short obstacle-avoidance state after blocked chase movement');
+assert.ok(Math.hypot(stuckEnemy.x - 100, stuckEnemy.y - 100) > 6,
+  'enemy should nudge itself out after repeated blocked chase movement');
 
 // Regression: continuing a non-village save should rebuild that level directly,
 // preserve phase trigger state, and create collision bodies for rendered walls.

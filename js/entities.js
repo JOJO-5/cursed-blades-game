@@ -90,16 +90,16 @@ class Player {
 
   gainXp(amount) {
     this.xp += amount * this.stats.xpMult;
-    let leveled = false;
+    let levelsGained = 0;
     while (this.level <= CONFIG.XP_CURVE.length && this.xp >= this.xpToNext) {
       this.xp -= this.xpToNext;
       this.level++;
       this.xpToNext = CONFIG.XP_CURVE[Math.min(this.level - 1, CONFIG.XP_CURVE.length - 1)] || 9999;
-      leveled = true;
+      levelsGained++;
       // heal 20% on level up
       this.heal(this.getMaxHp() * 0.2);
     }
-    return leveled;
+    return levelsGained;
   }
 
   takeDamage(amount) {
@@ -200,8 +200,12 @@ class Player {
       this.vy = my * speed;
     }
 
+    const prevPlayerX = this.x;
+    const prevPlayerY = this.y;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+    this.prevX = prevPlayerX;
+    this.prevY = prevPlayerY;
 
     // clamp to current level bounds
     const levelData = Game.levelData || {};
@@ -1320,6 +1324,7 @@ class Enemy {
     this.contactCooldown = 0;
     this.avoidTimer = 0;
     this.avoidSide = Math.random() < 0.5 ? -1 : 1;
+    this.stuckTimer = 0;
     this.burnTimer = 0;
     this.burnDps = 0;
     this.burnTickTimer = 0;
@@ -1587,16 +1592,30 @@ class Enemy {
     const beforePlayerDist = d;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+    this.prevX = beforeMoveX;
+    this.prevY = beforeMoveY;
 
     // resolve collision with solid props (enemies too)
     const hitProp = Game.resolvePropCollision(this);
     this.clampToLevelBounds();
     const afterPlayerDist = dist(this.x, this.y, player.x, player.y);
     const moved = dist(beforeMoveX, beforeMoveY, this.x, this.y);
+    const intendedSpeed = Math.hypot(this.vx, this.vy);
     if (!this.isBoss && hitProp && beforePlayerDist > 80 &&
         (afterPlayerDist >= beforePlayerDist - moved * 0.25)) {
       this.avoidTimer = Math.max(this.avoidTimer, 0.6);
       if (Math.random() < 0.25) this.avoidSide *= -1;
+    }
+    if (!this.isBoss && beforePlayerDist > 60 && intendedSpeed > 8 &&
+        (hitProp || moved < Math.max(0.75, intendedSpeed * dt * 0.12))) {
+      this.stuckTimer = (this.stuckTimer || 0) + dt;
+      if (this.stuckTimer >= 0.7 && this.nudgeOutOfStuck(player)) {
+        this.stuckTimer = 0;
+        this.avoidTimer = Math.max(this.avoidTimer, 0.8);
+        this.avoidSide *= -1;
+      }
+    } else {
+      this.stuckTimer = Math.max(0, (this.stuckTimer || 0) - dt * 2);
     }
 
     // boss state machine
@@ -1642,6 +1661,33 @@ class Enemy {
       if ((oldY < this.y && this.knockbackVy < 0) || (oldY > this.y && this.knockbackVy > 0)) this.knockbackVy = 0;
       if ((oldY < this.y && this.chargeVy < 0) || (oldY > this.y && this.chargeVy > 0)) this.chargeVy = 0;
     }
+  }
+
+  nudgeOutOfStuck(player) {
+    if (!player) return false;
+    const chaseAng = angleTo(this.x, this.y, player.x, player.y);
+    const awayAng = chaseAng + Math.PI;
+    const step = Math.max(this.radius * 1.4, 18);
+    const candidates = [
+      chaseAng + Math.PI / 2 * this.avoidSide,
+      chaseAng - Math.PI / 2 * this.avoidSide,
+      awayAng,
+      chaseAng + Math.PI / 4 * this.avoidSide,
+      chaseAng - Math.PI / 4 * this.avoidSide,
+    ];
+
+    for (const ang of candidates) {
+      const nx = this.x + Math.cos(ang) * step;
+      const ny = this.y + Math.sin(ang) * step;
+      if (Game.isCircleBlocked && Game.isCircleBlocked(nx, ny, this.radius)) continue;
+      this.x = nx;
+      this.y = ny;
+      this.clampToLevelBounds();
+      this.vx = Math.cos(ang) * this.speed * 0.35;
+      this.vy = Math.sin(ang) * this.speed * 0.35;
+      return true;
+    }
+    return false;
   }
 
   updateBoss(dt, player, d) {
@@ -2590,7 +2636,7 @@ class Pickup {
   collect() {
     this.alive = false;
     if (this.type === 'xp') {
-      const leveled = Game.player.gainXp(this.value);
+      const levelsGained = Game.player.gainXp(this.value);
       Audio2.pickup();
       // pickup flash: green sparkles
       for (let i = 0; i < 4; i++) {
@@ -2598,8 +2644,8 @@ class Pickup {
         const spd = rand(40, 90);
         Game.particles.push(Game.particlePool.obtain(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, '#80ff80', rand(0.2, 0.4), rand(1.5, 3)));
       }
-      if (leveled) {
-        Game.onLevelUp();
+      if (levelsGained) {
+        Game.onLevelUp(levelsGained);
       }
     } else if (this.type === 'heart') {
       Game.player.heal(20);
