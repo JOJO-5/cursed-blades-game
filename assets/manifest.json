@@ -47,6 +47,22 @@
     "w": 120,
     "h": 72
   },
+  "props/hell_ai_demon_gate": {
+    "w": 127,
+    "h": 170
+  },
+  "props/hell_ai_obsidian_obelisk": {
+    "w": 118,
+    "h": 170
+  },
+  "props/hell_ai_lava_rock": {
+    "w": 131,
+    "h": 140
+  },
+  "props/hell_ai_chain_pile": {
+    "w": 123,
+    "h": 120
+  },
   "props/wooden_platform_01": {
     "w": 113,
     "h": 66
@@ -474,6 +490,22 @@
   "effects/hell_rune_brand": {
     "w": 96,
     "h": 96
+  },
+  "effects/hell_ai_lava_fissure": {
+    "w": 102,
+    "h": 140
+  },
+  "effects/hell_ai_demon_rift": {
+    "w": 124,
+    "h": 170
+  },
+  "effects/hell_ai_rune_circle": {
+    "w": 150,
+    "h": 142
+  },
+  "effects/hell_ai_ember_burst": {
+    "w": 129,
+    "h": 150
   },
   "items/chest": {
     "w": 24,

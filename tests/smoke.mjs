@@ -137,6 +137,7 @@ for (const key of resources) {
 
 // Exercise the viewport-aware helpers without needing a browser or Canvas.
 const gameSource = readFileSync(path.join(jsDir, 'game.js'), 'utf8');
+const entitiesSource = readFileSync(path.join(jsDir, 'entities.js'), 'utf8');
 const gameContext = {
   CONFIG: config,
   window: { innerWidth: 390, innerHeight: 844 },
@@ -245,14 +246,39 @@ assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.lavaFissures?.count >= 3,
   'hell should define visible lava-fissure map features');
 assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.demonRifts?.count >= 3,
   'hell should define demon-rift map features');
-assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.lavaFissures.sprite, 'effects/lava_fissure_hell',
-  'hell lava fissures should use a dedicated generated sprite');
-assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.demonRifts.sprite, 'effects/demon_rift_hell',
-  'hell demon rifts should use a dedicated generated sprite');
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.lavaFissures.sprite, 'effects/hell_ai_lava_fissure',
+  'hell lava fissures should use the sliced AI sprite');
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.demonRifts.sprite, 'effects/hell_ai_demon_rift',
+  'hell demon rifts should use the sliced AI sprite');
 assert.ok(config.LEVELS.hell.groundDecorations.includes('effects/hell_rune_brand'),
   'hell ground decorations should include a generated rune brand');
 assert.ok(config.LEVELS.hell.props.spikes.includes('props/hell_spike_bones'),
   'hell spike props should include a generated bone-spike prop');
+const aiHellSheetPath = path.join(root, 'assets/source_sheets/hell_ai_sprite_sheet.png');
+assert.ok(existsSync(aiHellSheetPath), 'project should keep the AI-generated hell sprite sheet source');
+const aiHellAssets = [
+  'effects/hell_ai_lava_fissure',
+  'effects/hell_ai_demon_rift',
+  'effects/hell_ai_rune_circle',
+  'effects/hell_ai_ember_burst',
+  'props/hell_ai_demon_gate',
+  'props/hell_ai_obsidian_obelisk',
+  'props/hell_ai_lava_rock',
+  'props/hell_ai_chain_pile',
+];
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.lavaFissures.sprite, 'effects/hell_ai_lava_fissure',
+  'hell lava fissures should use the sliced AI sprite');
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.demonRifts.sprite, 'effects/hell_ai_demon_rift',
+  'hell demon rifts should use the sliced AI sprite');
+assert.ok(config.LEVELS.hell.groundDecorations.includes('effects/hell_ai_rune_circle') &&
+  config.LEVELS.hell.groundDecorations.includes('effects/hell_ai_ember_burst'),
+  'hell ground decorations should include sliced AI effect sprites');
+assert.ok(config.LEVELS.hell.props.stonework.includes('props/hell_ai_demon_gate') &&
+  config.LEVELS.hell.props.stonework.includes('props/hell_ai_obsidian_obelisk'),
+  'hell stonework props should include sliced AI structure sprites');
+assert.ok(config.LEVELS.hell.props.rocks.includes('props/hell_ai_lava_rock') &&
+  config.LEVELS.hell.props.furniture.includes('props/hell_ai_chain_pile'),
+  'hell props should include sliced AI rock and chain sprites');
 assert.ok(!config.LEVEL_VISUALS.mine.mapFeatures?.demonRifts,
   'mine should not inherit hell demon-rift features');
 assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev => ev.type === 'riftAmbush')),
@@ -274,11 +300,11 @@ assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev =
   );
   assert.ok(features.filter(f => f.type === 'lavaFissure').length >= 3,
     'hell feature generation should create visible lava fissures');
-  assert.ok(features.filter(f => f.type === 'lavaFissure').every(f => f.sprite === 'effects/lava_fissure_hell'),
+  assert.ok(features.filter(f => f.type === 'lavaFissure').every(f => f.sprite === 'effects/hell_ai_lava_fissure'),
     'generated lava fissure features should carry the dedicated sprite');
   const rifts = features.filter(f => f.type === 'demonRift');
   assert.ok(rifts.length >= 3, 'hell feature generation should create demon rifts');
-  assert.ok(rifts.every(f => f.sprite === 'effects/demon_rift_hell'),
+  assert.ok(rifts.every(f => f.sprite === 'effects/hell_ai_demon_rift'),
     'generated demon rift features should carry the dedicated sprite');
   assert.ok(rifts.every(f => gameContext.dist(f.x, f.y, cx, cy) > 190),
     'demon rifts should avoid the player spawn safe zone');
@@ -498,10 +524,21 @@ assert.ok(gameSource.includes('row 1 is reserved for rarity') &&
 assert.ok(gameSource.includes('drawChoiceIcon') && gameSource.includes('findDominantOpaqueCrop') &&
   gameSource.includes('_choiceIconCropCache'),
   'choice cards should crop composite weapon sprites to their dominant icon');
+assert.ok(gameSource.includes('drawCroppedAsset') && gameSource.includes('getChoiceIconCrop(iconKey, img)'),
+  'combat/UI rendering should share cropped drawing for composite weapon sprites');
+assert.ok(entitiesSource.includes('drawWeapons(ctx') &&
+  !entitiesSource.includes('for (const w of this.weapons) w.draw(ctx);'),
+  'Player.draw should not render weapons after the hero body where they can cover the player');
+assert.ok(entitiesSource.includes('drawCroppedAsset(ctx, this.def.icon') &&
+  entitiesSource.includes('drawCroppedAsset(ctx, this.sprite'),
+  'weapon and projectile drawing should crop composite weapon sprites instead of drawing entire sheets');
 const renderWorldStart = gameSource.indexOf('renderWorld() {');
 const renderHudStart = gameSource.indexOf('renderHUD() {', renderWorldStart);
 assert.ok(renderWorldStart >= 0 && renderHudStart > renderWorldStart, 'renderWorld source should be locatable');
 const renderWorldSource = gameSource.slice(renderWorldStart, renderHudStart);
+assert.ok(renderWorldSource.includes('this.player.drawWeapons(ctx,') &&
+  renderWorldSource.indexOf('this.player.drawWeapons(ctx,') < renderWorldSource.indexOf('this.player.draw(ctx'),
+  'renderWorld should draw player weapons before the hero body so weapons do not cover the player');
 assert.ok(renderWorldSource.includes('Summons are gameplay-critical companions') &&
   renderWorldSource.includes('particle clutter so orbit/projectile effects do not') &&
   renderWorldSource.indexOf('for (const p of this.particles)') < renderWorldSource.indexOf('for (const m of this.minions)'),
@@ -525,7 +562,6 @@ assert.ok(config.DROPS && config.DROPS.globalXpMagnet &&
 
 // Confirm the expanded pickup radius always attracts instead of producing a
 // negative speed outside the original radius.
-const entitiesSource = readFileSync(path.join(jsDir, 'entities.js'), 'utf8');
 assert.ok(entitiesSource.includes('drawFallback(ctx'), 'Player.draw should have a fallback when the hero sprite is unavailable');
 assert.ok(entitiesSource.includes('burnChance') && entitiesSource.includes('poisonChance') &&
   entitiesSource.includes('chainLightningChance') && entitiesSource.includes('orbitPulseChance'),
@@ -851,6 +887,14 @@ for (const asset of ['effects/lava_fissure_hell','effects/demon_rift_hell','effe
   assert.ok(manifest[asset], `generated hell asset ${asset} should exist in manifest`);
   assert.ok(assetManifest.assets[asset], `generated hell asset ${asset} should exist in asset_manifest`);
   assert.ok(existsSync(path.join(root, 'assets', `${asset}.png`)), `generated hell asset ${asset} PNG should exist`);
+}
+for (const asset of aiHellAssets) {
+  assert.ok(manifest[asset], `AI sliced hell asset ${asset} should exist in manifest`);
+  assert.ok(assetManifest.assets[asset], `AI sliced hell asset ${asset} should exist in asset_manifest`);
+  const pngPath = path.join(root, 'assets', `${asset}.png`);
+  assert.ok(existsSync(pngPath), `AI sliced hell asset ${asset} PNG should exist`);
+  const png = readFileSync(pngPath);
+  assert.ok(png[25] === 4 || png[25] === 6, `AI sliced hell asset ${asset} should preserve alpha channel`);
 }
 // Verify bone_pile and gallows_wooden are used in level props
 assert.ok(config.LEVELS.mine.props.bones && config.LEVELS.mine.props.bones.includes('props/bone_pile'),

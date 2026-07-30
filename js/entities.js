@@ -276,9 +276,11 @@ class Player {
     }
 
     ctx.globalAlpha = 1;
+  }
 
-    // draw weapons (always fully visible)
-    for (const w of this.weapons) w.draw(ctx);
+  drawWeapons(ctx, layer = 'all') {
+    if (!this.alive) return;
+    for (const weapon of this.weapons) weapon.draw(ctx, layer);
   }
 
   drawFallback(ctx, x, y, alpha) {
@@ -587,9 +589,10 @@ class Weapon {
     Audio2.play('triangle', 350, 0.06, 0.05);
   }
 
-  draw(ctx) {
+  draw(ctx, layer = 'all') {
     const player = Game.player;
     if (this.def.type === 'aura') {
+      if (layer === 'aboveHero') return;
       const range = this.getRange();
       const pulse = 1 + Math.sin(Date.now() / 200) * 0.05;
       ctx.save();
@@ -609,9 +612,15 @@ class Weapon {
         const sz = this.def.size || 24;
         const bob = Math.sin(Date.now() / 300) * 3;
         ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(img, player.x - sz/2, player.y - sz - 8 + bob, sz, sz);
+        const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.def.icon, player.x, player.y - sz - 8 + bob, sz, sz, {
+          alpha: 0.85,
+          imageSmoothingEnabled: false,
+        });
+        if (!drawn) {
+          ctx.imageSmoothingEnabled = false;
+          ctx.globalAlpha = 0.85;
+          ctx.drawImage(img, player.x - sz/2, player.y - sz - 8 + bob, sz, sz);
+        }
         ctx.restore();
       }
       return;
@@ -655,7 +664,10 @@ class Weapon {
       ctx.imageSmoothingEnabled = true;
       const img = Assets.get(this.def.icon);
       if (img && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
+        const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.def.icon, 0, 0, sz, sz, {
+          imageSmoothingEnabled: true,
+        });
+        if (!drawn) ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
       } else {
         ctx.fillStyle = this.def.color;
         ctx.fillRect(-sz/2, -sz/2, sz, sz);
@@ -2300,7 +2312,10 @@ class Projectile {
     ctx.imageSmoothingEnabled = true;
     const img = Assets.get(this.sprite);
     if (img && img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
+      const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.sprite, 0, 0, this.size, this.size, {
+        imageSmoothingEnabled: true,
+      });
+      if (!drawn) ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
     } else {
       ctx.fillStyle = this.color;
       ctx.beginPath();

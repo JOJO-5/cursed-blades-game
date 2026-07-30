@@ -3,16 +3,16 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 215,
+    "totalAssets": 223,
     "categories": {
-      "props": 40,
+      "props": 44,
       "ui": 21,
       "backgrounds": 30,
       "enemies": 30,
       "player": 5,
       "bosses": 3,
       "tiles": 16,
-      "effects": 11,
+      "effects": 15,
       "items": 5,
       "weapons": 54
     },
@@ -206,6 +206,58 @@
       "path": "assets/props/hell_spike_bones.png",
       "w": 120,
       "h": 72,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/hell_ai_demon_gate": {
+      "id": "props/hell_ai_demon_gate",
+      "name": "Hell Ai Demon Gate",
+      "category": "props",
+      "path": "assets/props/hell_ai_demon_gate.png",
+      "w": 127,
+      "h": 170,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/hell_ai_obsidian_obelisk": {
+      "id": "props/hell_ai_obsidian_obelisk",
+      "name": "Hell Ai Obsidian Obelisk",
+      "category": "props",
+      "path": "assets/props/hell_ai_obsidian_obelisk.png",
+      "w": 118,
+      "h": 170,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/hell_ai_lava_rock": {
+      "id": "props/hell_ai_lava_rock",
+      "name": "Hell Ai Lava Rock",
+      "category": "props",
+      "path": "assets/props/hell_ai_lava_rock.png",
+      "w": 131,
+      "h": 140,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/hell_ai_chain_pile": {
+      "id": "props/hell_ai_chain_pile",
+      "name": "Hell Ai Chain Pile",
+      "category": "props",
+      "path": "assets/props/hell_ai_chain_pile.png",
+      "w": 123,
+      "h": 120,
       "anchor": {
         "x": 0.5,
         "y": 0.85
@@ -1701,6 +1753,58 @@
       "path": "assets/effects/hell_rune_brand.png",
       "w": 96,
       "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/hell_ai_lava_fissure": {
+      "id": "effects/hell_ai_lava_fissure",
+      "name": "Hell Ai Lava Fissure",
+      "category": "effects",
+      "path": "assets/effects/hell_ai_lava_fissure.png",
+      "w": 102,
+      "h": 140,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/hell_ai_demon_rift": {
+      "id": "effects/hell_ai_demon_rift",
+      "name": "Hell Ai Demon Rift",
+      "category": "effects",
+      "path": "assets/effects/hell_ai_demon_rift.png",
+      "w": 124,
+      "h": 170,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/hell_ai_rune_circle": {
+      "id": "effects/hell_ai_rune_circle",
+      "name": "Hell Ai Rune Circle",
+      "category": "effects",
+      "path": "assets/effects/hell_ai_rune_circle.png",
+      "w": 150,
+      "h": 142,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/hell_ai_ember_burst": {
+      "id": "effects/hell_ai_ember_burst",
+      "name": "Hell Ai Ember Burst",
+      "category": "effects",
+      "path": "assets/effects/hell_ai_ember_burst.png",
+      "w": 129,
+      "h": 150,
       "anchor": {
         "x": 0.5,
         "y": 0.5

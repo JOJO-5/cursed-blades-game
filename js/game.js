@@ -1333,27 +1333,42 @@ const Game = {
     return out + '…';
   },
 
-  drawChoiceIcon(ctx, iconKey, cx, cy, maxW, maxH) {
+  drawCroppedAsset(ctx, iconKey, cx, cy, maxW, maxH, options = {}) {
     const img = Assets.get(iconKey);
-    if (!img || !img.complete || img.width <= 0 || img.height <= 0) return;
+    if (!img || !img.complete || img.width <= 0 || img.height <= 0) return false;
 
     const crop = iconKey && iconKey.startsWith('weapons/')
       ? this.getChoiceIconCrop(iconKey, img)
       : null;
     const srcW = crop ? crop.w : img.width;
     const srcH = crop ? crop.h : img.height;
-    const scale = Math.min(3.0, maxW / srcW, maxH / srcH);
+    const maxScale = Number.isFinite(options.maxScale) ? options.maxScale : Infinity;
+    const scale = Math.min(maxScale, maxW / srcW, maxH / srcH);
+    if (!Number.isFinite(scale) || scale <= 0) return false;
     const drawW = srcW * scale;
     const drawH = srcH * scale;
 
     ctx.save();
-    ctx.imageSmoothingEnabled = false;
+    ctx.translate(cx, cy);
+    if (options.rotation) ctx.rotate(options.rotation);
+    if (typeof options.alpha === 'number') {
+      ctx.globalAlpha = Math.max(0, Math.min(1, ctx.globalAlpha * options.alpha));
+    }
+    ctx.imageSmoothingEnabled = options.imageSmoothingEnabled === true;
     if (crop) {
-      ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, cx - drawW/2, cy - drawH/2, drawW, drawH);
+      ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, -drawW/2, -drawH/2, drawW, drawH);
     } else {
-      ctx.drawImage(img, cx - drawW/2, cy - drawH/2, drawW, drawH);
+      ctx.drawImage(img, -drawW/2, -drawH/2, drawW, drawH);
     }
     ctx.restore();
+    return true;
+  },
+
+  drawChoiceIcon(ctx, iconKey, cx, cy, maxW, maxH) {
+    this.drawCroppedAsset(ctx, iconKey, cx, cy, maxW, maxH, {
+      maxScale: 3.0,
+      imageSmoothingEnabled: false,
+    });
   },
 
   getChoiceIconCrop(iconKey, img) {
@@ -2854,6 +2869,10 @@ const Game = {
         Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1);
       }
     }
+
+    // Draw player weapon effects before the hero body so bright/tall weapon
+    // sprites do not cover the character in dense late-game builds.
+    if (this.player) this.player.drawWeapons(ctx, 'underHero');
 
     const actorDrawables = [];
     for (const e of this.enemies) {
