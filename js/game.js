@@ -2035,6 +2035,7 @@ const Game = {
           length: ts * (4.5 + rng() * 3),
           width: cfg.width || 34,
           angle,
+          sprite: cfg.sprite,
           glowColor: cfg.glowColor || 'rgba(255,80,20,0.24)',
           coreColor: cfg.coreColor || 'rgba(255,185,45,0.42)',
         });
@@ -2060,6 +2061,7 @@ const Game = {
           x,
           y,
           radius: cfg.radius || 96,
+          sprite: cfg.sprite,
           glowColor: cfg.glowColor || 'rgba(255,45,25,0.20)',
           coreColor: cfg.coreColor || 'rgba(255,105,20,0.36)',
           enemyPool: cfg.enemyPool || ['imp','hellhound'],
@@ -2128,6 +2130,21 @@ const Game = {
     }
 
     if (feature.type === 'lavaFissure') {
+      const img = feature.sprite && Assets.get(feature.sprite);
+      if (img && img.complete) {
+        const scale = Math.max(0.6, Math.min(1.6, (feature.length || img.width) / img.width));
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        ctx.save();
+        ctx.globalAlpha = 0.95;
+        ctx.translate(feature.x, feature.y);
+        ctx.rotate(feature.angle || 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+        return;
+      }
+
       const oldAlpha = ctx.globalAlpha;
       const segments = 7;
       const dx = Math.cos(feature.angle || 0);
@@ -2152,6 +2169,22 @@ const Game = {
     }
 
     if (feature.type === 'demonRift') {
+      const img = feature.sprite && Assets.get(feature.sprite);
+      if (img && img.complete) {
+        const targetW = (feature.radius || 96) * 2.1;
+        const scale = Math.max(0.7, Math.min(1.8, targetW / img.width));
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        ctx.save();
+        ctx.globalAlpha = 0.95;
+        ctx.translate(feature.x, feature.y);
+        ctx.rotate(0.18);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+        return;
+      }
+
       const oldAlpha = ctx.globalAlpha;
       ctx.globalAlpha = 1;
       ctx.fillStyle = feature.glowColor || 'rgba(255,45,25,0.20)';

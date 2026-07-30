@@ -887,12 +887,14 @@ const CONFIG = {
       mapFeatures: {
         lavaFissures: {
           count: 5,
+          sprite: 'effects/lava_fissure_hell',
           width: 34,
           glowColor: 'rgba(255,80,20,0.24)',
           coreColor: 'rgba(255,185,45,0.42)',
         },
         demonRifts: {
           count: 4,
+          sprite: 'effects/demon_rift_hell',
           radius: 96,
           glowColor: 'rgba(255,45,25,0.20)',
           coreColor: 'rgba(255,105,20,0.36)',
@@ -1035,7 +1037,7 @@ const CONFIG = {
         { time: 540, name: 'Boss降临',   enemyPool: [],                                       rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {
-        spikes: ['props/wooden_spikes_01'],
+        spikes: ['props/wooden_spikes_01','props/hell_spike_bones'],
         rocks: ['props/rocks_small_pile','props/rock_mossy_01','props/stone_fragment_01'],
         bones: ['props/bone_pile'],
         campfires: ['props/campfire_burnt','props/brazier_small_lit'],
@@ -1050,7 +1052,7 @@ const CONFIG = {
       },
       groundTiles: ['tiles/ground_dirt_large_01','tiles/ground_dirt_patch_01','tiles/ground_dirt_edge_01','tiles/ground_dirt_stones_01'],
       wallTiles: ['tiles/wall_stone_stacked_01','tiles/wall_stone_horizontal_01','tiles/wall_stone_base_mossy','tiles/wall_stone_brick_vertical','tiles/ruin_stone_wall_broken_02'],
-      groundDecorations: ['effects/ground_crack','effects/fire_projectile'],
+      groundDecorations: ['effects/ground_crack','effects/fire_projectile','effects/hell_rune_brand','effects/lava_fissure_hell'],
     },
   },
 

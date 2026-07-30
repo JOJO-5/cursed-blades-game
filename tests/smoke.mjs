@@ -245,6 +245,14 @@ assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.lavaFissures?.count >= 3,
   'hell should define visible lava-fissure map features');
 assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.demonRifts?.count >= 3,
   'hell should define demon-rift map features');
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.lavaFissures.sprite, 'effects/lava_fissure_hell',
+  'hell lava fissures should use a dedicated generated sprite');
+assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.demonRifts.sprite, 'effects/demon_rift_hell',
+  'hell demon rifts should use a dedicated generated sprite');
+assert.ok(config.LEVELS.hell.groundDecorations.includes('effects/hell_rune_brand'),
+  'hell ground decorations should include a generated rune brand');
+assert.ok(config.LEVELS.hell.props.spikes.includes('props/hell_spike_bones'),
+  'hell spike props should include a generated bone-spike prop');
 assert.ok(!config.LEVEL_VISUALS.mine.mapFeatures?.demonRifts,
   'mine should not inherit hell demon-rift features');
 assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev => ev.type === 'riftAmbush')),
@@ -266,8 +274,12 @@ assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev =
   );
   assert.ok(features.filter(f => f.type === 'lavaFissure').length >= 3,
     'hell feature generation should create visible lava fissures');
+  assert.ok(features.filter(f => f.type === 'lavaFissure').every(f => f.sprite === 'effects/lava_fissure_hell'),
+    'generated lava fissure features should carry the dedicated sprite');
   const rifts = features.filter(f => f.type === 'demonRift');
   assert.ok(rifts.length >= 3, 'hell feature generation should create demon rifts');
+  assert.ok(rifts.every(f => f.sprite === 'effects/demon_rift_hell'),
+    'generated demon rift features should carry the dedicated sprite');
   assert.ok(rifts.every(f => gameContext.dist(f.x, f.y, cx, cy) > 190),
     'demon rifts should avoid the player spawn safe zone');
 
@@ -335,6 +347,10 @@ gameContext.document = {
       beginPath() {},
       ellipse() {},
       fill() {},
+      save() {},
+      restore() {},
+      translate() {},
+      rotate() {},
       createLinearGradient() { return { addColorStop() {} }; },
     }),
   }),
@@ -625,6 +641,10 @@ const fakeCanvasContext = {
   beginPath() {},
   ellipse() {},
   fill() {},
+  save() {},
+  restore() {},
+  translate() {},
+  rotate() {},
   createLinearGradient() { return { addColorStop() {} }; },
 };
 const savedRun = {
@@ -826,6 +846,11 @@ for (const wt of config.LEVELS.mine.wallTiles) {
 // Verify all ground decorations exist in manifest
 for (const gd of config.LEVELS.mine.groundDecorations) {
   assert.ok(manifest[gd], `mine groundDecoration ${gd} should exist in manifest`);
+}
+for (const asset of ['effects/lava_fissure_hell','effects/demon_rift_hell','effects/hell_rune_brand','props/hell_spike_bones']) {
+  assert.ok(manifest[asset], `generated hell asset ${asset} should exist in manifest`);
+  assert.ok(assetManifest.assets[asset], `generated hell asset ${asset} should exist in asset_manifest`);
+  assert.ok(existsSync(path.join(root, 'assets', `${asset}.png`)), `generated hell asset ${asset} PNG should exist`);
 }
 // Verify bone_pile and gallows_wooden are used in level props
 assert.ok(config.LEVELS.mine.props.bones && config.LEVELS.mine.props.bones.includes('props/bone_pile'),

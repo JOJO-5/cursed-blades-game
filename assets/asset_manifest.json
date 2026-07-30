@@ -3,16 +3,16 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 211,
+    "totalAssets": 215,
     "categories": {
-      "props": 39,
+      "props": 40,
       "ui": 21,
       "backgrounds": 30,
       "enemies": 30,
       "player": 5,
       "bosses": 3,
       "tiles": 16,
-      "effects": 8,
+      "effects": 11,
       "items": 5,
       "weapons": 54
     },
@@ -193,6 +193,19 @@
       "path": "assets/props/wooden_spikes_01.png",
       "w": 95,
       "h": 66,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "animation": null
+    },
+    "props/hell_spike_bones": {
+      "id": "props/hell_spike_bones",
+      "name": "Hell Spike Bones",
+      "category": "props",
+      "path": "assets/props/hell_spike_bones.png",
+      "w": 120,
+      "h": 72,
       "anchor": {
         "x": 0.5,
         "y": 0.85
@@ -1649,6 +1662,45 @@
       "path": "assets/effects/fire_projectile.png",
       "w": 25,
       "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/lava_fissure_hell": {
+      "id": "effects/lava_fissure_hell",
+      "name": "Lava Fissure Hell",
+      "category": "effects",
+      "path": "assets/effects/lava_fissure_hell.png",
+      "w": 160,
+      "h": 80,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/demon_rift_hell": {
+      "id": "effects/demon_rift_hell",
+      "name": "Demon Rift Hell",
+      "category": "effects",
+      "path": "assets/effects/demon_rift_hell.png",
+      "w": 128,
+      "h": 128,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "effects/hell_rune_brand": {
+      "id": "effects/hell_rune_brand",
+      "name": "Hell Rune Brand",
+      "category": "effects",
+      "path": "assets/effects/hell_rune_brand.png",
+      "w": 96,
+      "h": 96,
       "anchor": {
         "x": 0.5,
         "y": 0.5

@@ -43,6 +43,10 @@
     "w": 95,
     "h": 66
   },
+  "props/hell_spike_bones": {
+    "w": 120,
+    "h": 72
+  },
   "props/wooden_platform_01": {
     "w": 113,
     "h": 66
@@ -458,6 +462,18 @@
   "effects/fire_projectile": {
     "w": 25,
     "h": 24
+  },
+  "effects/lava_fissure_hell": {
+    "w": 160,
+    "h": 80
+  },
+  "effects/demon_rift_hell": {
+    "w": 128,
+    "h": 128
+  },
+  "effects/hell_rune_brand": {
+    "w": 96,
+    "h": 96
   },
   "items/chest": {
     "w": 24,
