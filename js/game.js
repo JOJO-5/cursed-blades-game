@@ -455,6 +455,17 @@ const Game = {
           this.addMessage(ev.text || '怪物突袭！', ev.color || '#ff6040');
           this.shakeScreen(4, 0.2);
         }
+      } else if (ev.type === 'veinAmbush') {
+        const count = this.spawnEnemyGroupAtMapFeatures(
+          ev.featureType || 'crystalVein',
+          ev.enemyPool || phase.enemyPool || [],
+          ev.count || 4,
+          ev.radius || 90
+        );
+        if (count > 0) {
+          this.addMessage(ev.text || '矿脉惊动了敌人！', ev.color || '#80e8ff');
+          this.shakeScreen(5, 0.25);
+        }
       } else if (ev.type === 'boss') {
         this.spawnBoss();
       } else if (ev.type === 'message') {
@@ -475,6 +486,45 @@ const Game = {
       this.enemies.push(new Enemy(type, pos.x, pos.y));
       spawned++;
     }
+    return spawned;
+  },
+
+  spawnEnemyGroupAtMapFeatures(featureType, pool, count, spawnRadius) {
+    if (!pool || pool.length === 0 || !this.player) return 0;
+    const features = (this.mapData && this.mapData.features || []).filter(f => f.type === featureType);
+    if (features.length === 0) return this.spawnEnemyGroup(pool, count);
+
+    let spawned = 0;
+    const maxExtra = Math.max(0, (this.getActivePhase()?.maxEnemies || this.levelData.maxEnemies || 30) - this.enemies.length);
+    const targetCount = Math.min(count, Math.max(maxExtra, Math.ceil(count * 0.5)));
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+    const radius = spawnRadius || 90;
+
+    for (let i = 0; i < targetCount; i++) {
+      const feature = features[i % features.length];
+      const type = pick(pool);
+      const enemyRadius = CONFIG.ENEMIES[type]?.radius || 16;
+      let pos = null;
+
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const ang = Math.random() * TAU;
+        const r = radius * (0.35 + Math.random() * 0.75);
+        const x = clamp(feature.x + Math.cos(ang) * r, 30, mapW - 30);
+        const y = clamp(feature.y + Math.sin(ang) * r, 30, mapH - 30);
+        const clear = !this.isCircleBlocked(x, y, enemyRadius);
+        const notOnTopOfPlayer = dist(x, y, this.player.x, this.player.y) > 170 || attempt > 8;
+        if (clear && notOnTopOfPlayer) {
+          pos = { x, y };
+          break;
+        }
+      }
+
+      if (!pos) continue;
+      this.enemies.push(new Enemy(type, pos.x, pos.y));
+      spawned++;
+    }
+
     return spawned;
   },
 
@@ -1899,6 +1949,139 @@ const Game = {
     return defaults[categoryKey] || 8;
   },
 
+  generateThemeMapFeatures(theme, visualProfile, rng, mapW, mapH, ts, cx, cy) {
+    const visual = visualProfile || this.getLevelVisualProfile(theme);
+    const featureConfig = visual.mapFeatures || {};
+    const features = [];
+    const worldW = mapW * ts;
+    const worldH = mapH * ts;
+
+    if (theme === 'mine' && featureConfig.railLines) {
+      const cfg = featureConfig.railLines;
+      const count = cfg.count || 0;
+      for (let i = 0; i < count; i++) {
+        const horizontal = i % 2 === 0;
+        const t = (i + 1) / (count + 1);
+        const jitter = (rng() - 0.5) * ts * 2.5;
+        if (horizontal) {
+          const y = clamp(worldH * t + jitter, ts * 4, worldH - ts * 4);
+          features.push({
+            type: 'railLine',
+            x1: ts * 2,
+            y1: y,
+            x2: worldW - ts * 2,
+            y2: y,
+            horizontal: true,
+            width: cfg.width || 42,
+            sleeperGap: cfg.sleeperGap || 34,
+            railColor: cfg.railColor || 'rgba(118,92,52,0.55)',
+            sleeperColor: cfg.sleeperColor || 'rgba(34,23,16,0.70)',
+          });
+        } else {
+          const x = clamp(worldW * t + jitter, ts * 4, worldW - ts * 4);
+          features.push({
+            type: 'railLine',
+            x1: x,
+            y1: ts * 2,
+            x2: x,
+            y2: worldH - ts * 2,
+            horizontal: false,
+            width: cfg.width || 42,
+            sleeperGap: cfg.sleeperGap || 34,
+            railColor: cfg.railColor || 'rgba(118,92,52,0.55)',
+            sleeperColor: cfg.sleeperColor || 'rgba(34,23,16,0.70)',
+          });
+        }
+      }
+    }
+
+    if (theme === 'mine' && featureConfig.crystalVeins) {
+      const cfg = featureConfig.crystalVeins;
+      const count = cfg.count || 0;
+      const minRing = Math.min(worldW, worldH) * 0.24;
+      const maxRing = Math.min(worldW, worldH) * 0.42;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / Math.max(1, count)) * TAU + rng() * 0.45;
+        const ring = minRing + rng() * (maxRing - minRing);
+        let x = clamp(cx + Math.cos(angle) * ring, ts * 4, worldW - ts * 4);
+        let y = clamp(cy + Math.sin(angle) * ring, ts * 4, worldH - ts * 4);
+        if (dist(x, y, cx, cy) <= 180) {
+          x = clamp(cx + Math.cos(angle) * 220, ts * 4, worldW - ts * 4);
+          y = clamp(cy + Math.sin(angle) * 220, ts * 4, worldH - ts * 4);
+        }
+        features.push({
+          type: 'crystalVein',
+          x,
+          y,
+          radius: cfg.radius || 84,
+          glowColor: cfg.glowColor || 'rgba(70,220,255,0.18)',
+          coreColor: cfg.coreColor || 'rgba(170,255,255,0.34)',
+          enemyPool: cfg.enemyPool || ['crystal'],
+        });
+      }
+    }
+
+    return features;
+  },
+
+  drawMapFeature(ctx, feature) {
+    if (!ctx || !feature) return;
+
+    if (feature.type === 'railLine') {
+      const oldAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = feature.sleeperColor || 'rgba(34,23,16,0.70)';
+      if (feature.horizontal) {
+        const y = feature.y1;
+        const minX = Math.min(feature.x1, feature.x2);
+        const maxX = Math.max(feature.x1, feature.x2);
+        for (let x = minX; x <= maxX; x += feature.sleeperGap || 34) {
+          ctx.fillRect(x - 4, y - feature.width / 2, 8, feature.width);
+        }
+        ctx.fillStyle = feature.railColor || 'rgba(118,92,52,0.55)';
+        ctx.fillRect(minX, y - 10, maxX - minX, 4);
+        ctx.fillRect(minX, y + 8, maxX - minX, 4);
+      } else {
+        const x = feature.x1;
+        const minY = Math.min(feature.y1, feature.y2);
+        const maxY = Math.max(feature.y1, feature.y2);
+        for (let y = minY; y <= maxY; y += feature.sleeperGap || 34) {
+          ctx.fillRect(x - feature.width / 2, y - 4, feature.width, 8);
+        }
+        ctx.fillStyle = feature.railColor || 'rgba(118,92,52,0.55)';
+        ctx.fillRect(x - 10, minY, 4, maxY - minY);
+        ctx.fillRect(x + 8, minY, 4, maxY - minY);
+      }
+      ctx.globalAlpha = oldAlpha;
+      return;
+    }
+
+    if (feature.type === 'crystalVein') {
+      const oldAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = feature.glowColor || 'rgba(70,220,255,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(feature.x, feature.y, feature.radius * 1.35, feature.radius * 0.72, -0.4, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = feature.coreColor || 'rgba(170,255,255,0.34)';
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * TAU;
+        ctx.beginPath();
+        ctx.ellipse(
+          feature.x + Math.cos(a) * feature.radius * 0.32,
+          feature.y + Math.sin(a) * feature.radius * 0.18,
+          feature.radius * (0.18 + i * 0.025),
+          feature.radius * 0.10,
+          a,
+          0,
+          TAU
+        );
+        ctx.fill();
+      }
+      ctx.globalAlpha = oldAlpha;
+    }
+  },
+
   // ---- Map generation ----
   generateMap() {
     // Use a theme-based seed so each level has a unique random pattern
@@ -2016,6 +2199,11 @@ const Game = {
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
     const cx = mapW * ts / 2, cy = mapH * ts / 2;
+    const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy);
+    this.mapData.features = mapFeatures;
+    for (const feature of mapFeatures) {
+      this.drawMapFeature(gctx, feature);
+    }
     const wallCollisionProps = [];
     const addWallCollision = (x, y) => {
       wallCollisionProps.push({ type: 'wall', x, y, category: 'wall', radius: ts * 0.45 });

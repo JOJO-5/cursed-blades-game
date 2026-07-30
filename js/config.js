@@ -838,6 +838,22 @@ const CONFIG = {
       sceneUnderlayAlpha: 0.16,
       wallBorderThick: 2,
       interiorWallSegments: 9,
+      mapFeatures: {
+        railLines: {
+          count: 3,
+          width: 42,
+          sleeperGap: 34,
+          railColor: 'rgba(118,92,52,0.58)',
+          sleeperColor: 'rgba(34,23,16,0.72)',
+        },
+        crystalVeins: {
+          count: 5,
+          radius: 84,
+          glowColor: 'rgba(70,220,255,0.18)',
+          coreColor: 'rgba(170,255,255,0.34)',
+          enemyPool: ['crystal','beetle','miner'],
+        },
+      },
       propScatterCounts: {
         caves: 7,
         campfires: 4,
@@ -951,9 +967,9 @@ const CONFIG = {
       // ---- Phased spawning (data-driven) ----
       phases: [
         { time: 0,   name: '矿洞探索',   enemyPool: ['rat','beetle'],                          rangedPool: [],             maxEnemies: 14, spawnInterval: 2.5, events: [] },
-        { time: 120, name: '水晶法师',   enemyPool: ['rat','beetle','miner'],                   rangedPool: ['crystal'],    maxEnemies: 18, spawnInterval: 2.2, events: [{type:'chest', rare:false, mimic:false}, {type:'ambush', count:5, enemyPool:['rat','beetle']}, {type:'message', text:'水晶法师出现了！', color:'#ff8030'}] },
+        { time: 120, name: '水晶法师',   enemyPool: ['rat','beetle','miner'],                   rangedPool: ['crystal'],    maxEnemies: 18, spawnInterval: 2.2, events: [{type:'chest', rare:false, mimic:false}, {type:'veinAmbush', featureType:'crystalVein', count:5, enemyPool:['crystal','beetle'], radius:90, text:'晶簇回响，矿洞伏击！', color:'#80e8ff'}, {type:'message', text:'水晶法师出现了！', color:'#ff8030'}] },
         { time: 240, name: '腐化蔓延',   enemyPool: ['rat','beetle','miner','spider'],          rangedPool: ['crystal'],    maxEnemies: 22, spawnInterval: 2.0, events: [{type:'elite'}, {type:'ambush', count:5, enemyPool:['miner','spider']}, {type:'chest', rare:false, mimic:true}] },
-        { time: 360, name: '深渊回响',   enemyPool: ['rat','beetle','miner','spider','skeleton'], rangedPool: ['crystal','archer'], maxEnemies: 30, spawnInterval: 1.6, events: [{type:'elite'}, {type:'ambush', count:7, enemyPool:['beetle','skeleton','miner']}, {type:'chest', rare:true, mimic:false}] },
+        { time: 360, name: '深渊回响',   enemyPool: ['rat','beetle','miner','spider','skeleton'], rangedPool: ['crystal','archer'], maxEnemies: 30, spawnInterval: 1.6, events: [{type:'elite'}, {type:'veinAmbush', featureType:'crystalVein', count:7, enemyPool:['crystal','miner','skeleton'], radius:110, text:'矿脉震动，敌人从晶簇涌出！', color:'#80e8ff'}, {type:'chest', rare:true, mimic:false}] },
         { time: 420, name: 'Boss降临',   enemyPool: [],                                         rangedPool: [],             maxEnemies: 0,  spawnInterval: 999, events: [{type:'boss'}] },
       ],
       props: {

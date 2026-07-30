@@ -107,7 +107,8 @@ for (const [id, level] of Object.entries(config.LEVELS)) {
     assert.ok(!tile.includes('wall'), `level ${id} groundTiles should not contain wall art: ${tile}`);
     assert.ok(!tile.includes('grass_strip'), `level ${id} groundTiles should not contain strip overlay art: ${tile}`);
   }
-  const ambushEvents = level.phases.flatMap(phase => phase.events || []).filter(ev => ev.type === 'ambush');
+  const ambushEvents = level.phases.flatMap(phase => phase.events || [])
+    .filter(ev => ev.type === 'ambush' || ev.type === 'veinAmbush');
   assert.ok(ambushEvents.length >= 3, `level ${id} should include recurring ambush events for pacing`);
   for (const ev of ambushEvents) {
     assert.ok(ev.count > 0 && Array.isArray(ev.enemyPool) && ev.enemyPool.length > 0,
@@ -183,6 +184,62 @@ assert.ok(typeof game.getThemePropScatterCount === 'function',
     'combat maps should use configured scene backgrounds as subtle biome underlays');
   assert.equal(game.getThemePropScatterCount('tombstones', mineVisual), 0,
     'mine visual profile should be able to suppress off-theme graveyard scatter');
+}
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.count >= 2,
+  'mine should define visible rail-line map features');
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.count >= 3,
+  'mine should define crystal-vein map features');
+assert.ok(!config.LEVEL_VISUALS.village.mapFeatures?.crystalVeins,
+  'village should not use mine crystal-vein map features');
+assert.ok(config.LEVELS.mine.phases.some(phase => (phase.events || []).some(ev => ev.type === 'veinAmbush')),
+  'mine phases should include crystal-vein ambush events for distinct pacing');
+assert.ok(typeof game.generateThemeMapFeatures === 'function',
+  'Game should generate theme-specific non-collision map features');
+assert.ok(typeof game.spawnEnemyGroupAtMapFeatures === 'function',
+  'Game should spawn biome events around map features');
+{
+  const mineLevel = config.LEVELS.mine;
+  const mineVisual = game.getLevelVisualProfile('mine');
+  const cx = mineLevel.mapW * config.TILE_SIZE / 2;
+  const cy = mineLevel.mapH * config.TILE_SIZE / 2;
+  const features = game.generateThemeMapFeatures(
+    'mine',
+    mineVisual,
+    gameContext.makeRNG(42),
+    mineLevel.mapW,
+    mineLevel.mapH,
+    config.TILE_SIZE,
+    cx,
+    cy
+  );
+  assert.ok(features.filter(f => f.type === 'railLine').length >= 2,
+    'mine feature generation should create visible rail lines');
+  const veins = features.filter(f => f.type === 'crystalVein');
+  assert.ok(veins.length >= 3, 'mine feature generation should create crystal veins');
+  assert.ok(veins.every(f => gameContext.dist(f.x, f.y, cx, cy) > 180),
+    'crystal veins should avoid the player spawn safe zone');
+  assert.equal(game.generateThemeMapFeatures('village', game.getLevelVisualProfile('village'), gameContext.makeRNG(7), 40, 30, config.TILE_SIZE, 1280, 960).length, 0,
+    'village feature generation should not inherit mine-only features');
+
+  gameContext.Enemy = class {
+    constructor(type, x, y) {
+      this.type = type;
+      this.x = x;
+      this.y = y;
+      this.alive = true;
+      this.radius = config.ENEMIES[type]?.radius || 16;
+    }
+  };
+  game.levelData = mineLevel;
+  game.levelTime = 0;
+  game.player = { x: 800, y: 800 };
+  game.enemies = [];
+  game.collisionProps = [];
+  game.mapData = { features: [{ type: 'crystalVein', x: 360, y: 420, radius: 90 }] };
+  const spawned = game.spawnEnemyGroupAtMapFeatures('crystalVein', ['crystal'], 3, 90);
+  assert.equal(spawned, 3, 'feature ambush should spawn the requested group when space is clear');
+  assert.ok(game.enemies.every(e => e.type === 'crystal' && gameContext.dist(e.x, e.y, 360, 420) <= 140),
+    'feature ambush enemies should spawn near the selected crystal vein');
 }
 assert.ok(typeof game.collectAllXpPickups === 'function',
   'Game should expose a full-map XP collection helper for magnet pickups');
