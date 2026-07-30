@@ -2029,8 +2029,11 @@ const Game = {
           x,
           y,
           radius: cfg.radius || 84,
+          clusterCount: cfg.clusterCount || 4,
           glowColor: cfg.glowColor || 'rgba(70,220,255,0.18)',
           coreColor: cfg.coreColor || 'rgba(170,255,255,0.34)',
+          shardColor: cfg.shardColor || 'rgba(92,235,255,0.50)',
+          rimColor: cfg.rimColor || 'rgba(210,255,255,0.70)',
           enemyPool: cfg.enemyPool || ['crystal'],
         });
       }
@@ -2124,15 +2127,42 @@ const Game = {
       ctx.globalAlpha = 1;
       ctx.fillStyle = feature.glowColor || 'rgba(70,220,255,0.18)';
       ctx.beginPath();
-      ctx.ellipse(feature.x, feature.y, feature.radius * 1.35, feature.radius * 0.72, -0.4, 0, TAU);
+      ctx.ellipse(feature.x, feature.y, feature.radius * 1.45, feature.radius * 0.78, -0.4, 0, TAU);
       ctx.fill();
+
       ctx.fillStyle = feature.coreColor || 'rgba(170,255,255,0.34)';
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * TAU;
+      ctx.beginPath();
+      ctx.ellipse(feature.x, feature.y, feature.radius * 0.72, feature.radius * 0.36, -0.35, 0, TAU);
+      ctx.fill();
+
+      const clusterCount = feature.clusterCount || 4;
+      for (let i = 0; i < clusterCount; i++) {
+        const a = (i / clusterCount) * TAU;
+        const px = feature.x + Math.cos(a) * feature.radius * (0.18 + (i % 3) * 0.08);
+        const py = feature.y + Math.sin(a) * feature.radius * (0.10 + (i % 2) * 0.08);
+        const h = feature.radius * (0.34 + (i % 4) * 0.045);
+        const w = feature.radius * (0.09 + (i % 3) * 0.018);
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(a * 0.35 - 0.25);
+        ctx.fillStyle = feature.shardColor || 'rgba(92,235,255,0.50)';
+        ctx.beginPath();
+        ctx.moveTo(0, -h * 0.62);
+        ctx.lineTo(w, h * 0.26);
+        ctx.lineTo(0, h * 0.48);
+        ctx.lineTo(-w, h * 0.26);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = feature.rimColor || 'rgba(210,255,255,0.70)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
         ctx.beginPath();
         ctx.ellipse(
-          feature.x + Math.cos(a) * feature.radius * 0.32,
-          feature.y + Math.sin(a) * feature.radius * 0.18,
+          px,
+          py + h * 0.32,
           feature.radius * (0.18 + i * 0.025),
           feature.radius * 0.10,
           a,
@@ -2298,6 +2328,11 @@ const Game = {
       }
     }
     gctx.globalAlpha = 1;
+
+    if (visual.groundTintColor) {
+      gctx.fillStyle = visual.groundTintColor;
+      gctx.fillRect(0, 0, mapW * ts, mapH * ts);
+    }
 
     // Smooth tile edges: draw soft gradient strips between tiles to hide grid lines
     const edgeGrad = gctx.createLinearGradient(0, 0, ts, 0);
