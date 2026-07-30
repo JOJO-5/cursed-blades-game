@@ -2319,6 +2319,7 @@ const Game = {
         const tileName = groundTiles[tileIdx];
         const img = Assets.get(tileName);
         if (img && img.complete) {
+          if (visual.groundTileCoverage && rng() > visual.groundTileCoverage) continue;
           // draw with slight random offset and alpha for variation
           gctx.globalAlpha = groundAlphaMin + rng() * Math.max(0, groundAlphaMax - groundAlphaMin);
           const ox = (rng() - 0.5) * 6;

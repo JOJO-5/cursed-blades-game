@@ -185,20 +185,26 @@ assert.ok(typeof game.getThemePropScatterCount === 'function',
     'combat maps should use configured scene backgrounds as subtle biome underlays');
   assert.equal(game.getThemePropScatterCount('tombstones', mineVisual), 0,
     'mine visual profile should be able to suppress off-theme graveyard scatter');
-  assert.ok(mineVisual.sceneUnderlayAlpha >= 0.24,
-    'mine background underlay should be strong enough to distinguish the crystal cave from village stone');
-  assert.ok(mineVisual.groundAlphaMax <= 0.82,
-    'mine ground tiles should stay translucent enough for the cold cave tint to show through');
+  assert.ok(mineVisual.sceneUnderlayAlpha >= 0.30,
+    'mine should lean on coherent cave scene art instead of noisy tile spam');
+  assert.ok(mineVisual.groundAlphaMax <= 0.55 && mineVisual.groundTileCoverage <= 0.62,
+    'mine ground tiles should be sparse/translucent enough to avoid a noisy grid');
   assert.ok(mineVisual.groundTintColor && mineVisual.groundTintColor.includes('rgba'),
     'mine should apply a cold blue/cyan ground tint after drawing shared stone tiles');
+  const mineScatterTotal = Object.values(mineVisual.propScatterCounts).reduce((sum, value) => sum + (value || 0), 0);
+  assert.ok(mineScatterTotal <= 48 && mineVisual.decorationCount <= 24,
+    'mine should use restrained landmarks/props instead of filling the screen with clutter');
 }
-assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.count >= 4,
-  'mine should define enough rail-line map features to read as a mine at a glance');
-assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.count >= 7,
-  'mine should define enough crystal-vein map features to visually differ from village');
-assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.radius >= 110 &&
-  config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.clusterCount >= 6,
-  'mine crystal veins should be large clustered landmarks, not tiny colored spots');
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.count <= 2 &&
+  config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.width <= 26 &&
+  config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.sleeperGap >= 44,
+  'mine rail lines should be sparse and thin, not a full-screen grid');
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.count >= 3 &&
+  config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.count <= 5,
+  'mine should use a few memorable crystal landmarks instead of many glow blobs');
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.radius <= 62 &&
+  config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.clusterCount <= 5,
+  'mine crystal veins should be compact readable clusters, not giant cyan stains');
 assert.ok(config.LEVELS.mine.sceneBgs.includes('backgrounds/scene_crystal_track_section') &&
   config.LEVELS.mine.sceneBgs.includes('backgrounds/scene_crystal_crystal_deposits'),
   'mine should rotate through track/deposit scene art, not only generic cave backgrounds');
@@ -228,12 +234,13 @@ assert.ok(typeof game.spawnEnemyGroupAtMapFeatures === 'function',
     cx,
     cy
   );
-  assert.ok(features.filter(f => f.type === 'railLine').length >= 2,
-    'mine feature generation should create visible rail lines');
+  const rails = features.filter(f => f.type === 'railLine');
+  assert.ok(rails.length <= 2 && rails.every(f => f.width <= 26 && f.sleeperGap >= 44),
+    'mine feature generation should create sparse thin rail lines');
   const veins = features.filter(f => f.type === 'crystalVein');
-  assert.ok(veins.length >= 7, 'mine feature generation should create enough crystal veins');
-  assert.ok(veins.every(f => f.radius >= 110 && f.clusterCount >= 6),
-    'generated crystal veins should carry large clustered landmark settings');
+  assert.ok(veins.length >= 3 && veins.length <= 5, 'mine feature generation should create a few crystal landmarks');
+  assert.ok(veins.every(f => f.radius <= 62 && f.clusterCount <= 5),
+    'generated crystal veins should stay compact instead of covering the screen');
   assert.ok(veins.every(f => gameContext.dist(f.x, f.y, cx, cy) > 180),
     'crystal veins should avoid the player spawn safe zone');
   assert.equal(game.generateThemeMapFeatures('village', game.getLevelVisualProfile('village'), gameContext.makeRNG(7), 40, 30, config.TILE_SIZE, 1280, 960).length, 0,
