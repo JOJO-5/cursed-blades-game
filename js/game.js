@@ -1964,12 +1964,136 @@ const Game = {
     return defaults[categoryKey] || 8;
   },
 
+  isPointNearThemeFeature(x, y, radius, features) {
+    const clearance = Math.max(0, radius || 0);
+    for (const feature of features || []) {
+      if (feature.type === 'villageCrossroads') {
+        const halfRoad = (feature.width || 140) / 2 + clearance;
+        if (Math.abs(x - feature.x) <= halfRoad || Math.abs(y - feature.y) <= halfRoad) return true;
+      }
+      if (feature.type === 'railLine') {
+        const halfRail = (feature.width || 22) / 2 + clearance + 14;
+        if (feature.horizontal) {
+          const minX = Math.min(feature.x1, feature.x2) - clearance;
+          const maxX = Math.max(feature.x1, feature.x2) + clearance;
+          if (x >= minX && x <= maxX && Math.abs(y - feature.y1) <= halfRail) return true;
+        } else {
+          const minY = Math.min(feature.y1, feature.y2) - clearance;
+          const maxY = Math.max(feature.y1, feature.y2) + clearance;
+          if (y >= minY && y <= maxY && Math.abs(x - feature.x1) <= halfRail) return true;
+        }
+      }
+      if (feature.type === 'crystalVein' || feature.type === 'demonRift') {
+        if (dist(x, y, feature.x, feature.y) <= (feature.radius || 60) + clearance + 20) return true;
+      }
+      if (feature.type === 'lavaFissure') {
+        const angle = feature.angle || 0;
+        const dx = x - feature.x;
+        const dy = y - feature.y;
+        const along = dx * Math.cos(angle) + dy * Math.sin(angle);
+        const across = -dx * Math.sin(angle) + dy * Math.cos(angle);
+        if (Math.abs(along) <= (feature.length || 180) / 2 + clearance &&
+            Math.abs(across) <= (feature.width || 34) + clearance) return true;
+      }
+    }
+    return false;
+  },
+
+  drawThemeTerrainBase(ctx, theme, visual, rng, mapW, mapH, ts, cx, cy) {
+    if (!ctx) return;
+    const worldW = mapW * ts;
+    const worldH = mapH * ts;
+    const pattern = visual.terrainPattern || '';
+    ctx.save();
+
+    if (pattern === 'graveyardCrossroads') {
+      ctx.globalAlpha = 0.22;
+      for (let i = 0; i < 42; i++) {
+        const x = rng() * worldW;
+        const y = rng() * worldH;
+        ctx.fillStyle = i % 3 === 0 ? '#3d3420' : '#4b3a21';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 45 + rng() * 90, 24 + rng() * 52, rng() * TAU, 0, TAU);
+        ctx.fill();
+      }
+    } else if (pattern === 'crackedSlate') {
+      ctx.globalAlpha = 0.18;
+      for (let i = 0; i < 110; i++) {
+        const x = rng() * worldW;
+        const y = rng() * worldH;
+        const cool = 30 + Math.floor(rng() * 14);
+        ctx.fillStyle = `rgb(${cool - 9},${cool + 2},${cool + 7})`;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 50 + rng() * 105, 38 + rng() * 74, rng() * TAU, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = '#315767';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 34; i++) {
+        let x = rng() * worldW;
+        let y = rng() * worldH;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let j = 0; j < 4; j++) {
+          x += (rng() - 0.5) * 90;
+          y += 26 + rng() * 54;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    } else if (pattern === 'basaltRifts') {
+      ctx.globalAlpha = 0.12;
+      for (let i = 0; i < 160; i++) {
+        const x = rng() * worldW;
+        const y = rng() * worldH;
+        const heat = 38 + Math.floor(rng() * 18);
+        ctx.fillStyle = `rgb(${heat + 18},${Math.floor(heat * 0.42)},${Math.floor(heat * 0.33)})`;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 35 + rng() * 80, 28 + rng() * 58, rng() * TAU, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.30;
+      ctx.strokeStyle = '#f05a20';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 30; i++) {
+        let x = rng() * worldW;
+        let y = rng() * worldH;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let j = 0; j < 3; j++) {
+          x += (rng() - 0.5) * 74;
+          y += 18 + rng() * 44;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  },
+
   generateThemeMapFeatures(theme, visualProfile, rng, mapW, mapH, ts, cx, cy) {
     const visual = visualProfile || this.getLevelVisualProfile(theme);
     const featureConfig = visual.mapFeatures || {};
     const features = [];
     const worldW = mapW * ts;
     const worldH = mapH * ts;
+
+    if (theme === 'village' && featureConfig.crossroads && featureConfig.crossroads.count > 0) {
+      const cfg = featureConfig.crossroads;
+      features.push({
+        type: 'villageCrossroads',
+        x: cx,
+        y: cy,
+        width: cfg.width || 150,
+        worldW,
+        worldH,
+        pathColor: cfg.pathColor,
+        edgeColor: cfg.edgeColor,
+        rutColor: cfg.rutColor,
+      });
+    }
 
     if (theme === 'mine' && featureConfig.railLines) {
       const cfg = featureConfig.railLines;
@@ -2093,6 +2217,44 @@ const Game = {
   drawMapFeature(ctx, feature) {
     if (!ctx || !feature) return;
 
+    if (feature.type === 'villageCrossroads') {
+      const half = (feature.width || 150) / 2;
+      const worldW = feature.worldW || 2560;
+      const worldH = feature.worldH || 1920;
+      const oldAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = 1;
+      const paintRoad = (color, radiusScale) => {
+        ctx.fillStyle = color;
+        for (let x = -60; x <= worldW + 60; x += 52) {
+          const wobble = Math.sin(x * 0.013) * 9 + Math.sin(x * 0.031) * 4;
+          ctx.beginPath();
+          ctx.ellipse(x, feature.y + wobble, 42, half * radiusScale, 0.03 * Math.sin(x), 0, TAU);
+          ctx.fill();
+        }
+        for (let y = -60; y <= worldH + 60; y += 52) {
+          const wobble = Math.sin(y * 0.015) * 8 + Math.sin(y * 0.027) * 4;
+          ctx.beginPath();
+          ctx.ellipse(feature.x + wobble, y, half * radiusScale, 42, 0.03 * Math.sin(y), 0, TAU);
+          ctx.fill();
+        }
+      };
+      paintRoad(feature.edgeColor || 'rgba(28,20,12,0.18)', 1.18);
+      paintRoad(feature.pathColor || 'rgba(91,67,39,0.42)', 0.94);
+      ctx.fillStyle = feature.rutColor || 'rgba(20,14,9,0.20)';
+      for (let x = 20; x < worldW; x += 108) {
+        const wobble = Math.sin(x * 0.013) * 9;
+        ctx.fillRect(x, feature.y + wobble - half * 0.35, 42, 3);
+        ctx.fillRect(x, feature.y + wobble + half * 0.35, 42, 3);
+      }
+      for (let y = 20; y < worldH; y += 108) {
+        const wobble = Math.sin(y * 0.015) * 8;
+        ctx.fillRect(feature.x + wobble - half * 0.35, y, 3, 42);
+        ctx.fillRect(feature.x + wobble + half * 0.35, y, 3, 42);
+      }
+      ctx.globalAlpha = oldAlpha;
+      return;
+    }
+
     if (feature.type === 'railLine') {
       const oldAlpha = ctx.globalAlpha;
       ctx.globalAlpha = 1;
@@ -2127,12 +2289,12 @@ const Game = {
       ctx.globalAlpha = 1;
       ctx.fillStyle = feature.glowColor || 'rgba(70,220,255,0.18)';
       ctx.beginPath();
-      ctx.ellipse(feature.x, feature.y, feature.radius * 1.45, feature.radius * 0.78, -0.4, 0, TAU);
+      ctx.ellipse(feature.x, feature.y, feature.radius * 1.12, feature.radius * 0.56, -0.4, 0, TAU);
       ctx.fill();
 
       ctx.fillStyle = feature.coreColor || 'rgba(170,255,255,0.34)';
       ctx.beginPath();
-      ctx.ellipse(feature.x, feature.y, feature.radius * 0.72, feature.radius * 0.36, -0.35, 0, TAU);
+      ctx.ellipse(feature.x, feature.y, feature.radius * 0.58, feature.radius * 0.28, -0.35, 0, TAU);
       ctx.fill();
 
       const clusterCount = feature.clusterCount || 4;
@@ -2163,8 +2325,8 @@ const Game = {
         ctx.ellipse(
           px,
           py + h * 0.32,
-          feature.radius * (0.18 + i * 0.025),
-          feature.radius * 0.10,
+          feature.radius * (0.12 + i * 0.018),
+          feature.radius * 0.07,
           a,
           0,
           TAU
@@ -2257,6 +2419,7 @@ const Game = {
     for (let i = 0; i < theme.length; i++) seed = seed * 31 + theme.charCodeAt(i);
     const rng = makeRNG(seed);
     const mapW = this.levelData.mapW, mapH = this.levelData.mapH, ts = CONFIG.TILE_SIZE;
+    const cx = mapW * ts / 2, cy = mapH * ts / 2;
     this.mapData = { tiles: [], props: [] };
 
     // generate ground tile texture cache
@@ -2270,6 +2433,7 @@ const Game = {
     const baseColors = { village: '#2a2218', mine: '#1a1520', hell: '#201010' };
     gctx.fillStyle = visual.baseColor || baseColors[theme] || '#2a2218';
     gctx.fillRect(0, 0, mapW * ts, mapH * ts);
+    this.drawThemeTerrainBase(gctx, theme, visual, rng, mapW, mapH, ts, cx, cy);
 
     // Blend one level scene background into the combat map so biome art is
     // visible beyond props and ground tiles.
@@ -2318,7 +2482,7 @@ const Game = {
         }
         const tileName = groundTiles[tileIdx];
         const img = Assets.get(tileName);
-        if (img && img.complete) {
+        if (visual.useGroundTiles !== false && img && img.complete) {
           if (visual.groundTileCoverage && rng() > visual.groundTileCoverage) continue;
           // draw with slight random offset and alpha for variation
           gctx.globalAlpha = groundAlphaMin + rng() * Math.max(0, groundAlphaMax - groundAlphaMin);
@@ -2336,10 +2500,11 @@ const Game = {
     }
 
     // Smooth tile edges: draw soft gradient strips between tiles to hide grid lines
+    const tileEdgeAlpha = visual.tileEdgeAlpha ?? 0.18;
     const edgeGrad = gctx.createLinearGradient(0, 0, ts, 0);
-    edgeGrad.addColorStop(0, 'rgba(0,0,0,0.18)');
+    edgeGrad.addColorStop(0, `rgba(0,0,0,${tileEdgeAlpha})`);
     edgeGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
-    edgeGrad.addColorStop(1, 'rgba(0,0,0,0.18)');
+    edgeGrad.addColorStop(1, `rgba(0,0,0,${tileEdgeAlpha})`);
     for (let ty = 0; ty < mapH; ty++) {
       for (let tx = 1; tx < mapW; tx++) {
         gctx.fillStyle = edgeGrad;
@@ -2347,9 +2512,9 @@ const Game = {
       }
     }
     const edgeGradV = gctx.createLinearGradient(0, 0, 0, ts);
-    edgeGradV.addColorStop(0, 'rgba(0,0,0,0.18)');
+    edgeGradV.addColorStop(0, `rgba(0,0,0,${tileEdgeAlpha})`);
     edgeGradV.addColorStop(0.5, 'rgba(0,0,0,0)');
-    edgeGradV.addColorStop(1, 'rgba(0,0,0,0.18)');
+    edgeGradV.addColorStop(1, `rgba(0,0,0,${tileEdgeAlpha})`);
     for (let tx = 0; tx < mapW; tx++) {
       for (let ty = 1; ty < mapH; ty++) {
         gctx.fillStyle = edgeGradV;
@@ -2370,7 +2535,6 @@ const Game = {
     }
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
-    const cx = mapW * ts / 2, cy = mapH * ts / 2;
     const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy);
     this.mapData.features = mapFeatures;
     for (const feature of mapFeatures) {
@@ -2428,7 +2592,8 @@ const Game = {
           const wallX = wx + ts / 2;
           const wallY = wy + ts / 2;
           // skip if too close to player spawn
-          if (dist(wallX, wallY, cx, cy) < 100) continue;
+          if (dist(wallX, wallY, cx, cy) < 100 ||
+              this.isPointNearThemeFeature(wallX, wallY, ts * 0.48, mapFeatures)) continue;
           addWallCollision(wallX, wallY);
           if (img && img.complete) {
             gctx.globalAlpha = 0.5 + rng() * 0.4;
@@ -2446,6 +2611,7 @@ const Game = {
       for (let i = 0; i < decoCount; i++) {
         const dx = rng() * mapW * ts;
         const dy = rng() * mapH * ts;
+        if (this.isPointNearThemeFeature(dx, dy, 18, mapFeatures)) continue;
         const dt = groundDecorations[Math.floor(rng() * groundDecorations.length)];
         const img = Assets.get(dt);
         if (img && img.complete) {
@@ -2472,9 +2638,22 @@ const Game = {
           py = rng() * mapH * ts;
           tries++;
         } while (
-          tries < 12 &&
-          (dist(px, py, cx, cy) < 120 || this.footprintOverlapsCircle(px, py, footprint, cx, cy, 90))
+          tries < 24 &&
+          (dist(px, py, cx, cy) < 120 ||
+           this.footprintOverlapsCircle(px, py, footprint, cx, cy, 90) ||
+           this.isPointNearThemeFeature(
+             px + (footprint.collisionOffsetX || 0),
+             py + (footprint.collisionOffsetY || 0),
+             Math.max(footprint.radius || 0, footprint.halfWidth || 0, footprint.halfHeight || 0),
+             mapFeatures
+           ))
         );
+        if (this.isPointNearThemeFeature(
+          px + (footprint.collisionOffsetX || 0),
+          py + (footprint.collisionOffsetY || 0),
+          Math.max(footprint.radius || 0, footprint.halfWidth || 0, footprint.halfHeight || 0),
+          mapFeatures
+        )) continue;
         const prop = { type, x: px, y: py, category: categoryKey, ...footprint };
         prop.collisionX = px + (footprint.collisionOffsetX || 0);
         prop.collisionY = py + (footprint.collisionOffsetY || 0);

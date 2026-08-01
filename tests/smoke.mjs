@@ -177,23 +177,38 @@ assert.ok(typeof game.getThemePropScatterCount === 'function',
     'village should visually lean into graveyard props more than mine');
   assert.ok((mineVisual.propScatterCounts.caves || 0) > (villageVisual.propScatterCounts.caves || 0),
     'mine should visually lean into cave props more than village');
-  assert.ok(mineVisual.interiorWallSegments > villageVisual.interiorWallSegments,
-    'mine should have denser interior cave-wall segmentation than village');
+  assert.ok(mineVisual.wallBorderThick > villageVisual.wallBorderThick,
+    'mine should keep a stronger cave boundary than the open village');
+  assert.equal(mineVisual.interiorWallSegments, 0,
+    'mine should not scatter floating stone-wall columns through the playable floor');
+  assert.equal(hellVisual.interiorWallSegments, 0,
+    'hell should not scatter mismatched stone-wall columns through the basalt floor');
   assert.ok(hellVisual.patchColor !== mineVisual.patchColor,
     'hell should have a distinct patch tint from mine');
-  assert.ok(villageVisual.sceneUnderlayAlpha > 0 && mineVisual.sceneUnderlayAlpha > 0 && hellVisual.sceneUnderlayAlpha > 0,
-    'combat maps should use configured scene backgrounds as subtle biome underlays');
+  assert.ok(villageVisual.sceneUnderlayAlpha === 0 && mineVisual.sceneUnderlayAlpha === 0 && hellVisual.sceneUnderlayAlpha === 0,
+    'sprite-sheet scene art must not be stretched across combat maps as a background');
+  assert.equal(new Set([
+    villageVisual.terrainPattern,
+    mineVisual.terrainPattern,
+    hellVisual.terrainPattern,
+  ]).size, 3, 'each level should use a unique procedural terrain pattern');
   assert.equal(game.getThemePropScatterCount('tombstones', mineVisual), 0,
     'mine visual profile should be able to suppress off-theme graveyard scatter');
-  assert.ok(mineVisual.sceneUnderlayAlpha >= 0.30,
-    'mine should lean on coherent cave scene art instead of noisy tile spam');
-  assert.ok(mineVisual.groundAlphaMax <= 0.55 && mineVisual.groundTileCoverage <= 0.62,
+  assert.ok(mineVisual.groundAlphaMax <= 0.38 && mineVisual.groundTileCoverage <= 0.48,
     'mine ground tiles should be sparse/translucent enough to avoid a noisy grid');
+  assert.equal(mineVisual.terrainPattern, 'crackedSlate',
+    'mine should use an organic cracked-slate floor instead of a chamber grid');
+  assert.ok(mineVisual.groundTileCoverage <= 0.22,
+    'mine should not expose repeated square ground sprites across the whole view');
+  assert.equal(mineVisual.useGroundTiles, false,
+    'mine should rely on its continuous procedural floor instead of floating square sprites');
   assert.ok(mineVisual.groundTintColor && mineVisual.groundTintColor.includes('rgba'),
     'mine should apply a cold blue/cyan ground tint after drawing shared stone tiles');
   const mineScatterTotal = Object.values(mineVisual.propScatterCounts).reduce((sum, value) => sum + (value || 0), 0);
-  assert.ok(mineScatterTotal <= 48 && mineVisual.decorationCount <= 24,
+  assert.ok(mineScatterTotal <= 36 && mineVisual.decorationCount <= 18,
     'mine should use restrained landmarks/props instead of filling the screen with clutter');
+  assert.ok(mineVisual.propScatterCounts.caves <= 1 && mineVisual.propScatterCounts.stonework <= 3,
+    'mine should not repeat oversized cave entrances and stone columns across one viewport');
 }
 assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.count <= 2 &&
   config.LEVEL_VISUALS.mine.mapFeatures?.railLines?.width <= 26 &&
@@ -205,6 +220,8 @@ assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.count >= 3 &&
 assert.ok(config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.radius <= 62 &&
   config.LEVEL_VISUALS.mine.mapFeatures?.crystalVeins?.clusterCount <= 5,
   'mine crystal veins should be compact readable clusters, not giant cyan stains');
+assert.ok(config.LEVEL_VISUALS.mine.mapFeatures.crystalVeins.radius <= 46,
+  'mine crystal glow should stay smaller than a character-scale landmark');
 assert.ok(config.LEVELS.mine.sceneBgs.includes('backgrounds/scene_crystal_track_section') &&
   config.LEVELS.mine.sceneBgs.includes('backgrounds/scene_crystal_crystal_deposits'),
   'mine should rotate through track/deposit scene art, not only generic cave backgrounds');
@@ -213,6 +230,14 @@ assert.ok(config.LEVELS.mine.groundDecorations.includes('effects/ice_orb') &&
   'mine ground decorations should include clear blue crystal/ice accents');
 assert.ok(!config.LEVEL_VISUALS.village.mapFeatures?.crystalVeins,
   'village should not use mine crystal-vein map features');
+  assert.equal(config.LEVEL_VISUALS.village.mapFeatures?.crossroads?.count, 1,
+    'village should have one readable crossroads landmark');
+  assert.ok(config.LEVEL_VISUALS.village.mapFeatures.crossroads.width <= 100,
+    'village crossroads should read as narrow old roads instead of a full-screen overlay');
+  assert.ok(config.LEVEL_VISUALS.village.tileEdgeAlpha <= 0.08 &&
+    config.LEVEL_VISUALS.mine.tileEdgeAlpha <= 0.05 &&
+    config.LEVEL_VISUALS.hell.tileEdgeAlpha <= 0.05,
+    'level terrain should suppress the obvious repeated tile grid');
 assert.ok(config.LEVELS.mine.phases.some(phase => (phase.events || []).some(ev => ev.type === 'veinAmbush')),
   'mine phases should include crystal-vein ambush events for distinct pacing');
 assert.ok(typeof game.generateThemeMapFeatures === 'function',
@@ -243,7 +268,10 @@ assert.ok(typeof game.spawnEnemyGroupAtMapFeatures === 'function',
     'generated crystal veins should stay compact instead of covering the screen');
   assert.ok(veins.every(f => gameContext.dist(f.x, f.y, cx, cy) > 180),
     'crystal veins should avoid the player spawn safe zone');
-  assert.equal(game.generateThemeMapFeatures('village', game.getLevelVisualProfile('village'), gameContext.makeRNG(7), 40, 30, config.TILE_SIZE, 1280, 960).length, 0,
+  const villageFeatures = game.generateThemeMapFeatures('village', game.getLevelVisualProfile('village'), gameContext.makeRNG(7), 40, 30, config.TILE_SIZE, 1280, 960);
+  assert.equal(villageFeatures.filter(f => f.type === 'villageCrossroads').length, 1,
+    'village feature generation should create one central crossroads');
+  assert.ok(!villageFeatures.some(f => f.type === 'crystalVein' || f.type === 'railLine'),
     'village feature generation should not inherit mine-only features');
 
   gameContext.Enemy = class {
@@ -270,6 +298,18 @@ assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.lavaFissures?.count >= 3,
   'hell should define visible lava-fissure map features');
 assert.ok(config.LEVEL_VISUALS.hell.mapFeatures?.demonRifts?.count >= 3,
   'hell should define demon-rift map features');
+assert.equal(config.LEVEL_VISUALS.hell.terrainPattern, 'basaltRifts',
+  'hell should use a dedicated basalt terrain pattern');
+assert.equal(config.LEVEL_VISUALS.hell.useGroundTiles, false,
+  'hell should rely on a continuous basalt floor instead of floating dirt sprites');
+assert.ok(config.LEVELS.hell.props.spikes.length === 1 &&
+  config.LEVELS.hell.props.spikes[0] === 'props/hell_spike_bones',
+  'hell should not mix bright wooden spike art into the basalt biome');
+assert.equal(config.LEVEL_VISUALS.hell.propScatterCounts.spikes, 0,
+  'bright bone spike sheets should stay out of the active hell scatter');
+assert.ok(Object.values(config.LEVEL_VISUALS.hell.propScatterCounts)
+  .reduce((sum, value) => sum + (value || 0), 0) <= 42,
+  'hell should reserve visual space for fissures and rifts instead of generic prop clutter');
 assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.lavaFissures.sprite, 'effects/hell_ai_lava_fissure',
   'hell lava fissures should use the sliced AI sprite');
 assert.equal(config.LEVEL_VISUALS.hell.mapFeatures.demonRifts.sprite, 'effects/hell_ai_demon_rift',
@@ -305,6 +345,14 @@ assert.ok(config.LEVELS.hell.props.rocks.includes('props/hell_ai_lava_rock') &&
   'hell props should include sliced AI rock and chain sprites');
 assert.ok(!config.LEVEL_VISUALS.mine.mapFeatures?.demonRifts,
   'mine should not inherit hell demon-rift features');
+assert.ok(typeof game.isPointNearThemeFeature === 'function',
+  'map generation should expose feature clearance checks for walls and props');
+assert.ok(game.isPointNearThemeFeature(320, 420, 20, [{
+  type: 'railLine', x1: 100, y1: 420, x2: 600, y2: 420, horizontal: true, width: 22,
+}]), 'rail corridors should reserve clear movement space');
+assert.ok(!game.isPointNearThemeFeature(320, 620, 20, [{
+  type: 'railLine', x1: 100, y1: 420, x2: 600, y2: 420, horizontal: true, width: 22,
+}]), 'points far from theme features should remain available for props');
 assert.ok(config.LEVELS.hell.phases.some(phase => (phase.events || []).some(ev => ev.type === 'riftAmbush')),
   'hell phases should include demon-rift ambush events for distinct pacing');
 {
