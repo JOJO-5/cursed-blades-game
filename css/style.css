@@ -62,3 +62,16 @@ html, body {
   transition: width 0.2s;
 }
 #loading-text { margin-top: 10px; font-size: 14px; color: #8a7a5a; }
+
+.load-error .loading-content h2 { color: #ff8060; }
+.loading-error-hint { margin-top: 12px; font-size: 13px; color: #c4a87a; }
+.loading-retry {
+  margin-top: 18px;
+  padding: 10px 24px;
+  border: 1px solid #c4a87a;
+  background: #241b12;
+  color: #ffd080;
+  font: bold 14px 'Courier New', monospace;
+  cursor: pointer;
+}
+.loading-retry:active { background: #4a3020; }

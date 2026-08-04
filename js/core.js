@@ -248,13 +248,15 @@ const Assets = {
   images: {},
   loaded: 0,
   total: 0,
+  failed: [],
   onProgress: null,
 
   loadList(manifest) {
     return new Promise((resolve) => {
       const keys = Object.keys(manifest);
-      this.total = keys.length;
-      this.loaded = 0;
+    this.total = keys.length;
+    this.loaded = 0;
+    this.failed = [];
       if (this.total === 0) { resolve(); return; }
       for (const key of keys) {
         const path = 'assets/' + key + '.png';
@@ -266,6 +268,7 @@ const Assets = {
         };
         img.onerror = () => {
           console.warn('Failed to load: ' + path);
+          this.failed.push(key);
           this.loaded++;
           if (this.onProgress) this.onProgress(this.loaded, this.total);
           if (this.loaded >= this.total) resolve();
@@ -391,6 +394,9 @@ const Audio2 = {
   _musicTracks: {
     menu:     { baseFreq: 98,  oscType: 'triangle', lfoRate: 0.10, harmonic: 1.5,  vol: 0.12 },
     gameplay: { baseFreq: 110, oscType: 'triangle', lfoRate: 0.15, harmonic: 1.5,  vol: 0.14 },
+    village:  { baseFreq: 104, oscType: 'triangle', lfoRate: 0.12, harmonic: 1.5,  vol: 0.13 },
+    mine:     { baseFreq: 82,  oscType: 'sine',     lfoRate: 0.08, harmonic: 1.25, vol: 0.13 },
+    hell:     { baseFreq: 58,  oscType: 'sawtooth', lfoRate: 0.22, harmonic: 1.75, vol: 0.12 },
     boss:     { baseFreq: 146, oscType: 'sawtooth', lfoRate: 0.30, harmonic: 1.33, vol: 0.16 },
     victory:  { baseFreq: 131, oscType: 'sine',     lfoRate: 0.08, harmonic: 2.0,  vol: 0.12 },
   },

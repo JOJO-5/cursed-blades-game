@@ -20,12 +20,15 @@ const Game = {
   camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeTime: 0, shakeMag: 0 },
   damageVignette: 0,
   time: 0,
+  runSeed: 0,
+  environmentSpeedMult: 1,
   levelTime: 0,
   spawnTimer: 0,
   eliteTimer: 0,
   bossSpawned: false,
   bossDefeated: false,
   bossDefeatedGraceTimer: 0,
+  globalXpMagnetDropped: false,
   levelData: null,
   mapData: null,
   propPositions: [],
@@ -97,6 +100,10 @@ const Game = {
       .then(r => r.json())
       .then(manifest => Assets.loadList(manifest))
       .then(() => {
+        if (Assets.failed && Assets.failed.length > 0) {
+          this.showAssetLoadError(Assets.failed);
+          return;
+        }
         Audio2.init();
         this.loadMeta();
         this.state = 'menu';
@@ -106,8 +113,7 @@ const Game = {
       })
       .catch(err => {
         console.error('Load error:', err);
-        // try loading with known assets anyway
-        this.fallbackLoad();
+        this.showAssetLoadError(['assets/manifest.json']);
       });
   },
 
@@ -190,14 +196,44 @@ const Game = {
   },
 
   fallbackLoad() {
-    const manifest = {};
-    const cats = ['player','enemies','bosses','weapons','items','ui','tiles','props','backgrounds','effects'];
-    // We'll just proceed with what we have
-    Audio2.init();
-    this.state = 'menu';
-    Audio2.playMusic('menu');
-    document.getElementById('loading-screen').style.display = 'none';
-    this.loop();
+    this.showAssetLoadError(Assets.failed || ['assets/manifest.json']);
+  },
+
+  showAssetLoadError(failedKeys) {
+    const screen = document.getElementById('loading-screen');
+    const content = screen && screen.querySelector('.loading-content');
+    if (!screen || !content) return;
+
+    screen.classList.add('load-error');
+    screen.style.display = 'flex';
+    const title = content.querySelector('h2');
+    const text = content.querySelector('#loading-text');
+    const bar = content.querySelector('.loading-bar');
+    if (title) title.textContent = '资源加载失败';
+    if (bar) bar.style.display = 'none';
+    if (text) {
+      const unique = [...new Set(failedKeys || [])];
+      const shown = unique.slice(0, 8).join(', ');
+      text.textContent = `无法加载 ${unique.length} 个资源${shown ? `：${shown}` : ''}`;
+    }
+
+    let hint = content.querySelector('.loading-error-hint');
+    if (!hint) {
+      hint = document.createElement('p');
+      hint.className = 'loading-error-hint';
+      content.appendChild(hint);
+    }
+    hint.textContent = '请检查网络或部署路径，然后重试。';
+
+    let retry = content.querySelector('.loading-retry');
+    if (!retry) {
+      retry = document.createElement('button');
+      retry.className = 'loading-retry';
+      retry.type = 'button';
+      retry.textContent = '重新加载';
+      retry.addEventListener('click', () => window.location.reload());
+      content.appendChild(retry);
+    }
   },
 
   // ---- Game loop ----
@@ -299,7 +335,7 @@ const Game = {
     // trigger pending mimic encounter story
     if (this.pendingMimicStory) {
       this.pendingMimicStory = false;
-      this.startStory(CONFIG.STORY.mimicEncounter, () => { this.state = 'playing'; });
+      this.startStory(CONFIG.STORY.mimicEncounter, () => { this.state = 'playing'; }, 'mimic');
       return;
     }
 
@@ -311,6 +347,7 @@ const Game = {
         this.startVictorySequence();
       }
       // Still update player, pickups, particles, camera during grace period
+      this.updateThemeHazards(dt);
       this.player.update(dt);
       for (const p of this.pickups) p.update(dt);
       this.pickupPool.recycle(this.pickups);
@@ -336,6 +373,7 @@ const Game = {
       if (e.alive) this.enemyGrid.insert(e);
     }
 
+    this.updateThemeHazards(dt);
     this.player.update(dt);
 
     // update enemies — skip far-off-screen enemies for performance (bosses always update)
@@ -889,6 +927,42 @@ const Game = {
     }
   },
 
+  updateThemeHazards(dt) {
+    this.environmentSpeedMult = 1;
+    const player = this.player;
+    const features = (this.mapData && this.mapData.features) || [];
+    if (!player || features.length === 0) return;
+
+    for (const feature of features) {
+      if (!['lavaFissure', 'crystalVein', 'demonRift'].includes(feature.type)) continue;
+      const inside = this.isPointNearThemeFeature(player.x, player.y, player.radius, [feature]);
+      if (!inside) {
+        feature.hazardTimer = 0;
+        feature.playerInside = false;
+        continue;
+      }
+
+      this.environmentSpeedMult = Math.min(this.environmentSpeedMult, feature.slow || 1);
+      if (!feature.playerInside) {
+        const label = feature.type === 'lavaFissure' ? '熔岩灼烧！' :
+          (feature.type === 'demonRift' ? '恶魔裂隙正在撕裂你！' : '晶簇共鸣减缓了脚步！');
+        this.addMessage(label, feature.type === 'crystalVein' ? '#80e8ff' : '#ff7040');
+      }
+      feature.playerInside = true;
+      feature.hazardTimer = (feature.hazardTimer || 0) - dt;
+      if (feature.hazardTimer <= 0) {
+        feature.hazardTimer = feature.tickRate || 0.7;
+        if (feature.damage) player.takeDamage(feature.damage);
+        if (this.particles && this.particlePool && this.particles.length < 800) {
+          const color = feature.type === 'crystalVein' ? '#80e8ff' : '#ff7040';
+          this.particles.push(this.particlePool.obtain(
+            player.x, player.y, rand(-25, 25), rand(-45, -15), color, 0.28, 3
+          ));
+        }
+      }
+    }
+  },
+
   spawnBoss() {
     this.bossSpawned = true;
     // clear normal enemies when boss appears (design: "清理普通敌人")
@@ -907,7 +981,7 @@ const Game = {
     Audio2.playMusic('boss');
     this.shakeScreen(10, 0.5);
     // show boss intro dialogue
-    this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => { this.state = 'playing'; });
+    this.startStory(CONFIG.STORY[this.levelData.theme].bossIntro, () => { this.state = 'playing'; }, 'boss');
   },
 
   getSpawnPosition(radius) {
@@ -928,9 +1002,66 @@ const Game = {
     return null;
   },
 
+  isPickupPositionSafe(x, y, radius = 18, options = {}) {
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+    const margin = Math.max(36, radius + 12);
+    if (x < margin || y < margin || x > mapW - margin || y > mapH - margin) return false;
+    if (this.isCircleBlocked(x, y, radius)) return false;
+    const minPlayerDistance = options.minPlayerDistance ?? 0;
+    if (this.player && dist(x, y, this.player.x, this.player.y) < minPlayerDistance) return false;
+    if (options.avoidThemeFeatures !== false && this.isPointNearThemeFeature(
+      x, y, radius, (this.mapData && this.mapData.features) || []
+    )) return false;
+    const minPickupDistance = options.minPickupDistance ?? radius * 2.5;
+    if (Array.isArray(this.pickups) && this.pickups.some(p =>
+      p.alive && p.type === 'chest' && dist(x, y, p.x, p.y) < minPickupDistance
+    )) return false;
+    return true;
+  },
+
+  getSafePickupPosition(radius = 18, options = {}) {
+    if (!this.levelData) return null;
+    const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
+    const mapH = this.levelData.mapH * CONFIG.TILE_SIZE;
+    const margin = Math.max(36, radius + 12);
+    const minPlayerDistance = options.minPlayerDistance ?? 150;
+
+    for (let attempt = 0; attempt < 48; attempt++) {
+      const x = rand(margin, mapW - margin);
+      const y = rand(margin, mapH - margin);
+      if (this.isPickupPositionSafe(x, y, radius, { ...options, minPlayerDistance })) {
+        return { x, y };
+      }
+    }
+
+    // Deterministic fallback keeps a reward from disappearing when a generated
+    // map is crowded or a seeded run happens to reject many random positions.
+    const step = Math.max(32, CONFIG.TILE_SIZE);
+    for (let y = margin; y <= mapH - margin; y += step) {
+      for (let x = margin; x <= mapW - margin; x += step) {
+        if (this.isPickupPositionSafe(x, y, radius, { ...options, minPlayerDistance: 0 })) {
+          return { x, y };
+        }
+      }
+    }
+    return null;
+  },
+
   spawnChest(x, y, isRare) {
     // isRare: 0=normal, 1=rare, 2=suspicious
-    this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', isRare ? isRare : 0));
+    const chestRadius = 24;
+    const safe = this.isPickupPositionSafe(x, y, chestRadius, {
+      minPlayerDistance: 0,
+      minPickupDistance: 48,
+      avoidThemeFeatures: false,
+    }) ? { x, y } : this.getSafePickupPosition(chestRadius, {
+      minPlayerDistance: 0,
+      minPickupDistance: 48,
+    });
+    if (!safe) return false;
+    this.pickups.push(this.pickupPool.obtain(safe.x, safe.y, 'chest', 'chest', isRare ? isRare : 0));
+    return true;
   },
 
   collectAllXpPickups(originX, originY) {
@@ -1679,24 +1810,30 @@ const Game = {
           this.state = 'victory';
           Audio2.playMusic('victory');
         }
-      });
+      }, 'victory');
     }, 1000);
   },
 
   // ---- Story ----
-  startStory(lines, onComplete) {
+  startStory(lines, onComplete, storyId = 'intro') {
+    const theme = this.levelData && this.levelData.theme;
+    const storyKey = theme ? `${theme}_story_${storyId}` : null;
+    if (storyKey && this.meta && this.meta.seenStories.includes(storyKey)) {
+      this.storyLines = [];
+      this.storyComplete = null;
+      if (onComplete) onComplete();
+      else this.state = 'playing';
+      return;
+    }
     this.storyLines = lines;
     this.storyIndex = 0;
     this.storyComplete = onComplete;
     this.state = 'story';
     this.storyTimer = 0;
-    // record seen story for this level theme
-    if (this.levelData && this.levelData.theme) {
-      const storyKey = this.levelData.theme + '_story_' + (this.storyComplete ? 'victory' : 'intro');
-      if (!this.meta.seenStories.includes(storyKey)) {
-        this.meta.seenStories.push(storyKey);
-        this.saveMeta();
-      }
+    // record the explicit story type for future skip behavior
+    if (storyKey && this.meta && !this.meta.seenStories.includes(storyKey)) {
+      this.meta.seenStories.push(storyKey);
+      this.saveMeta();
     }
   },
 
@@ -1846,6 +1983,7 @@ const Game = {
 
   // ---- New game ----
   startNewGame() {
+    this.runSeed = Math.floor(Math.random() * 0x7fffffff);
     this.player = new Player(CONFIG.MAP_W * CONFIG.TILE_SIZE / 2, CONFIG.MAP_H * CONFIG.TILE_SIZE / 2);
     this.enemies = [];
     this.projectiles = [];
@@ -1862,6 +2000,7 @@ const Game = {
     this.bossSpawned = false;
     this.bossDefeated = false;
     this.bossDefeatedGraceTimer = 0;
+    this.globalXpMagnetDropped = false;
     this.currentPhase = -1;
     this.triggeredPhases = {};
     this.pendingMimicStory = false;
@@ -1908,18 +2047,20 @@ const Game = {
     // spawn initial chests
     this.spawnInitialChests();
 
-    // start gameplay BGM (resumes from menu/victory)
-    Audio2.playMusic('gameplay');
+    // start level-specific BGM (resumes from menu/victory)
+    Audio2.playMusic(this.levelData.bgMusic || 'gameplay');
     // start story
     const storyLines = CONFIG.STORY[this.levelData.theme].intro;
-    this.startStory(storyLines, () => { this.state = 'playing'; });
+    this.startStory(storyLines, () => { this.state = 'playing'; }, 'intro');
   },
 
   spawnInitialChests() {
     for (let i = 0; i < this.levelData.chestCount; i++) {
-      const x = rand(200, this.levelData.mapW * CONFIG.TILE_SIZE - 200);
-      const y = rand(200, this.levelData.mapH * CONFIG.TILE_SIZE - 200);
-      this.pickups.push(this.pickupPool.obtain(x, y, 'chest', 'chest', 0));
+      const safe = this.getSafePickupPosition(24, {
+        minPlayerDistance: 180,
+        minPickupDistance: 72,
+      });
+      if (safe) this.pickups.push(this.pickupPool.obtain(safe.x, safe.y, 'chest', 'chest', 0));
     }
   },
 
@@ -2154,6 +2295,9 @@ const Game = {
           y,
           radius: cfg.radius || 84,
           clusterCount: cfg.clusterCount || 4,
+          damage: cfg.damage || 5,
+          tickRate: cfg.tickRate || 0.8,
+          slow: cfg.slow || 0.84,
           glowColor: cfg.glowColor || 'rgba(70,220,255,0.18)',
           coreColor: cfg.coreColor || 'rgba(170,255,255,0.34)',
           shardColor: cfg.shardColor || 'rgba(92,235,255,0.50)',
@@ -2176,6 +2320,9 @@ const Game = {
           y,
           length: ts * (4.5 + rng() * 3),
           width: cfg.width || 34,
+          damage: cfg.damage || 12,
+          tickRate: cfg.tickRate || 0.6,
+          slow: cfg.slow || 0.72,
           angle,
           sprite: cfg.sprite,
           glowColor: cfg.glowColor || 'rgba(255,80,20,0.24)',
@@ -2203,6 +2350,9 @@ const Game = {
           x,
           y,
           radius: cfg.radius || 96,
+          damage: cfg.damage || 8,
+          tickRate: cfg.tickRate || 0.7,
+          slow: cfg.slow || 0.76,
           sprite: cfg.sprite,
           glowColor: cfg.glowColor || 'rgba(255,45,25,0.20)',
           coreColor: cfg.coreColor || 'rgba(255,105,20,0.36)',
@@ -2412,11 +2562,14 @@ const Game = {
 
   // ---- Map generation ----
   generateMap() {
-    // Use a theme-based seed so each level has a unique random pattern
-    let seed = 0;
+    // Keep a run-stable seed so retries can differ while saves and level
+    // transitions still rebuild the same map layout.
+    let seed = Number.isFinite(this.runSeed) ? this.runSeed : 0;
     const theme = this.levelData.theme || 'default';
     const visual = this.getLevelVisualProfile(theme);
-    for (let i = 0; i < theme.length; i++) seed = seed * 31 + theme.charCodeAt(i);
+    for (let i = 0; i < theme.length; i++) {
+      seed = (seed * 31 + theme.charCodeAt(i)) & 0x7fffffff;
+    }
     const rng = makeRNG(seed);
     const mapW = this.levelData.mapW, mapH = this.levelData.mapH, ts = CONFIG.TILE_SIZE;
     const cx = mapW * ts / 2, cy = mapH * ts / 2;
@@ -2729,6 +2882,7 @@ const Game = {
       weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level })),
       stats: this.player.stats,
       upgradeLevels: this.player.upgradeLevels,
+      runSeed: this.runSeed,
       levelTime: this.levelTime,
       levelId: this.levelData ? this.levelData.theme : 'village',
       playerPosition: { x: this.player.x, y: this.player.y },
@@ -2736,6 +2890,7 @@ const Game = {
       eliteTimer: this.eliteTimer,
       bossSpawned: this.bossSpawned,
       bossDefeated: this.bossDefeated,
+      globalXpMagnetDropped: this.globalXpMagnetDropped,
       bossDefeatedGraceTimer: this.bossDefeatedGraceTimer,
       currentPhase: this.currentPhase,
       triggeredPhases: this.triggeredPhases,
@@ -2848,6 +3003,7 @@ const Game = {
       this.pendingLevelUps = 0;
       this.damageVignette = 0;
       this.player.level = data.level ?? 1;
+      this.runSeed = Number.isFinite(data.runSeed) ? data.runSeed : 0;
       this.player.xp = data.xp ?? 0;
       this.player.xpToNext = CONFIG.XP_CURVE[Math.min(this.player.level - 1, CONFIG.XP_CURVE.length - 1)] || 9999;
       // Merge so old saves gain every later-added stat with a safe default.
@@ -2863,6 +3019,7 @@ const Game = {
       this.spawnTimer = data.spawnTimer ?? 1;
       this.eliteTimer = data.eliteTimer ?? 0;
       this.bossDefeated = !!data.bossDefeated;
+      this.globalXpMagnetDropped = !!data.globalXpMagnetDropped;
       this.bossDefeatedGraceTimer = data.bossDefeatedGraceTimer ?? 0;
       this.currentPhase = data.currentPhase ?? -1;
       this.triggeredPhases = data.triggeredPhases || this.inferTriggeredPhases(this.levelTime, !!data.bossSpawned || !!data.bossDefeated);
@@ -2903,7 +3060,7 @@ const Game = {
         Audio2.playMusic('boss');
       } else {
         this.bossSpawned = !!data.bossDefeated;
-        Audio2.playMusic('gameplay');
+        Audio2.playMusic(this.levelData.bgMusic || 'gameplay');
       }
       this.camera.x = clamp(this.player.x - CONFIG.CANVAS_W / 2, 0, Math.max(0, this.levelData.mapW * CONFIG.TILE_SIZE - CONFIG.CANVAS_W));
       this.camera.y = clamp(this.player.y - CONFIG.CANVAS_H / 2, 0, Math.max(0, this.levelData.mapH * CONFIG.TILE_SIZE - CONFIG.CANVAS_H));
@@ -2979,7 +3136,9 @@ const Game = {
     const gap = iconSize + (iconSize <= 28 ? 8 : 6);
     const maxColumns = portrait ? 6 : 12;
     const columns = Math.max(1, Math.min(Math.max(1, count), maxColumns, Math.floor((maxWidth + gap - iconSize) / gap)));
-    const rows = Math.max(1, Math.ceil(Math.max(1, count) / columns));
+    const maxRows = portrait ? 2 : 3;
+    const visibleCount = Math.min(Math.max(1, count), columns * maxRows);
+    const rows = Math.max(1, Math.ceil(visibleCount / columns));
     const rowGap = iconSize + 14;
     const itemHeight = rows * rowGap;
     const totalW = Math.max(0, columns - 1) * gap + iconSize;
@@ -2987,7 +3146,8 @@ const Game = {
     const x = clamp(rawX, visible.x + leftSafe, Math.max(visible.x + leftSafe, visible.x + visible.w - totalW - rightSafe));
     const rawY = portrait ? visible.y + visible.h - 165 : visible.y + visible.h - itemHeight - 12;
     const y = clamp(rawY, visible.y + 8, Math.max(visible.y + 8, visible.y + visible.h - itemHeight - 8));
-    return { x, y, gap, iconSize, itemHeight, totalW, columns, rows, rowGap };
+    return { x, y, gap, iconSize, itemHeight, totalW, columns, rows, rowGap,
+      visibleCount, overflowCount: Math.max(0, count - visibleCount) };
   },
 
   getChoiceLayout(count) {
@@ -3202,7 +3362,8 @@ const Game = {
     const iconSize = weaponHud.iconSize;
     const rowGap = weaponHud.rowGap;
     const columns = weaponHud.columns || Math.max(1, p.weapons.length);
-    for (let i = 0; i < p.weapons.length; i++) {
+    const visibleWeaponCount = weaponHud.visibleCount ?? p.weapons.length;
+    for (let i = 0; i < visibleWeaponCount; i++) {
       const w = p.weapons[i];
       const col = i % columns;
       const row = Math.floor(i / columns);
@@ -3216,6 +3377,18 @@ const Game = {
       ctx.fillStyle = '#ffd040';
       ctx.font = iconSize <= 28 ? '9px Courier New' : '10px Courier New';
       ctx.fillText(`Lv${w.level}`, wx - 1, wY + iconSize + 10);
+    }
+    if (weaponHud.overflowCount > 0) {
+      const overflowX = weaponStartX + Math.min(weaponHud.columns - 1, visibleWeaponCount % weaponHud.columns) * weaponGap;
+      const overflowRow = Math.min(weaponHud.rows - 1, Math.floor(visibleWeaponCount / weaponHud.columns));
+      const overflowY = weaponHud.y + overflowRow * rowGap;
+      ctx.fillStyle = 'rgba(0,0,0,0.72)';
+      ctx.fillRect(overflowX - 2, overflowY - 2, iconSize, iconSize);
+      ctx.fillStyle = '#ffd040';
+      ctx.font = iconSize <= 28 ? '9px Courier New' : '10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('+' + weaponHud.overflowCount, overflowX + iconSize / 2 - 2, overflowY + iconSize / 2 + 3);
+      ctx.textAlign = 'left';
     }
 
     // dash cooldown indicator

@@ -191,6 +191,7 @@ class Player {
     }
 
     let speed = CONFIG.PLAYER.speed * this.stats.moveSpeedMult;
+    speed *= Game.environmentSpeedMult || 1;
     if (this.dashTimer > 0) {
       speed = CONFIG.PLAYER.dashSpeed;
       this.vx = this.dashDir.x * speed;
@@ -1297,8 +1298,12 @@ class DeathBehavior {
     const drop = CONFIG.DROPS && CONFIG.DROPS.globalXpMagnet;
     if (!drop || enemy.isMimic) return;
     const chance = enemy.isBoss ? drop.bossChance : (enemy.isElite ? drop.eliteChance : drop.normalChance);
-    if (!chance || Math.random() >= chance) return;
+    const firstGuarantee = !Game.globalXpMagnetDropped && Game.player &&
+      Game.player.kills >= (drop.firstGuaranteeKills || 25);
+    if (!firstGuarantee && (!chance || Math.random() >= chance)) return;
+    Game.globalXpMagnetDropped = true;
     Game.pickups.push(Game.pickupPool.obtain(enemy.x, enemy.y, 'magnet', drop.sprite || 'xp_gem_large', 0));
+    Game.addMessage('全图经验磁石出现了！', '#80ffff');
   }
 }
 
@@ -1680,26 +1685,32 @@ class Enemy {
     const chaseAng = angleTo(this.x, this.y, player.x, player.y);
     const awayAng = chaseAng + Math.PI;
     const step = Math.max(this.radius * 1.4, 18);
-    const candidates = [
+    const angles = [
       chaseAng + Math.PI / 2 * this.avoidSide,
       chaseAng - Math.PI / 2 * this.avoidSide,
       awayAng,
       chaseAng + Math.PI / 4 * this.avoidSide,
       chaseAng - Math.PI / 4 * this.avoidSide,
+      0, Math.PI / 2, Math.PI, Math.PI * 1.5,
     ];
-
-    for (const ang of candidates) {
-      const nx = this.x + Math.cos(ang) * step;
-      const ny = this.y + Math.sin(ang) * step;
-      if (Game.isCircleBlocked && Game.isCircleBlocked(nx, ny, this.radius)) continue;
-      this.x = nx;
-      this.y = ny;
-      this.clampToLevelBounds();
-      this.vx = Math.cos(ang) * this.speed * 0.35;
-      this.vy = Math.sin(ang) * this.speed * 0.35;
-      return true;
+    let best = null;
+    for (const distance of [step, step * 1.6, step * 2.2]) {
+      for (const ang of angles) {
+        const nx = this.x + Math.cos(ang) * distance;
+        const ny = this.y + Math.sin(ang) * distance;
+        if (Game.isCircleBlocked && Game.isCircleBlocked(nx, ny, this.radius)) continue;
+        const score = dist(nx, ny, player.x, player.y) + distance * 0.08;
+        if (!best || score < best.score) best = { nx, ny, ang, score };
+      }
+      if (best) break;
     }
-    return false;
+    if (!best) return false;
+    this.x = best.nx;
+    this.y = best.ny;
+    this.clampToLevelBounds();
+    this.vx = Math.cos(best.ang) * this.speed * 0.35;
+    this.vy = Math.sin(best.ang) * this.speed * 0.35;
+    return true;
   }
 
   updateBoss(dt, player, d) {
@@ -2602,7 +2613,7 @@ class Pickup {
     this.value = value || 0;
     this.alive = true;
     this.bob = Math.random() * TAU;
-    this.life = 30;
+    this.life = type === 'xp' ? 60 : (type === 'magnet' ? 45 : 30);
     this.magnetized = false;
     // initial scatter
     const ang = Math.random() * TAU;

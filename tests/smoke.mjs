@@ -628,6 +628,21 @@ assert.ok(renderHudSource.includes('drawChoiceIcon(ctx, w.def.hudIcon || w.def.i
   'weapon HUD should use the same cropped icon drawing path as upgrade cards');
 assert.ok(gameSource.includes('spawnEnemyGroup') && gameSource.includes("ev.type === 'ambush'"),
   'phase events should support ambush pacing events');
+assert.ok(gameSource.includes('getSafePickupPosition') && gameSource.includes('isPickupPositionSafe'),
+  'pickups should use collision-aware safe spawn helpers');
+game.levelData = config.LEVELS.village;
+game.player = { x: 960, y: 720 };
+game.pickups = [];
+game.collisionProps = [{ x: 420, y: 420, radius: 42 }];
+game.mapData = { features: [{ type: 'lavaFissure', x: 700, y: 420, length: 180, width: 34, angle: 0 }] };
+assert.equal(game.isPickupPositionSafe(420, 420, 18), false,
+  'pickup safe-spawn helper should reject solid prop overlap');
+assert.equal(game.isPickupPositionSafe(700, 420, 18), false,
+  'pickup safe-spawn helper should reject theme feature overlap');
+assert.equal(game.isPickupPositionSafe(720, 720, 18, { avoidThemeFeatures: false }), true,
+  'pickup safe-spawn helper should accept a clear position');
+game.collisionProps = [];
+game.mapData = { features: [] };
 assert.ok(gameSource.includes('applyPlayerHitEffects') && gameSource.includes('chainLightning') &&
   gameSource.includes('orbitPulse') && gameSource.includes('guardRetaliation'),
   'Game should apply synergy hit effects');
@@ -847,7 +862,16 @@ assert.ok(coreSource.includes('startMusic') && coreSource.includes('stopMusic'),
 assert.ok(coreSource.includes('playMusic'), 'Audio2 should have playMusic method for named tracks');
 assert.ok(coreSource.includes('_musicTracks'), 'Audio2 should define _musicTracks for named BGM');
 assert.ok(coreSource.includes('_pendingTrack'), 'Audio2 should handle pending track for autoplay policy');
+assert.ok(coreSource.includes('failed: []') && coreSource.includes('this.failed.push(key)'),
+  'asset loader should retain failed resource keys for a visible startup error');
 assert.ok(gameSource.includes('playMusic'), 'Game should call playMusic for BGM state transitions');
+assert.ok(gameSource.includes('showAssetLoadError') && gameSource.includes('Assets.failed'),
+  'Game should stop booting when asset loading fails instead of entering a blank scene');
+assert.equal(config.LEVELS.village.bgMusic, 'village', 'village should use a distinct gameplay music track');
+assert.equal(config.LEVELS.mine.bgMusic, 'mine', 'mine should use a distinct gameplay music track');
+assert.equal(config.LEVELS.hell.bgMusic, 'hell', 'hell should use a distinct gameplay music track');
+assert.ok(gameSource.includes('runSeed') && gameSource.includes('updateThemeHazards'),
+  'runs should have a stable layout seed and active theme hazards');
 assert.ok(gameSource.includes('_settingsOverlay') && gameSource.includes('renderSettings'),
   'Game should have settings overlay state and render method');
 assert.ok(gameSource.includes('openSettings') && gameSource.includes('closeSettings'),
