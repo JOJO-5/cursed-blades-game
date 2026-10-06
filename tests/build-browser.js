@@ -59,7 +59,14 @@ async page => {
     await page.reload();await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));await wait('playing');
     check('Legacy nine-weapon save restores all levels and capacity',await page.evaluate(()=>Game.player.weapons.length===9&&Game.player.weaponCapacity===9&&Game.player.weapons.every(w=>w.level===3)));
     for(const theme of ['village','mine','hell']) {
-      await page.evaluate(theme=>{Game.loadLevel(theme);Game.state='paused';Game._buildOpen=false;},theme);
+      await page.evaluate(theme=>{Game.runSeed=123;Game.loadLevel(theme);Game.state='paused';Game._buildOpen=false;},theme);
+      // Captured from v0.6's generator, seed 123. Visual changes must retain
+      // obstacle types and positions for saved players and encounter guards.
+      const hash=await page.evaluate(()=>{
+        let hash=2166136261;const source=JSON.stringify(Game.mapData.props.map(p=>[p.type,p.x,p.y]));
+        for(const c of source){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619)>>>0;}return hash;
+      });
+      check(`${theme}: terrain update preserves v0.6 obstacle layout`,hash==={village:779931628,mine:3508978612,hell:1609912571}[theme]);
       const pixels=await page.evaluate(theme=>{const c=document.createElement('canvas');c.width=c.height=128;const t=c.getContext('2d');t.drawImage(Assets.get(`tiles/ground_${theme}_v070`),0,0);const d=t.getImageData(0,0,128,128).data;let opaque=true;for(let i=3;i<d.length;i+=4)if(d[i]!==255)opaque=false;return {opaque,complete:Assets.get(`tiles/ground_${theme}_v070`).complete};},theme);
       check(`${theme}: opaque ground texture loads`,pixels.opaque&&pixels.complete);
       // Compare adjacent pixels at former tile boundaries; no periodic dark strips.
