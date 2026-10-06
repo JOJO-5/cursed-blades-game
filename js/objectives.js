@@ -2,8 +2,10 @@
 Object.assign(Game, {
   levelEncounters: [],
 
+  getLevelEncounterDefinitions() { return this.levelData.encounters || []; },
+
   initLevelEncounters() {
-    const definitions = this.levelData.encounters || [];
+    const definitions = this.getLevelEncounterDefinitions();
     const rng = makeRNG((this.runSeed ^ 0x43616d70) >>> 0);
     const direction = Math.floor(rng() * 4);
     const cx = this.levelData.mapW * CONFIG.TILE_SIZE/2, cy = this.levelData.mapH * CONFIG.TILE_SIZE/2;
@@ -66,12 +68,15 @@ Object.assign(Game, {
     return true;
   },
 
-  updateLevelEncounters() {
+  advanceWorldEncounter() { return true; },
+
+  updateLevelEncounters(dt = 0) {
     if (!this.player?.alive || this.state !== 'playing') return;
     for (const site of this.levelEncounters) {
       const def = this.levelData.encounters.find(d => d.id === site.id);
+      if (this.bossSpawned && !['complete','expired'].includes(site.status)) {site.status='expired';continue;}
       if (site.status === 'active') {
-        if (!this.enemies.some(e => e.alive && e.encounterId === site.id)) {
+        if (!this.enemies.some(e => e.alive && e.encounterId === site.id) && this.advanceWorldEncounter(site,def,dt)) {
           site.status = 'complete';
           if (!site.rewardSpawned) {
             site.rewardSpawned = true;
@@ -88,7 +93,7 @@ Object.assign(Game, {
         site.status='ready';this.addMessage(`${def.name}已显现，跟随金色指引`, '#d4b87a');
       }
       if (site.status !== 'ready' || dist(this.player.x,this.player.y,site.x,site.y)>def.triggerRadius) continue;
-      if (!def.healthCost) this.startLevelEncounter(site);
+      if (!def.healthCost && !def.manual) this.startLevelEncounter(site);
       else {
         const b=this.getEncounterActionButton();
         if (Input.wasPressed('KeyE') || Input.consumeClick(b.x,b.y,b.w,b.h)) this.startLevelEncounter(site);
@@ -118,11 +123,11 @@ Object.assign(Game, {
     const def=this.levelData.encounters.find(d=>d.id===target.id);
     const distance=Math.ceil(dist(this.player.x,this.player.y,target.x,target.y));
     const near=distance<=def.triggerRadius;
-    return {site:target,title:target.status==='active' ? `净化${def.name}` : `调查${def.name}`,
-      detail:target.status==='waiting' ? `${Math.ceil(def.availableAt-this.levelTime)}秒后显现 · 跟随金色指引` :
+    return {site:target,title:target.status==='active' ? `${def.mode==='escort'?'护送':def.mode==='seal'?'封印':'净化'}${def.name}` : `调查${def.name}`,
+      detail:def.mode && target.status!=='waiting' ? this.getEncounterObjectiveDetail(target,def,distance) : target.status==='waiting' ? `${Math.ceil(def.availableAt-this.levelTime)}秒后显现 · 跟随金色指引` :
         target.status==='active' ? `守卫剩余 ${this.enemies.filter(e=>e.alive&&e.encounterId===target.id).length}/${def.count} · ${def.reward===1?'稀有':''}宝箱` :
         def.healthCost ? `${Math.ceil(distance/CONFIG.TILE_SIZE)}格 · 献祭15%生命 → 稀有宝箱` : `${Math.ceil(distance/CONFIG.TILE_SIZE)}格 · 靠近触发3只守卫，清理获宝箱`,
-      action:target.status==='ready' && near && !!def.healthCost,next};
+      action:target.status==='ready' && near && !!(def.healthCost || def.manual),next};
   },
 
   renderObjectiveHUD() {
@@ -135,12 +140,12 @@ Object.assign(Game, {
     ctx.font='10px Courier New';ctx.fillStyle='#e1cfac';
     ctx.fillText(this.fitChoiceBadgeText(ctx,objective.detail,p.w-16),p.x+8,p.y+32);
     if(objective.action) {
-      const b=this.getEncounterActionButton();this.drawButton(b.x,b.y,b.w,b.h,'挑战5只守卫 · E / 点按','#d4a65c');
+      const b=this.getEncounterActionButton();this.drawButton(b.x,b.y,b.w,b.h,this.getEncounterActionLabel ? this.getEncounterActionLabel(objective.site) : '挑战5只守卫 · E / 点按','#d4a65c');
     } else {
       ctx.fillStyle='#a69d88';ctx.fillText(this.fitChoiceBadgeText(ctx,`下一事件：${objective.next}`,p.w-16),p.x+8,p.y+51);
     }
     const site=objective.site;
-    if(site && ['waiting','ready'].includes(site.status)) {
+    if(site && ['waiting','ready','active'].includes(site.status)) {
       const v=this.getVisibleCanvasRect(),sx=site.x-this.camera.x,sy=site.y-this.camera.y;
       const x=clamp(sx,v.x+24,v.x+v.w-24),y=clamp(sy,p.y+p.h+28,v.y+v.h-100);
       if(sx!==x || sy!==y) {

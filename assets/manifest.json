@@ -990,5 +990,25 @@
   "tiles/ground_hell_v070": {
     "w": 128,
     "h": 128
+  },
+  "props/minecart_v080": {
+    "w": 100,
+    "h": 80
+  },
+  "player/hero_walk_v080_01": {
+    "w": 96,
+    "h": 94
+  },
+  "player/hero_walk_v080_02": {
+    "w": 96,
+    "h": 94
+  },
+  "player/hero_walk_v080_03": {
+    "w": 96,
+    "h": 94
+  },
+  "player/hero_walk_v080_04": {
+    "w": 96,
+    "h": 94
   }
 }

@@ -7,7 +7,7 @@ async page => {
     if(touch)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y);
     await page.waitForTimeout(50); // Canvas consumes one queued pointer event per animation frame.
   };
-  const capture=async name=>{const path=`output/playwright/v070/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v080/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   page.on('pageerror',e=>errors.push(String(e)));
   try {
     await page.setViewportSize({width:1280,height:720});await page.goto(url);await wait('menu');
@@ -59,7 +59,7 @@ async page => {
     await page.reload();await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));await wait('playing');
     check('Legacy nine-weapon save restores all levels and capacity',await page.evaluate(()=>Game.player.weapons.length===9&&Game.player.weaponCapacity===9&&Game.player.weapons.every(w=>w.level===3)));
     for(const theme of ['village','mine','hell']) {
-      await page.evaluate(theme=>{Game.runSeed=123;Game.loadLevel(theme);Game.state='paused';Game._buildOpen=false;},theme);
+      await page.evaluate(theme=>{Game.runSeed=123;Game.loadLevel(theme);Game.mapLayoutVersion=0;Game.generateMap();Game.state='paused';Game._buildOpen=false;},theme);
       // Captured from v0.6's generator, seed 123. Visual changes must retain
       // obstacle types and positions for saved players and encounter guards.
       const hash=await page.evaluate(()=>{

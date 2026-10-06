@@ -3,13 +3,13 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 248,
+    "totalAssets": 253,
     "categories": {
-      "props": 44,
+      "props": 45,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
-      "player": 5,
+      "player": 9,
       "bosses": 3,
       "tiles": 19,
       "effects": 15,
@@ -3355,6 +3355,100 @@
       },
       "animation": null,
       "source": "assets/source_sheets/v070_ground_atlas.png"
+    },
+    "props/minecart_v080": {
+      "id": "props/minecart_v080",
+      "name": "minecart_v080",
+      "category": "props",
+      "path": "assets/props/minecart_v080.png",
+      "w": 100,
+      "h": 80,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "assets/source_sheets/v080_minecart.png"
+    },
+    "player/hero_walk_v080_01": {
+      "id": "player/hero_walk_v080_01",
+      "name": "hero_walk_v080_01",
+      "category": "player",
+      "path": "assets/player/hero_walk_v080_01.png",
+      "w": 96,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": {
+        "frames": 1,
+        "frameW": 96,
+        "frameH": 94,
+        "fps": 8,
+        "loop": true
+      },
+      "source": "assets/source_sheets/v080_hero_walk.png"
+    },
+    "player/hero_walk_v080_02": {
+      "id": "player/hero_walk_v080_02",
+      "name": "hero_walk_v080_02",
+      "category": "player",
+      "path": "assets/player/hero_walk_v080_02.png",
+      "w": 96,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": {
+        "frames": 1,
+        "frameW": 96,
+        "frameH": 94,
+        "fps": 8,
+        "loop": true
+      },
+      "source": "assets/source_sheets/v080_hero_walk.png"
+    },
+    "player/hero_walk_v080_03": {
+      "id": "player/hero_walk_v080_03",
+      "name": "hero_walk_v080_03",
+      "category": "player",
+      "path": "assets/player/hero_walk_v080_03.png",
+      "w": 96,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": {
+        "frames": 1,
+        "frameW": 96,
+        "frameH": 94,
+        "fps": 8,
+        "loop": true
+      },
+      "source": "assets/source_sheets/v080_hero_walk.png"
+    },
+    "player/hero_walk_v080_04": {
+      "id": "player/hero_walk_v080_04",
+      "name": "hero_walk_v080_04",
+      "category": "player",
+      "path": "assets/player/hero_walk_v080_04.png",
+      "w": 96,
+      "h": 94,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": {
+        "frames": 1,
+        "frameW": 96,
+        "frameH": 94,
+        "fps": 8,
+        "loop": true
+      },
+      "source": "assets/source_sheets/v080_hero_walk.png"
     }
   }
 }

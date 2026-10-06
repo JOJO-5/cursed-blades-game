@@ -261,7 +261,9 @@ class Player {
 
     // walk bob
     const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    const spriteKey = 'player/hero';
+    const frame = Math.floor(this.animTime * 8) % 4 + 1;
+    const walkingKey = `player/hero_walk_v080_0${frame}`;
+    const spriteKey = this.isMoving && Assets.get(walkingKey) ? walkingKey : 'player/hero';
     const spriteImg = Assets.get(spriteKey);
     if (spriteImg && spriteImg.complete && spriteImg.width > 0) {
       Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);

@@ -37,7 +37,7 @@ assert.equal(run('Game.player.weapons[1].level'),4,'Evolution preserves level');
 assert.equal(run('Game.player.weapons.length'),6);
 run(`const old=Game.migrateSave({schemaVersion:5,weapons:ids.slice(0,9).map(id=>({id,level:3}))})`);
 assert.equal(run('old.weaponCapacity'),9,'Legacy saves preserve expanded inventory');
-assert.equal(run('old.schemaVersion'),6);
+assert.equal(run('old.schemaVersion'),7);
 for(const size of [[390,844],[320,568],[844,390],[1280,720]]) {
   run(`window.innerWidth=${size[0]};window.innerHeight=${size[1]};Game._buildPage=0;Game._buildTab='weapons'`);
   assert.ok(run(`(()=>{const l=Game.getBuildPanelLayout(),v=Game.getVisibleCanvasRect();return [l.back,l.prev,l.next,...l.rows,...l.tabs].every(r=>r.x>=v.x&&r.y>=v.y&&r.x+r.w<=v.x+v.w&&r.y+r.h<=v.y+v.h)})()`),'Controls remain in the visible canvas');

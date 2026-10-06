@@ -54,7 +54,7 @@ const Game = {
 
   saveKey: 'cursed_blades_save',
   metaKey: 'cursed_blades_meta',
-  saveSchemaVersion: 6,
+  saveSchemaVersion: 7,
 
   // Object pools (initialized in init() — reduce GC by reusing entities)
   particlePool: null,
@@ -426,7 +426,7 @@ const Game = {
 
     // phased spawning — data-driven, replaces fixed spawn/elite/boss timers
     this.updatePhase(dt);
-    this.updateLevelEncounters();
+    this.updateLevelEncounters(dt);
 
     // pause toggle
     if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
@@ -2909,6 +2909,7 @@ const Game = {
     if (!this.player || !this.player.alive) return;
     const data = {
       schemaVersion: this.saveSchemaVersion,
+      mapLayoutVersion: this.mapLayoutVersion ?? 0,
       level: this.player.level,
       xp: this.player.xp,
       hp: this.player.hp,
@@ -3026,6 +3027,7 @@ const Game = {
       const raw = localStorage.getItem(this.saveKey);
       if (!raw) { this.startNewGame(); return; }
       const data = this.migrateSave(JSON.parse(raw));
+      this.mapLayoutVersion = data.mapLayoutVersion ?? 0;
       const levelId = CONFIG.LEVELS[data.levelId] ? data.levelId : 'village';
       this.levelData = CONFIG.LEVELS[levelId];
       this.player = new Player(this.levelData.mapW * CONFIG.TILE_SIZE / 2, this.levelData.mapH * CONFIG.TILE_SIZE / 2);
