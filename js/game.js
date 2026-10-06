@@ -54,7 +54,7 @@ const Game = {
 
   saveKey: 'cursed_blades_save',
   metaKey: 'cursed_blades_meta',
-  saveSchemaVersion: 7,
+  saveSchemaVersion: 8,
 
   // Object pools (initialized in init() — reduce GC by reusing entities)
   particlePool: null,
@@ -1817,6 +1817,7 @@ const Game = {
         } else {
           // Final victory after hell
           this.state = 'victory';
+          this.updateMeta();
           Audio2.playMusic('victory');
         }
       }, 'victory');
@@ -2910,6 +2911,10 @@ const Game = {
     const data = {
       schemaVersion: this.saveSchemaVersion,
       mapLayoutVersion: this.mapLayoutVersion ?? 0,
+      runHistory: this.runHistory,
+      runStartKills: this.runStartKills,
+      runStartChests: this.runStartChests,
+      runHistoryComplete: this.runHistoryComplete,
       level: this.player.level,
       xp: this.player.xp,
       hp: this.player.hp,
@@ -3027,6 +3032,7 @@ const Game = {
       const raw = localStorage.getItem(this.saveKey);
       if (!raw) { this.startNewGame(); return; }
       const data = this.migrateSave(JSON.parse(raw));
+      this.restoreRunHistory?.(data);
       this.mapLayoutVersion = data.mapLayoutVersion ?? 0;
       const levelId = CONFIG.LEVELS[data.levelId] ? data.levelId : 'village';
       this.levelData = CONFIG.LEVELS[levelId];
@@ -4003,7 +4009,7 @@ const Game = {
     ctx.fillStyle = '#c4a87a';
     ctx.font = '16px Courier New';
     ctx.fillText(`等级: ${this.player.level}  |  击杀: ${this.player.kills}`, CONFIG.CANVAS_W/2, 165);
-    ctx.fillText(`存活时间: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 190);
+    ctx.fillText(this.formatRunTime ? this.formatRunTime() : `存活时间: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 190);
     ctx.fillStyle = '#ff8040';
     ctx.fillText(`精英击杀: ${this.eliteKills}  |  Boss击杀: ${this.bossKills}  |  宝箱开启: ${this.chestsOpened}`, CONFIG.CANVAS_W/2, 215);
 
@@ -4043,9 +4049,10 @@ const Game = {
 
     ctx.fillStyle = '#c4a87a';
     ctx.font = '16px Courier New';
-    ctx.fillText('腐化巨蛛已被击败，诅咒的源头彻底消散！', CONFIG.CANVAS_W/2, 210);
+    ctx.fillText(this.getEndingText ? this.getEndingText() : '最终首领已被击败，诅咒的源头彻底消散！', CONFIG.CANVAS_W/2, 210);
     ctx.fillText(`等级: ${this.player.level}  |  击杀: ${this.player.kills}`, CONFIG.CANVAS_W/2, 240);
-    ctx.fillText(`用时: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 270);
+    ctx.fillText(this.formatRunTime ? this.formatRunTime() : `用时: ${Math.floor(this.levelTime/60)}分${Math.floor(this.levelTime%60)}秒`, CONFIG.CANVAS_W/2, 270);
+    if(this.getRunSummary){ctx.font='12px Courier New';ctx.fillStyle='#8a9d86';ctx.fillText(this.getRunSummary().levels.map(r=>`${CONFIG.LEVELS[r.theme].name} ${Math.floor(r.seconds/60)}:${String(Math.floor(r.seconds%60)).padStart(2,'0')}`).join(' · '),CONFIG.CANVAS_W/2,295);}
 
     ctx.fillStyle = '#8a7a5a';
     ctx.font = '13px Courier New';

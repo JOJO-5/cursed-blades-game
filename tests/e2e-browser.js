@@ -8,7 +8,7 @@ async page => {
     if (!condition) throw new Error(name);
   };
   const waitState = (p, state) => p.waitForFunction(s => typeof Game !== 'undefined' && Game.state === s, state, {timeout:15000});
-  const capture = async (p, name) => { const filename=`output/playwright/v080/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
+  const capture = async (p, name) => { const filename=`output/playwright/v090/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
   const clickRect = async (p, rect, touch=false) => {
     const pos = await p.evaluate(r => {
       const b=Game.canvas.getBoundingClientRect(), x=r.x+r.w/2, y=r.y+r.h/2;
@@ -213,7 +213,7 @@ async page => {
     }
     await waitState(page,'victory'); await capture(page,'final-victory');
     check('All three completion flags persist',await page.evaluate(()=>['village','mine','hell'].every(t=>Game.meta.levelsCompleted[t])),'accelerated-flow');
-    await clickRect(page,{x:380,y:380,w:200,h:45}); await waitState(page,'menu');
+    await clickRect(page,await page.evaluate(()=>Game.getEndingLayout().menu)); await waitState(page,'menu');
     await clickMenu(page,'start'); await finishStories(page); await waitState(page,'playing');
     await page.evaluate(()=>{
       Game.player.hp=1;Game.player.invuln=0;

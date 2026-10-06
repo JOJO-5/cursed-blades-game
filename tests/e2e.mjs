@@ -5,10 +5,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const output = path.join(root, 'output/playwright/v080');
+const campaign = process.argv.includes('--campaign');
+const summaryOnly = process.argv.includes('--summary');
+const output = path.join(root, 'output/playwright/v090');
 const natural = process.argv.includes('--natural');
-const resultFile = natural ? 'natural-results.json' : 'results.json';
-const failureFile = natural ? 'natural-failure.json' : 'failure.json';
+const profile=process.argv.find(a=>a.startsWith('--profile='))?.split('=')[1];
+const resultFile = campaign ? `campaign-${profile||'all'}-results.json` : summaryOnly ? 'summary-results.json' : natural ? 'natural-results.json' : 'results.json';
+const failureFile = campaign ? `campaign-${profile||'all'}-failure.json` : summaryOnly ? 'summary-failure.json' : natural ? 'natural-failure.json' : 'failure.json';
 await mkdir(output, { recursive: true });
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
   '.css':'text/css','.png':'image/png','.json':'application/json'};
@@ -23,7 +26,7 @@ const server = createServer(async (req, res) => {
   } catch { res.writeHead(404); res.end('Not found'); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const url = process.env.CURSED_TEST_URL || `http://127.0.0.1:${server.address().port}`;
+const url = (process.env.CURSED_TEST_URL || `http://127.0.0.1:${server.address().port}`)+(campaign&&profile?`?naturalProfile=${encodeURIComponent(profile)}`:'');
 const session = `cursed-e2e-${process.pid}`;
 const cli = path.join(root, 'node_modules/@playwright/cli/playwright-cli.js');
 const config = {browser: {browserName:'chromium', launchOptions: {channel:process.platform === 'win32' ? 'chrome' : 'chromium'},
@@ -47,11 +50,11 @@ const started = new Date().toISOString();
 try {
   await run(['open',url,'--config',configPath]);
   await run(['snapshot']);
-  const response = await run(['run-code','--filename',natural ? 'tests/natural-browser.js' : 'tests/e2e-browser.js']);
+  const response = await run(['run-code','--filename',campaign ? 'tests/natural-campaign-browser.js' : summaryOnly ? 'tests/run-browser.js' : natural ? 'tests/natural-browser.js' : 'tests/e2e-browser.js']);
   const resultMatch = response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
   if (!resultMatch) throw new Error('Missing browser test result');
   const result = JSON.parse(resultMatch[1]);
-  for(const file of natural ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js']) {
+  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js']) {
     if(!result.passed)break;
     const response = await run(['run-code','--filename',file]);
     const match=response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
@@ -61,6 +64,7 @@ try {
     result.passed=build.passed;if(!build.passed)result.failure=build.failure;
   }
   await writeFile(path.join(output,resultFile),JSON.stringify({started,url,...result},null,2));
+  if(campaign)console.log('Natural campaign report: '+JSON.stringify(result.results.map(r=>({profile:r.profile,state:r.state,theme:r.theme,time:r.time,hp:r.hp,level:r.level,wallSeconds:r.wallSeconds,weapons:r.weapons,summary:r.summary,timing:r.timing}))));
   if (!result.passed) throw new Error(result.failure || 'Browser assertions failed');
   await rm(path.join(output,failureFile),{force:true});
   if(!natural)for(const name of ['failure.png','build-failure.png','world-failure.png',...['orbit','projectile','summon'].map(id=>`campaign-${id}-failure.png`)])await rm(path.join(output,name),{force:true});

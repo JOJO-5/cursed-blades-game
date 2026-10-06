@@ -7,7 +7,7 @@ async page => {
     if(touch)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y);
     await page.waitForTimeout(50); // Canvas consumes one queued pointer event per animation frame.
   };
-  const capture=async name=>{const path=`output/playwright/v080/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v090/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   page.on('pageerror',e=>errors.push(String(e)));
   try {
     await page.setViewportSize({width:1280,height:720});await page.goto(url);await wait('menu');

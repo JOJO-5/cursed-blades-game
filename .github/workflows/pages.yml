@@ -31,7 +31,7 @@ jobs:
         if: always()
         with:
           name: browser-regression
-          path: output/playwright/v080/
+          path: output/playwright/v090/
 
   deploy:
     if: github.event_name != 'pull_request'

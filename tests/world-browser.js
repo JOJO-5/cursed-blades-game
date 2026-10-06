@@ -6,7 +6,7 @@ async page => {
     const pos=await page.evaluate(r=>{const b=Game.canvas.getBoundingClientRect(),x=r.x+r.w/2,y=r.y+r.h/2;return Game._rotate90?{x:b.left+(1-y/540)*b.width,y:b.top+x/960*b.height}:{x:b.left+x/960*b.width,y:b.top+y/540*b.height};},r);
     if(touch)await page.touchscreen.tap(pos.x,pos.y);else await page.mouse.click(pos.x,pos.y);await page.waitForTimeout(60);
   };
-  const capture=async name=>{const path=`output/playwright/v080/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v090/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   const settle=async()=>{
     for(let i=0;i<40;i++) {
       const state=await page.evaluate(()=>Game.state);
