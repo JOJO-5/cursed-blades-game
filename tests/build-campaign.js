@@ -53,7 +53,7 @@ async page => {
         });
         await p.waitForFunction(()=>Game.bossDefeated,null,{timeout:18000});
         check(`${profile.id}/${theme}: build deals boss finishing damage`,await p.evaluate(()=>Game.bossDefeated&&Game.bossDefeatedGraceTimer>0));
-        const path=`output/playwright/v090/campaign-${profile.id}-${theme}.png`;await p.screenshot({path});screenshots.push(path);
+        const path=`output/playwright/v100/campaign-${profile.id}-${theme}.png`;await p.screenshot({path});screenshots.push(path);
         for(let i=0;i<180;i++) {
           const s=await p.evaluate(()=>Game.state);
           if(s==='story'||s==='victory')break;
@@ -63,9 +63,9 @@ async page => {
       }
       await p.waitForFunction(()=>Game.state==='victory');
       check(`${profile.id}: full accelerated campaign reaches victory`,await p.evaluate(()=>['village','mine','hell'].every(t=>Game.meta.levelsCompleted[t])));
-      check(`${profile.id}: final time includes all three biomes and pickup grace`,await p.evaluate(()=>Game.getRunSummary().seconds>=Object.values(CONFIG.LEVELS).reduce((s,l)=>s+l.bossSpawnTime,0)&&Game.meta.bestSurvivalTime>=Game.getRunSummary().seconds-.1));
+      check(`${profile.id}: final time includes all three biomes and pickup grace`,await p.evaluate(()=>Game.getRunSummary().seconds>=['village','mine','hell'].reduce((s,id)=>s+CONFIG.LEVELS[id].bossSpawnTime,0)&&Game.meta.bestSurvivalTime>=Game.getRunSummary().seconds-.1));
       check(`${profile.id}: final ending names the actual dragon`,await p.evaluate(()=>Game.getEndingText().includes(CONFIG.ENEMIES[CONFIG.LEVELS.hell.bossId].name)));
-    } catch(error){await p.screenshot({path:`output/playwright/v090/campaign-${profile.id}-failure.png`}).catch(()=>{});return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};}
+    } catch(error){await p.screenshot({path:`output/playwright/v100/campaign-${profile.id}-failure.png`}).catch(()=>{});return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};}
     finally {await context.close();}
   }
   check('Three build campaigns have no JavaScript errors',errors.length===0);

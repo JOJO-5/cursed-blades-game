@@ -12,6 +12,11 @@ async page => {
     const release=async()=>{for(const k of held)await p.keyboard.up(k);held=[];};
     try {
       await p.goto(url);await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});
+      const setup=new URL(url).searchParams;
+      for(const [param,list] of [['character','characters'],['expedition','expeditions']])if(setup.get(param)){
+        const rect=await p.evaluate(({list,id})=>Game.getMenuLayout()[list].find(r=>r.id===id),{list,id:setup.get(param)});
+        const bounds=await p.locator('canvas').boundingBox();await p.mouse.click(bounds.x+(rect.x+rect.w/2)/960*bounds.width,bounds.y+(rect.y+rect.h/2)/540*bounds.height);await p.waitForTimeout(80);
+      }
       const r=await p.evaluate(()=>Game.getMenuLayout().start),b=await p.locator('canvas').boundingBox();
       await p.mouse.click(b.x+(r.x+r.w/2)/960*b.width,b.y+(r.y+r.h/2)/540*b.height);
       await p.evaluate(()=>{Game._naturalTiming={update:[],render:[],separation:[],frame:[]};const record=(key,value)=>{const a=Game._naturalTiming[key];if(a.length<4000)a.push(value);else a[(Game._naturalTiming[key+'Index']=(Game._naturalTiming[key+'Index']||0)+1)%4000]=value;};for(const [method,key] of [['updatePlaying','update'],['render','render'],['separateEnemies','separation']]){const original=Game[method];Game[method]=function(...args){const t=performance.now();try{return original.apply(this,args);}finally{if(this.state==='playing'){record(key,performance.now()-t);if(key==='render'){if(this._naturalFrameTime)record('frame',this._lastTime-this._naturalFrameTime);this._naturalFrameTime=this._lastTime;}}else if(key==='render')this._naturalFrameTime=0;}};}});
@@ -48,6 +53,7 @@ async page => {
             for(const e of g.enemies)if(e.alive){const d=dist(x,y,e.x,e.y)-e.radius-a.radius;if(d<45)score-=(45-d)*3;}
             for(const e of g.enemyProjectiles)if(e.alive){const d=dist(x,y,e.x+e.vx*.15,e.y+e.vy*.15);if(d<60)score-=(60-d)*4;}
             if(g.mapData.features.some(f=>!f.sealed&&['demonRift','lavaFissure','crystalVein'].includes(f.type)&&g.isPointNearThemeFeature(x,y,a.radius,[f])))score-=800;
+            if(g.getTrialWeather?.().marsh&&g.getTrialWeather().active&&g.trialZones.some(z=>g.isPointInTrialZone(x,y,z)))score-=800;
             if(score>bestScore){bestScore=score;best=v;}
           }
           return {state:g.state,theme,time:g.levelTime,hp:a.hp,maxHp:a.getMaxHp(),level:a.level,kills:a.kills,bosses:g.bossKills,chests:g.chestsOpened,
@@ -70,18 +76,18 @@ async page => {
         }
         if(s.state!=='playing'){await release();await p.waitForTimeout(100);continue;}
         const sampleKey=s.theme+'-'+Math.floor(s.time/60);
-        if(sampleKey!==lastSample){samples.push(s);lastSample=sampleKey;const path=`output/playwright/v090/natural-${profile.id}-${sampleKey}-hp${Math.round(s.hp)}-lv${s.level}.png`;await p.screenshot({path});screenshots.push(path);}
+        if(sampleKey!==lastSample){samples.push(s);lastSample=sampleKey;const path=`output/playwright/v100/natural-${profile.id}-${sampleKey}-hp${Math.round(s.hp)}-lv${s.level}.png`;await p.screenshot({path});screenshots.push(path);}
         for(const k of held)if(!s.keys.includes(k))await p.keyboard.up(k);
         for(const k of s.keys)if(!held.includes(k))await p.keyboard.down(k);held=s.keys;
         if(s.action)await p.keyboard.press('KeyE');if(s.dash)await p.keyboard.press('Space');
         await p.waitForTimeout(100);
       }
       await release();
-      if(!outcome){outcome=lastSeen;const path=`output/playwright/v090/natural-${profile.id}-timeout.png`;await p.screenshot({path});screenshots.push(path);}
+      if(!outcome){outcome=lastSeen;const path=`output/playwright/v100/natural-${profile.id}-timeout.png`;await p.screenshot({path});screenshots.push(path);}
       results.push({profile,...outcome,samples,choices,wallSeconds:(Date.now()-started)/1000});
       checks.push({name:`Natural full campaign: ${profile.id}`,passed:outcome?.state==='victory',mode:'real-time seeded random + keyboard, unchanged stats/timers'});
       if(outcome?.state!=='victory')return {passed:false,checks,results,screenshots,errors,failure:`${profile.id}: ${outcome?.state||'timeout'} in ${outcome?.theme} at ${outcome?.time}s`};
-    }catch(error){const path=`output/playwright/v090/natural-${profile.id}-failure.png`;await p.screenshot({path}).catch(()=>{});screenshots.push(path);results.push({profile,...lastSeen,samples,choices,wallSeconds:(Date.now()-started)/1000});checks.push({name:`Natural full campaign: ${profile.id}`,passed:false});return {passed:false,checks,results,screenshots,errors,failure:String(error.stack||error)};}
+    }catch(error){const path=`output/playwright/v100/natural-${profile.id}-failure.png`;await p.screenshot({path}).catch(()=>{});screenshots.push(path);results.push({profile,...lastSeen,samples,choices,wallSeconds:(Date.now()-started)/1000});checks.push({name:`Natural full campaign: ${profile.id}`,passed:false});return {passed:false,checks,results,screenshots,errors,failure:String(error.stack||error)};}
     finally{await release().catch(()=>{});await context.close();}
   }
   return {passed:errors.length===0,checks,results,screenshots,errors,limits:['Automated decisions do not establish human balance or physical-device acceptance. Build profiles are upgrade preferences, not injected starting weapons.']};

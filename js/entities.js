@@ -9,7 +9,11 @@ class Player {
     this.radius = CONFIG.PLAYER.radius;
     this.vx = 0; this.vy = 0;
     this.facing = 0; // angle
-    this.moveAngle = 0;
+    this.moveAngle = Math.PI / 2;
+    this.characterId = 'warden';
+    this.stepDistance = 0;
+    this.spriteDirection = 'south';
+    this.spriteFlip = false;
     this.hp = CONFIG.PLAYER.maxHp;
     this.invuln = 0;
     this.dashTimer = 0;
@@ -183,6 +187,8 @@ class Player {
       const len = Math.sqrt(mx*mx + my*my);
       mx /= len; my /= len;
       this.moveAngle = Math.atan2(my, mx);
+      if (Math.abs(my) > Math.abs(mx)) { this.spriteDirection = my < 0 ? 'north' : 'south'; this.spriteFlip = false; }
+      else { this.spriteDirection = 'east'; this.spriteFlip = mx < 0; }
     }
 
     // dash (keyboard or touch button)
@@ -223,6 +229,9 @@ class Player {
     // resolve collision with solid props
     Game.resolvePropCollision(this);
     if (Game.clampEntityToMap) Game.clampEntityToMap(this, 30);
+    const traveled = dist(prevPlayerX, prevPlayerY, this.x, this.y);
+    this.isMoving = this.isMoving && traveled > 0.05 && this.dashTimer <= 0;
+    if (this.isMoving) this.stepDistance += traveled;
 
     // update weapons
     for (const w of this.weapons) w.update(dt, this);
@@ -237,6 +246,12 @@ class Player {
       Game.addMessage('召唤契约唤来了暗影小鬼', '#c080ff');
       this._summonPactGrantedMessage = true;
     }
+  }
+
+  getSpritePose() {
+    const frame = this.isMoving ? 1 + Math.floor(this.stepDistance / 12) % 4 : 0;
+    return {key:`player/${this.characterId || 'warden'}_${this.spriteDirection}_${frame}_v100`,
+      direction:this.spriteDirection,flip:this.spriteFlip,frame,height:64};
   }
 
   draw(ctx) {
@@ -259,14 +274,14 @@ class Player {
     ctx.ellipse(this.x + sx, this.y + 14 + sy, 14, 6, 0, 0, TAU);
     ctx.fill();
 
-    // walk bob
-    const bob = this.isMoving ? Math.sin(this.animTime * 10) * 2 : Math.sin(this.animTime * 3) * 1;
-    const frame = Math.floor(this.animTime * 8) % 4 + 1;
-    const walkingKey = `player/hero_walk_v080_0${frame}`;
-    const spriteKey = this.isMoving && Assets.get(walkingKey) ? walkingKey : 'player/hero';
+    // Keep the visible body height and foot anchor stable in every pose.
+    const pose = this.getSpritePose(), bob = 0;
+    const spriteKey = Assets.get(pose.key) ? pose.key : 'player/hero';
     const spriteImg = Assets.get(spriteKey);
     if (spriteImg && spriteImg.complete && spriteImg.width > 0) {
-      Assets.drawCentered(ctx, spriteKey, this.x + sx, this.y + bob + sy, 0.7, 0, alpha);
+      ctx.save();ctx.translate(this.x + sx, this.y + 14 + sy);ctx.scale(pose.flip ? -1 : 1, 1);
+      Game.drawCroppedAsset(ctx,spriteKey,0,-pose.height/2,64,pose.height,{alpha,imageSmoothingEnabled:false});
+      ctx.restore();
     } else {
       this.drawFallback(ctx, this.x + sx, this.y + bob + sy, alpha);
     }
@@ -277,10 +292,7 @@ class Player {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.globalAlpha = alpha * 0.7 * (this.hitFlash / 0.2);
       ctx.fillStyle = '#ff2020';
-      const img = Assets.get(spriteKey);
-      const w = img ? img.width * 0.7 : 32;
-      const h = img ? img.height * 0.7 : 32;
-      ctx.fillRect(this.x + sx - w/2, this.y + bob + sy - h/2, w, h);
+      ctx.fillRect(this.x + sx - 24, this.y + 14 + sy - pose.height, 48, pose.height);
       ctx.restore();
     }
 
@@ -672,24 +684,18 @@ class Weapon {
       ctx.arc(0, 0, sz * 0.8, 0, TAU);
       ctx.stroke();
 
-      // weapon sprite - 使用平滑缩放让小素材更清晰
-      ctx.imageSmoothingEnabled = true;
+      // Preserve crisp pixel edges on weapon sprites.
+      ctx.imageSmoothingEnabled = false;
       const img = Assets.get(this.def.icon);
       if (img && img.complete && img.naturalWidth > 0) {
         const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.def.icon, 0, 0, sz, sz, {
-          imageSmoothingEnabled: true,
+          imageSmoothingEnabled: false,
         });
         if (!drawn) ctx.drawImage(img, -sz/2, -sz/2, sz, sz);
       } else {
         ctx.fillStyle = this.def.color;
         ctx.fillRect(-sz/2, -sz/2, sz, sz);
       }
-
-      // animated edge highlight - 降低不透明度避免遮挡素材
-      ctx.strokeStyle = this.def.color + '30';
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.18 + Math.sin(Date.now() / 150 + offset) * 0.08;
-      ctx.strokeRect(-sz/2 - 1, -sz/2 - 1, sz + 2, sz + 2);
 
       ctx.restore();
 
@@ -2331,11 +2337,11 @@ class Projectile {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = false;
     const img = Assets.get(this.sprite);
     if (img && img.complete && img.naturalWidth > 0) {
       const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.sprite, 0, 0, this.size, this.size, {
-        imageSmoothingEnabled: true,
+        imageSmoothingEnabled: false,
       });
       if (!drawn) ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
     } else {

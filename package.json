@@ -1,10 +1,10 @@
 {
   "name": "cursed-blades",
   "private": true,
-  "version": "0.9.0-preview",
+  "version": "0.10.0-preview",
   "scripts": {
-    "validate": "node tests/smoke.mjs && node tests/reliability.mjs && node tests/objectives.mjs && node tests/builds.mjs && node tests/world.mjs && node tests/run-summary.mjs && node tests/assets-loader.mjs && node tests/boss-runtime.mjs",
-    "test": "node tests/smoke.mjs && node tests/reliability.mjs && node tests/objectives.mjs && node tests/builds.mjs && node tests/world.mjs && node tests/run-summary.mjs && node tests/assets-loader.mjs && node tests/boss-runtime.mjs",
+    "validate": "node tests/smoke.mjs && node tests/reliability.mjs && node tests/objectives.mjs && node tests/builds.mjs && node tests/world.mjs && node tests/run-summary.mjs && node tests/assets-loader.mjs && node tests/boss-runtime.mjs && node tests/hero-motion.mjs && node tests/expeditions.mjs",
+    "test": "node tests/smoke.mjs && node tests/reliability.mjs && node tests/objectives.mjs && node tests/builds.mjs && node tests/world.mjs && node tests/run-summary.mjs && node tests/assets-loader.mjs && node tests/boss-runtime.mjs && node tests/hero-motion.mjs && node tests/expeditions.mjs",
     "test:e2e": "node tests/e2e.mjs",
     "test:opening": "node tests/e2e.mjs --natural",
     "stage:site": "node tools/stage-site.mjs",

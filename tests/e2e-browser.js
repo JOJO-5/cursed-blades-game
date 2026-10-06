@@ -8,7 +8,7 @@ async page => {
     if (!condition) throw new Error(name);
   };
   const waitState = (p, state) => p.waitForFunction(s => typeof Game !== 'undefined' && Game.state === s, state, {timeout:state==='menu'?65000:15000});
-  const capture = async (p, name) => { const filename=`output/playwright/v090/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
+  const capture = async (p, name) => { const filename=`output/playwright/v100/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
   const clickRect = async (p, rect, touch=false) => {
     const pos = await p.evaluate(r => {
       const b=Game.canvas.getBoundingClientRect(), x=r.x+r.w/2, y=r.y+r.h/2;

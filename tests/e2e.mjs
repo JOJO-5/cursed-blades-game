@@ -7,10 +7,12 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const campaign = process.argv.includes('--campaign');
 const summaryOnly = process.argv.includes('--summary');
-const output = path.join(root, 'output/playwright/v090');
+const output = path.join(root, 'output/playwright/v100');
 const natural = process.argv.includes('--natural');
 const profile=process.argv.find(a=>a.startsWith('--profile='))?.split('=')[1];
-const resultFile = campaign ? `campaign-${profile||'all'}-results.json` : summaryOnly ? 'summary-results.json' : natural ? 'natural-results.json' : 'results.json';
+const expedition=process.argv.find(a=>a.startsWith('--expedition='))?.split('=')[1];
+const character=process.argv.find(a=>a.startsWith('--character='))?.split('=')[1];
+const resultFile = campaign ? `campaign-${expedition?expedition+'-':''}${profile||'all'}-results.json` : summaryOnly ? 'summary-results.json' : natural ? 'natural-results.json' : 'results.json';
 const failureFile = campaign ? `campaign-${profile||'all'}-failure.json` : summaryOnly ? 'summary-failure.json' : natural ? 'natural-failure.json' : 'failure.json';
 await mkdir(output, { recursive: true });
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
@@ -26,7 +28,11 @@ const server = createServer(async (req, res) => {
   } catch { res.writeHead(404); res.end('Not found'); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const url = (process.env.CURSED_TEST_URL || `http://127.0.0.1:${server.address().port}`)+(campaign&&profile?`?naturalProfile=${encodeURIComponent(profile)}`:'');
+const targetURL=new URL(process.env.CURSED_TEST_URL || `http://127.0.0.1:${server.address().port}`);
+if(campaign&&profile)targetURL.searchParams.set('naturalProfile',profile);
+if(expedition)targetURL.searchParams.set('expedition',expedition);
+if(character)targetURL.searchParams.set('character',character);
+const url=targetURL.href;
 const session = `cursed-e2e-${process.pid}`;
 const cli = path.join(root, 'node_modules/@playwright/cli/playwright-cli.js');
 const config = {browser: {browserName:'chromium', launchOptions: {channel:process.platform === 'win32' ? 'chrome' : 'chromium'},
@@ -54,7 +60,7 @@ try {
   const resultMatch = response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
   if (!resultMatch) throw new Error('Missing browser test result');
   const result = JSON.parse(resultMatch[1]);
-  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js']) {
+  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js','tests/expansion-browser.js']) {
     if(!result.passed)break;
     const response = await run(['run-code','--filename',file]);
     const match=response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);

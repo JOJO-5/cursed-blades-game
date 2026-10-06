@@ -2916,6 +2916,9 @@ const Game = {
       runStartChests: this.runStartChests,
       runHistoryComplete: this.runHistoryComplete,
       level: this.player.level,
+      characterId: this.player.characterId,
+      spriteDirection: this.player.spriteDirection,
+      spriteFlip: this.player.spriteFlip,
       xp: this.player.xp,
       hp: this.player.hp,
       kills: this.player.kills,
@@ -3049,6 +3052,9 @@ const Game = {
       this._choiceDetails = null;
       this.damageVignette = 0;
       this.player.level = data.level ?? 1;
+      this.player.characterId = CONFIG.CHARACTERS?.[data.characterId] ? data.characterId : 'warden';
+      this.player.spriteDirection = ['south','north','east'].includes(data.spriteDirection) ? data.spriteDirection : 'south';
+      this.player.spriteFlip = this.player.spriteDirection === 'east' && !!data.spriteFlip;
       this.runSeed = Number.isFinite(data.runSeed) ? data.runSeed : 0;
       this.player.xp = data.xp ?? 0;
       this.player.xpToNext = CONFIG.XP_CURVE[Math.min(this.player.level - 1, CONFIG.XP_CURVE.length - 1)] || 9999;

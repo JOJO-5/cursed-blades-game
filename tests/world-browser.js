@@ -6,7 +6,7 @@ async page => {
     const pos=await page.evaluate(r=>{const b=Game.canvas.getBoundingClientRect(),x=r.x+r.w/2,y=r.y+r.h/2;return Game._rotate90?{x:b.left+(1-y/540)*b.width,y:b.top+x/960*b.height}:{x:b.left+x/960*b.width,y:b.top+y/540*b.height};},r);
     if(touch)await page.touchscreen.tap(pos.x,pos.y);else await page.mouse.click(pos.x,pos.y);await page.waitForTimeout(60);
   };
-  const capture=async name=>{const path=`output/playwright/v090/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v100/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   const settle=async()=>{
     for(let i=0;i<40;i++) {
       const state=await page.evaluate(()=>Game.state);
@@ -59,12 +59,12 @@ async page => {
     await page.evaluate(()=>{Game.startNewGame();Game.runSeed=123;Game.loadLevel('village');Game.state='paused';Game.renderPause=()=>{};Game.player.invuln=0;});
     await capture('village-regions');
     const animation=await page.evaluate(()=>{
-      const p=Game.player,seen=[],original=Assets.drawCentered;
-      Assets.drawCentered=function(c,key,...args){if(key.startsWith('player/'))seen.push(key);return original.call(this,c,key,...args);};
-      try{p.isMoving=true;for(let i=0;i<4;i++){p.animTime=i/8;p.draw(Game.ctx);}p.isMoving=false;p.draw(Game.ctx);}finally{Assets.drawCentered=original;}
+      const p=Game.player,seen=[],original=Game.drawCroppedAsset;
+      Game.drawCroppedAsset=function(c,key,...args){if(key.startsWith('player/'))seen.push(key);return original.call(this,c,key,...args);};
+      try{p.isMoving=true;for(let i=0;i<4;i++){p.stepDistance=i*12;p.draw(Game.ctx);}p.isMoving=false;p.draw(Game.ctx);}finally{Game.drawCroppedAsset=original;}
       return seen;
     });
-    check('Moving player renders four walking frames and returns to original idle',new Set(animation.slice(0,4)).size===4&&animation.at(-1)==='player/hero',animation);
+    check('Moving player renders four distance-based frames and returns to directional idle',new Set(animation.slice(0,4)).size===4&&animation.at(-1)==='player/warden_south_0_v100',animation);
     await page.reload();await wait('menu');await page.evaluate(()=>{Game.startNewGame();Game.loadLevel('mine');});await settle();await wait('playing');
     await page.evaluate(()=>{Game.levelTime=29.9;Game.spawnTimer=999;Game.player.invuln=999;Game.enemies=[];Game.pickups=[];});
     await page.keyboard.down('KeyA');await page.waitForTimeout(1600);await page.keyboard.up('KeyA');

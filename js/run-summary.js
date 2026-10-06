@@ -32,7 +32,7 @@
       const c=this.ctx,l=this.getEndingLayout(),v=l.visible,compact=v.w<400,summary=this.getRunSummary();
       c.save();c.fillStyle=victory?'#07120b':'#160a0a';c.fillRect(0,0,960,540);
       const line=(text,y,color='#c4a87a',size=compact?12:15)=>{c.font=`${size}px Courier New`;c.textAlign='center';c.fillStyle=color;c.fillText(this.fitChoiceBadgeText(c,text,l.w),l.cx,v.y+y);};
-      line(victory?'最终通关！':'旅途止步',65,victory?'#7dd8a0':'#ff7060',compact?30:44);
+      line(victory?(this.levelData.challenge?'远征完成！':'最终通关！'):'旅途止步',65,victory?'#7dd8a0':'#ff7060',compact?30:44);
       c.font=`${compact?12:15}px Courier New`;c.textAlign='center';c.fillStyle='#c4a87a';
       this.drawTextBlock(c,victory?this.getEndingText():'整理构筑，下一次再挑战。',l.cx,v.y+105,Math.min(l.w,540),18,2);
       line(`等级 ${this.player.level} · 击杀 ${this.player.kills}`,157);

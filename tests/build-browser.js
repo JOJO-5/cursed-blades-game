@@ -7,7 +7,7 @@ async page => {
     if(touch)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y);
     await page.waitForTimeout(50); // Canvas consumes one queued pointer event per animation frame.
   };
-  const capture=async name=>{const path=`output/playwright/v090/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v100/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   page.on('pageerror',e=>errors.push(String(e)));
   try {
     await page.setViewportSize({width:1280,height:720});await page.goto(url);await wait('menu');
@@ -67,10 +67,10 @@ async page => {
         for(const c of source){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619)>>>0;}return hash;
       });
       check(`${theme}: terrain update preserves v0.6 obstacle layout`,hash==={village:779931628,mine:3508978612,hell:1609912571}[theme]);
-      const pixels=await page.evaluate(theme=>{const c=document.createElement('canvas');c.width=c.height=128;const t=c.getContext('2d');t.drawImage(Assets.get(`tiles/ground_${theme}_v070`),0,0);const d=t.getImageData(0,0,128,128).data;let opaque=true;for(let i=3;i<d.length;i+=4)if(d[i]!==255)opaque=false;return {opaque,complete:Assets.get(`tiles/ground_${theme}_v070`).complete};},theme);
+      const pixels=await page.evaluate(theme=>{const c=document.createElement('canvas');c.width=c.height=256;const t=c.getContext('2d');t.drawImage(Assets.get(`tiles/ground_${theme}_v100`),0,0);const d=t.getImageData(0,0,256,256).data;let opaque=true;for(let i=3;i<d.length;i+=4)if(d[i]!==255)opaque=false;return {opaque,complete:Assets.get(`tiles/ground_${theme}_v100`).complete};},theme);
       check(`${theme}: opaque ground texture loads`,pixels.opaque&&pixels.complete);
       // Compare adjacent pixels at former tile boundaries; no periodic dark strips.
-      const seam=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=256;Game.drawContinuousGround(c.getContext('2d'),Game.levelData.theme,256,256);const d=c.getContext('2d').getImageData(0,0,256,256).data;let max=0;for(let y=0;y<256;y++)for(const x of [128])for(let k=0;k<3;k++)max=Math.max(max,Math.abs(d[(y*256+x-1)*4+k]-d[(y*256+x)*4+k]));return max;});
+      const seam=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=768;Game.drawContinuousGround(c.getContext('2d'),Game.levelData.theme,768,768);const d=c.getContext('2d').getImageData(0,0,768,768).data;let max=0;for(let y=0;y<768;y++)for(const x of [256,512])for(let k=0;k<3;k++)max=Math.max(max,Math.abs(d[(y*768+x-1)*4+k]-d[(y*768+x)*4+k]));return max;});
       check(`${theme}: mirrored ground has no hard tile seam`,seam===0);
       await page.evaluate(()=>{Game.renderPause=()=>{};});await page.waitForTimeout(60);await capture(`terrain-${theme}`);
     }
