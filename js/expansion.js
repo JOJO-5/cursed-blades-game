@@ -112,7 +112,7 @@
       ctx.restore();
     },
     renderObjectiveHUD(){old.renderObjectiveHUD.call(this);if(!this.levelData.challenge)return;const v=this.getVisibleCanvasRect(),c=this.ctx,w=this.getTrialWeather();c.save();c.textAlign='right';c.font='11px Courier New';c.fillStyle=w.active?'#efbc78':'#a1c8c8';
-      c.fillText(this.isTrialSheltered()?'石碑暖光 · 环境庇护':w.active?(w.frost?'暴风雪 · 寻找暖光':'涨潮 · 离开水洼'):w.warning?'环境预警 · 4 秒内来袭':`环境来袭 · ${Math.max(0,w.next)} 秒`,v.x+v.w-12,v.y+130);c.restore();}
+      c.fillText(this.isTrialSheltered()?(w.frost?'火炬暖光 · 环境庇护':'石碑暖光 · 环境庇护'):w.active?(w.frost?'暴风雪 · 寻找暖光':'涨潮 · 离开水洼'):w.warning?'环境预警 · 4 秒内来袭':`环境来袭 · ${Math.max(0,w.next)} 秒`,v.x+v.w-12,v.y+130);c.restore();}
   });
 })();
 

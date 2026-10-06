@@ -156,7 +156,7 @@
     renderObjectiveHUD() {
       old.renderObjectiveHUD.call(this);
       if(this.mapLayoutVersion!==1)return;
-      const ctx=this.ctx,p=this.getObjectiveLayout();let name=this.levelData.theme==='mine'?'晶矿运输线':this.levelData.theme==='hell'?'深渊前沿':'荒村十字路';
+      const ctx=this.ctx,p=this.getObjectiveLayout();let name=this.levelData.challenge?this.levelData.name:this.levelData.theme==='mine'?'晶矿运输线':this.levelData.theme==='hell'?'深渊前沿':'荒村十字路';
       for(const region of this.mapData?.regions||[])if(dist(this.player.x,this.player.y,region.x,region.y)<270)name=region.name;
       ctx.save();ctx.font='11px Courier New';ctx.textAlign='left';ctx.fillStyle='#bbae8f';ctx.fillText(`区域 · ${name}`,p.x+4,p.y-8);ctx.restore();
     }
