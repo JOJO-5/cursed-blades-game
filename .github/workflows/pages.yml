@@ -21,7 +21,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+      - run: npm ci
       - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:opening
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-regression
+          path: output/playwright/v060/
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -38,8 +48,12 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm run stage:site
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: output/site
       - id: deployment
         uses: actions/deploy-pages@v4

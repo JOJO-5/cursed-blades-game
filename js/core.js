@@ -90,6 +90,7 @@ const Input = {
     // ---- Touch events for mobile ----
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      this.touchMode = true;
       Audio2.resume();
 
       for (const touch of e.changedTouches) {
@@ -99,7 +100,7 @@ const Input = {
 
         // Check rotate button first (works in all states and cropped views).
         const rotate = Game.getRotateButtonRect();
-        if (tx >= rotate.x && tx <= rotate.x + rotate.w && ty >= rotate.y && ty <= rotate.y + rotate.h) {
+        if (Game.canShowRotateButton() && tx >= rotate.x && tx <= rotate.x + rotate.w && ty >= rotate.y && ty <= rotate.y + rotate.h) {
           // Let Game.update() handle via mouse click for consistency
           this.mouse.x = tx;
           this.mouse.y = ty;
@@ -121,8 +122,14 @@ const Input = {
         const pause = Game.getPauseButtonRect();
         if (tx >= pause.x && tx <= pause.x + pause.w && ty >= pause.y && ty <= pause.y + pause.h) {
           this._justPressed['Escape'] = true;
-          this.keys['Escape'] = true;
           continue;
+        }
+        if (Game.getCurrentObjective()?.action) {
+          const action = Game.getEncounterActionButton();
+          if (tx >= action.x && tx <= action.x + action.w && ty >= action.y && ty <= action.y + action.h) {
+            this.mouse.x=tx;this.mouse.y=ty;this.mouse.clicked=true;this.mouse.down=true;
+            continue;
+          }
         }
 
         if (tx < CONFIG.CANVAS_W * 0.5 && !this.joystick.active) {

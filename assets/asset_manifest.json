@@ -3,12 +3,12 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 223,
+    "totalAssets": 245,
     "categories": {
       "props": 44,
-      "ui": 21,
+      "ui": 41,
       "backgrounds": 30,
-      "enemies": 30,
+      "enemies": 32,
       "player": 5,
       "bosses": 3,
       "tiles": 16,
@@ -36,7 +36,7 @@
         "frameW": "width of each frame in pixels",
         "frameH": "height of each frame in pixels",
         "fps": "frames per second",
-        "loop": "boolean \u2014 whether the animation loops"
+        "loop": "boolean — whether the animation loops"
       }
     }
   },
@@ -638,7 +638,7 @@
     },
     "ui/upgrade_damage": {
       "id": "ui/upgrade_damage",
-      "name": "\u4f24\u5bb3\u63d0\u5347",
+      "name": "伤害提升",
       "category": "ui",
       "path": "assets/ui/upgrade_damage.png",
       "w": 16,
@@ -651,7 +651,7 @@
     },
     "ui/upgrade_regen": {
       "id": "ui/upgrade_regen",
-      "name": "\u56de\u590d\u6548\u679c\u63d0\u5347",
+      "name": "回复效果提升",
       "category": "ui",
       "path": "assets/ui/upgrade_regen.png",
       "w": 16,
@@ -664,7 +664,7 @@
     },
     "ui/upgrade_attackspeed": {
       "id": "ui/upgrade_attackspeed",
-      "name": "\u653b\u901f\u63d0\u5347",
+      "name": "攻速提升",
       "category": "ui",
       "path": "assets/ui/upgrade_attackspeed.png",
       "w": 16,
@@ -677,7 +677,7 @@
     },
     "ui/upgrade_pierce": {
       "id": "ui/upgrade_pierce",
-      "name": "\u7a7f\u900f\u63d0\u5347",
+      "name": "穿透提升",
       "category": "ui",
       "path": "assets/ui/upgrade_pierce.png",
       "w": 16,
@@ -690,7 +690,7 @@
     },
     "ui/upgrade_range": {
       "id": "ui/upgrade_range",
-      "name": "\u653b\u51fb\u8303\u56f4\u63d0\u5347",
+      "name": "攻击范围提升",
       "category": "ui",
       "path": "assets/ui/upgrade_range.png",
       "w": 16,
@@ -703,7 +703,7 @@
     },
     "ui/upgrade_rotatespeed": {
       "id": "ui/upgrade_rotatespeed",
-      "name": "\u65cb\u8f6c\u901f\u5ea6\u63d0\u5347",
+      "name": "旋转速度提升",
       "category": "ui",
       "path": "assets/ui/upgrade_rotatespeed.png",
       "w": 16,
@@ -729,7 +729,7 @@
     },
     "ui/upgrade_maxhp": {
       "id": "ui/upgrade_maxhp",
-      "name": "\u6700\u5927\u751f\u547d\u63d0\u5347",
+      "name": "最大生命提升",
       "category": "ui",
       "path": "assets/ui/upgrade_maxhp.png",
       "w": 16,
@@ -742,7 +742,7 @@
     },
     "ui/upgrade_crit": {
       "id": "ui/upgrade_crit",
-      "name": "\u66b4\u51fb\u63d0\u5347",
+      "name": "暴击提升",
       "category": "ui",
       "path": "assets/ui/upgrade_crit.png",
       "w": 16,
@@ -755,7 +755,7 @@
     },
     "ui/upgrade_weaponcount": {
       "id": "ui/upgrade_weaponcount",
-      "name": "\u6b66\u5668\u6570\u91cf\u589e\u52a0",
+      "name": "武器数量增加",
       "category": "ui",
       "path": "assets/ui/upgrade_weaponcount.png",
       "w": 16,
@@ -768,7 +768,7 @@
     },
     "ui/upgrade_movespeed": {
       "id": "ui/upgrade_movespeed",
-      "name": "\u79fb\u52a8\u901f\u5ea6\u63d0\u5347",
+      "name": "移动速度提升",
       "category": "ui",
       "path": "assets/ui/upgrade_movespeed.png",
       "w": 16,
@@ -781,7 +781,7 @@
     },
     "ui/upgrade_projspeed": {
       "id": "ui/upgrade_projspeed",
-      "name": "\u5f39\u4e38\u901f\u5ea6\u63d0\u5347",
+      "name": "弹丸速度提升",
       "category": "ui",
       "path": "assets/ui/upgrade_projspeed.png",
       "w": 16,
@@ -794,7 +794,7 @@
     },
     "ui/upgrade_knockback": {
       "id": "ui/upgrade_knockback",
-      "name": "\u51fb\u9000\u63d0\u5347",
+      "name": "击退提升",
       "category": "ui",
       "path": "assets/ui/upgrade_knockback.png",
       "w": 16,
@@ -807,7 +807,7 @@
     },
     "ui/upgrade_pickuprange": {
       "id": "ui/upgrade_pickuprange",
-      "name": "\u62fe\u53d6\u8303\u56f4\u63d0\u5347",
+      "name": "拾取范围提升",
       "category": "ui",
       "path": "assets/ui/upgrade_pickuprange.png",
       "w": 16,
@@ -820,7 +820,7 @@
     },
     "ui/upgrade_xpmult": {
       "id": "ui/upgrade_xpmult",
-      "name": "\u7ecf\u9a8c\u52a0\u6210",
+      "name": "经验加成",
       "category": "ui",
       "path": "assets/ui/upgrade_xpmult.png",
       "w": 16,
@@ -833,7 +833,7 @@
     },
     "ui/upgrade_critdamage": {
       "id": "ui/upgrade_critdamage",
-      "name": "\u66b4\u51fb\u4f24\u5bb3\u63d0\u5347",
+      "name": "暴击伤害提升",
       "category": "ui",
       "path": "assets/ui/upgrade_critdamage.png",
       "w": 16,
@@ -846,7 +846,7 @@
     },
     "ui/upgrade_cooldown": {
       "id": "ui/upgrade_cooldown",
-      "name": "\u51b7\u5374\u964d\u4f4e",
+      "name": "冷却降低",
       "category": "ui",
       "path": "assets/ui/upgrade_cooldown.png",
       "w": 16,
@@ -859,7 +859,7 @@
     },
     "ui/upgrade_dashcd": {
       "id": "ui/upgrade_dashcd",
-      "name": "\u95ea\u907f\u51b7\u5374\u964d\u4f4e",
+      "name": "闪避冷却降低",
       "category": "ui",
       "path": "assets/ui/upgrade_dashcd.png",
       "w": 16,
@@ -872,7 +872,7 @@
     },
     "ui/upgrade_armor": {
       "id": "ui/upgrade_armor",
-      "name": "\u62a4\u7532\u63d0\u5347",
+      "name": "护甲提升",
       "category": "ui",
       "path": "assets/ui/upgrade_armor.png",
       "w": 16,
@@ -885,7 +885,7 @@
     },
     "ui/upgrade_luck": {
       "id": "ui/upgrade_luck",
-      "name": "\u5e78\u8fd0\u63d0\u5347",
+      "name": "幸运提升",
       "category": "ui",
       "path": "assets/ui/upgrade_luck.png",
       "w": 16,
@@ -898,7 +898,7 @@
     },
     "ui/upgrade_lifesteal": {
       "id": "ui/upgrade_lifesteal",
-      "name": "\u751f\u547d\u5077\u53d6",
+      "name": "生命偷取",
       "category": "ui",
       "path": "assets/ui/upgrade_lifesteal.png",
       "w": 16,
@@ -937,7 +937,7 @@
     },
     "enemies/grim_reaper": {
       "id": "enemies/grim_reaper",
-      "name": "\u6536\u5272\u8005",
+      "name": "收割者",
       "category": "enemies",
       "path": "assets/enemies/grim_reaper.png",
       "w": 96,
@@ -954,7 +954,7 @@
     },
     "enemies/bear_armored": {
       "id": "enemies/bear_armored",
-      "name": "\u8150\u5316\u730e\u72ac",
+      "name": "腐化猎犬",
       "category": "enemies",
       "path": "assets/enemies/bear_armored.png",
       "w": 96,
@@ -982,7 +982,7 @@
     },
     "enemies/bandit_hooded": {
       "id": "enemies/bandit_hooded",
-      "name": "\u8150\u5316\u6751\u6c11",
+      "name": "腐化村民",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded.png",
       "w": 71,
@@ -997,7 +997,7 @@
     },
     "enemies/bandit_hooded_idle_01": {
       "id": "enemies/bandit_hooded_idle_01",
-      "name": "\u8150\u5316\u6751\u6c11 Idle 01",
+      "name": "腐化村民 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded_idle_01.png",
       "w": 32,
@@ -1011,7 +1011,7 @@
     },
     "enemies/bandit_hooded_idle_02": {
       "id": "enemies/bandit_hooded_idle_02",
-      "name": "\u8150\u5316\u6751\u6c11 Idle 02",
+      "name": "腐化村民 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/bandit_hooded_idle_02.png",
       "w": 32,
@@ -1025,7 +1025,7 @@
     },
     "enemies/archer": {
       "id": "enemies/archer",
-      "name": "\u6697\u5f71\u5f13\u624b",
+      "name": "暗影弓手",
       "category": "enemies",
       "path": "assets/enemies/archer.png",
       "w": 96,
@@ -1040,7 +1040,7 @@
     },
     "enemies/hooded_warrior": {
       "id": "enemies/hooded_warrior",
-      "name": "\u8150\u5316\u77ff\u5de5",
+      "name": "腐化矿工",
       "category": "enemies",
       "path": "assets/enemies/hooded_warrior.png",
       "w": 96,
@@ -1055,7 +1055,7 @@
     },
     "enemies/demon_bat": {
       "id": "enemies/demon_bat",
-      "name": "\u5f71\u7ffc\u8759\u8760",
+      "name": "影翼蝙蝠",
       "category": "enemies",
       "path": "assets/enemies/demon_bat.png",
       "w": 96,
@@ -1070,7 +1070,7 @@
     },
     "enemies/demon_bat_idle_01": {
       "id": "enemies/demon_bat_idle_01",
-      "name": "\u5f71\u7ffc\u8759\u8760 Idle 01",
+      "name": "影翼蝙蝠 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/demon_bat_idle_01.png",
       "w": 32,
@@ -1084,7 +1084,7 @@
     },
     "enemies/demon_bat_idle_02": {
       "id": "enemies/demon_bat_idle_02",
-      "name": "\u5f71\u7ffc\u8759\u8760 Idle 02",
+      "name": "影翼蝙蝠 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/demon_bat_idle_02.png",
       "w": 32,
@@ -1098,7 +1098,7 @@
     },
     "enemies/toxic_slime": {
       "id": "enemies/toxic_slime",
-      "name": "\u75ab\u75c5\u9f20\u7fa4",
+      "name": "疫病鼠群",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime.png",
       "w": 96,
@@ -1113,7 +1113,7 @@
     },
     "enemies/toxic_slime_idle_01": {
       "id": "enemies/toxic_slime_idle_01",
-      "name": "\u75ab\u75c5\u9f20\u7fa4 Idle 01",
+      "name": "疫病鼠群 Idle 01",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime_idle_01.png",
       "w": 32,
@@ -1127,7 +1127,7 @@
     },
     "enemies/toxic_slime_idle_02": {
       "id": "enemies/toxic_slime_idle_02",
-      "name": "\u75ab\u75c5\u9f20\u7fa4 Idle 02",
+      "name": "疫病鼠群 Idle 02",
       "category": "enemies",
       "path": "assets/enemies/toxic_slime_idle_02.png",
       "w": 32,
@@ -1154,7 +1154,7 @@
     },
     "enemies/spiked_boar": {
       "id": "enemies/spiked_boar",
-      "name": "\u68d8\u523a\u91ce\u732a",
+      "name": "棘刺野猪",
       "category": "enemies",
       "path": "assets/enemies/spiked_boar.png",
       "w": 96,
@@ -1169,7 +1169,7 @@
     },
     "enemies/spearman": {
       "id": "enemies/spearman",
-      "name": "\u761f\u75ab\u5f13\u624b",
+      "name": "瘟疫弓手",
       "category": "enemies",
       "path": "assets/enemies/spearman.png",
       "w": 96,
@@ -1184,7 +1184,7 @@
     },
     "enemies/torchbearer": {
       "id": "enemies/torchbearer",
-      "name": "\u8150\u5316\u7a3b\u8349\u602a",
+      "name": "腐化稻草怪",
       "category": "enemies",
       "path": "assets/enemies/torchbearer.png",
       "w": 78,
@@ -1212,7 +1212,7 @@
     },
     "enemies/fungal_golem": {
       "id": "enemies/fungal_golem",
-      "name": "\u5ca9\u77f3\u7c89\u788e\u8005",
+      "name": "岩石粉碎者",
       "category": "enemies",
       "path": "assets/enemies/fungal_golem.png",
       "w": 96,
@@ -1229,7 +1229,7 @@
     },
     "enemies/bone_spider": {
       "id": "enemies/bone_spider",
-      "name": "\u8150\u5316\u5de8\u86db",
+      "name": "腐化巨蛛",
       "category": "enemies",
       "path": "assets/enemies/bone_spider.png",
       "w": 96,
@@ -1257,7 +1257,7 @@
     },
     "enemies/dwarf_torchbearer": {
       "id": "enemies/dwarf_torchbearer",
-      "name": "\u8150\u5316\u7a3b\u8349\u4eba\u4e4b\u738b",
+      "name": "腐化稻草人之王",
       "category": "enemies",
       "path": "assets/enemies/dwarf_torchbearer.png",
       "w": 80,
@@ -1274,7 +1274,7 @@
     },
     "enemies/mimic_chest_red": {
       "id": "enemies/mimic_chest_red",
-      "name": "\u5b9d\u7bb1\u602a",
+      "name": "宝箱怪",
       "category": "enemies",
       "path": "assets/enemies/mimic_chest_red.png",
       "w": 96,
@@ -1291,7 +1291,7 @@
     },
     "enemies/dwarf_mage": {
       "id": "enemies/dwarf_mage",
-      "name": "\u6c34\u6676\u6cd5\u5e08",
+      "name": "水晶法师",
       "category": "enemies",
       "path": "assets/enemies/dwarf_mage.png",
       "w": 96,
@@ -1371,7 +1371,7 @@
     },
     "bosses/dark_knight_flame": {
       "id": "bosses/dark_knight_flame",
-      "name": "\u65e0\u5934\u9a91\u58eb",
+      "name": "无头骑士",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame.png",
       "w": 116,
@@ -1384,7 +1384,7 @@
     },
     "bosses/dark_knight_flame_idle_01": {
       "id": "bosses/dark_knight_flame_idle_01",
-      "name": "\u65e0\u5934\u9a91\u58eb Idle",
+      "name": "无头骑士 Idle",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame_idle_01.png",
       "w": 64,
@@ -1397,7 +1397,7 @@
     },
     "bosses/dark_knight_flame_attack_01": {
       "id": "bosses/dark_knight_flame_attack_01",
-      "name": "\u65e0\u5934\u9a91\u58eb Attack",
+      "name": "无头骑士 Attack",
       "category": "bosses",
       "path": "assets/bosses/dark_knight_flame_attack_01.png",
       "w": 64,
@@ -1891,7 +1891,7 @@
     },
     "weapons/soul": {
       "id": "weapons/soul",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u7075\u9b42\u5f39",
+      "name": "获得武器: 灵魂弹",
       "category": "weapons",
       "path": "assets/weapons/soul.png",
       "w": 24,
@@ -1906,7 +1906,7 @@
     },
     "weapons/knife": {
       "id": "weapons/knife",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u98de\u5200",
+      "name": "获得武器: 飞刀",
       "category": "weapons",
       "path": "assets/weapons/knife.png",
       "w": 24,
@@ -1921,7 +1921,7 @@
     },
     "weapons/bow": {
       "id": "weapons/bow",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u5f13\u7bad",
+      "name": "获得武器: 弓箭",
       "category": "weapons",
       "path": "assets/weapons/bow.png",
       "w": 24,
@@ -1975,7 +1975,7 @@
     },
     "weapons/shield": {
       "id": "weapons/shield",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u76fe\u724c",
+      "name": "获得武器: 盾牌",
       "category": "weapons",
       "path": "assets/weapons/shield.png",
       "w": 24,
@@ -1990,7 +1990,7 @@
     },
     "weapons/fireball": {
       "id": "weapons/fireball",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u706b\u7403",
+      "name": "获得武器: 火球",
       "category": "weapons",
       "path": "assets/weapons/fireball.png",
       "w": 24,
@@ -2005,7 +2005,7 @@
     },
     "weapons/ring_void": {
       "id": "weapons/ring_void",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u865a\u7a7a\u73af\u5203",
+      "name": "获得武器: 虚空环刃",
       "category": "weapons",
       "path": "assets/weapons/ring_void.png",
       "w": 64,
@@ -2020,7 +2020,7 @@
     },
     "weapons/sword": {
       "id": "weapons/sword",
-      "name": "\u94c1\u5251",
+      "name": "铁剑",
       "category": "weapons",
       "path": "assets/weapons/sword.png",
       "w": 24,
@@ -2035,7 +2035,7 @@
     },
     "weapons/scythe": {
       "id": "weapons/scythe",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u9570\u5200",
+      "name": "获得武器: 镰刀",
       "category": "weapons",
       "path": "assets/weapons/scythe.png",
       "w": 24,
@@ -2050,7 +2050,7 @@
     },
     "weapons/hammer": {
       "id": "weapons/hammer",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u6218\u9524",
+      "name": "获得武器: 战锤",
       "category": "weapons",
       "path": "assets/weapons/hammer.png",
       "w": 24,
@@ -2065,7 +2065,7 @@
     },
     "weapons/ring_fire": {
       "id": "weapons/ring_fire",
-      "name": "\u83b7\u5f97\u6b66\u5668: \u708e\u4e4b\u73af\u5203",
+      "name": "获得武器: 炎之环刃",
       "category": "weapons",
       "path": "assets/weapons/ring_fire.png",
       "w": 64,
@@ -3005,6 +3005,314 @@
         "x": 0.5,
         "y": 0.5
       }
+    },
+    "ui/upgrade_damage_v051": {
+      "id": "ui/upgrade_damage_v051",
+      "name": "upgrade_damage_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_damage_v051.png",
+      "w": 32,
+      "h": 23,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_attackspeed_v051": {
+      "id": "ui/upgrade_attackspeed_v051",
+      "name": "upgrade_attackspeed_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_attackspeed_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_rotatespeed_v051": {
+      "id": "ui/upgrade_rotatespeed_v051",
+      "name": "upgrade_rotatespeed_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_rotatespeed_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_range_v051": {
+      "id": "ui/upgrade_range_v051",
+      "name": "upgrade_range_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_range_v051.png",
+      "w": 32,
+      "h": 29,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_movespeed_v051": {
+      "id": "ui/upgrade_movespeed_v051",
+      "name": "upgrade_movespeed_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_movespeed_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_maxhp_v051": {
+      "id": "ui/upgrade_maxhp_v051",
+      "name": "upgrade_maxhp_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_maxhp_v051.png",
+      "w": 32,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_projspeed_v051": {
+      "id": "ui/upgrade_projspeed_v051",
+      "name": "upgrade_projspeed_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_projspeed_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_knockback_v051": {
+      "id": "ui/upgrade_knockback_v051",
+      "name": "upgrade_knockback_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_knockback_v051.png",
+      "w": 32,
+      "h": 27,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_pickuprange_v051": {
+      "id": "ui/upgrade_pickuprange_v051",
+      "name": "upgrade_pickuprange_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_pickuprange_v051.png",
+      "w": 32,
+      "h": 23,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_xpmult_v051": {
+      "id": "ui/upgrade_xpmult_v051",
+      "name": "upgrade_xpmult_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_xpmult_v051.png",
+      "w": 32,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_weaponcount_v051": {
+      "id": "ui/upgrade_weaponcount_v051",
+      "name": "upgrade_weaponcount_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_weaponcount_v051.png",
+      "w": 32,
+      "h": 26,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_pierce_v051": {
+      "id": "ui/upgrade_pierce_v051",
+      "name": "upgrade_pierce_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_pierce_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_crit_v051": {
+      "id": "ui/upgrade_crit_v051",
+      "name": "upgrade_crit_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_crit_v051.png",
+      "w": 32,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_regen_v051": {
+      "id": "ui/upgrade_regen_v051",
+      "name": "upgrade_regen_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_regen_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_critdamage_v051": {
+      "id": "ui/upgrade_critdamage_v051",
+      "name": "upgrade_critdamage_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_critdamage_v051.png",
+      "w": 32,
+      "h": 24,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_cooldown_v051": {
+      "id": "ui/upgrade_cooldown_v051",
+      "name": "upgrade_cooldown_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_cooldown_v051.png",
+      "w": 32,
+      "h": 25,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_dashcd_v051": {
+      "id": "ui/upgrade_dashcd_v051",
+      "name": "upgrade_dashcd_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_dashcd_v051.png",
+      "w": 32,
+      "h": 28,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_armor_v051": {
+      "id": "ui/upgrade_armor_v051",
+      "name": "upgrade_armor_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_armor_v051.png",
+      "w": 32,
+      "h": 27,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_luck_v051": {
+      "id": "ui/upgrade_luck_v051",
+      "name": "upgrade_luck_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_luck_v051.png",
+      "w": 32,
+      "h": 31,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "ui/upgrade_lifesteal_v051": {
+      "id": "ui/upgrade_lifesteal_v051",
+      "name": "upgrade_lifesteal_v051",
+      "category": "ui",
+      "path": "assets/ui/upgrade_lifesteal_v051.png",
+      "w": 32,
+      "h": 26,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "enemies/corrupted_hound_v051": {
+      "id": "enemies/corrupted_hound_v051",
+      "name": "corrupted_hound_v051",
+      "category": "enemies",
+      "path": "assets/enemies/corrupted_hound_v051.png",
+      "w": 63,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "enemies/plague_archer_v051": {
+      "id": "enemies/plague_archer_v051",
+      "name": "plague_archer_v051",
+      "category": "enemies",
+      "path": "assets/enemies/plague_archer_v051.png",
+      "w": 64,
+      "h": 69,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
     }
   }
 }

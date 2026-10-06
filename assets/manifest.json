@@ -890,5 +890,93 @@
   "backgrounds/scene_mine_crystal": {
     "w": 600,
     "h": 900
+  },
+  "ui/upgrade_damage_v051": {
+    "w": 32,
+    "h": 23
+  },
+  "ui/upgrade_attackspeed_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_rotatespeed_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_range_v051": {
+    "w": 32,
+    "h": 29
+  },
+  "ui/upgrade_movespeed_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_maxhp_v051": {
+    "w": 32,
+    "h": 24
+  },
+  "ui/upgrade_projspeed_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_knockback_v051": {
+    "w": 32,
+    "h": 27
+  },
+  "ui/upgrade_pickuprange_v051": {
+    "w": 32,
+    "h": 23
+  },
+  "ui/upgrade_xpmult_v051": {
+    "w": 32,
+    "h": 24
+  },
+  "ui/upgrade_weaponcount_v051": {
+    "w": 32,
+    "h": 26
+  },
+  "ui/upgrade_pierce_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_crit_v051": {
+    "w": 32,
+    "h": 24
+  },
+  "ui/upgrade_regen_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_critdamage_v051": {
+    "w": 32,
+    "h": 24
+  },
+  "ui/upgrade_cooldown_v051": {
+    "w": 32,
+    "h": 25
+  },
+  "ui/upgrade_dashcd_v051": {
+    "w": 32,
+    "h": 28
+  },
+  "ui/upgrade_armor_v051": {
+    "w": 32,
+    "h": 27
+  },
+  "ui/upgrade_luck_v051": {
+    "w": 32,
+    "h": 31
+  },
+  "ui/upgrade_lifesteal_v051": {
+    "w": 32,
+    "h": 26
+  },
+  "enemies/corrupted_hound_v051": {
+    "w": 63,
+    "h": 64
+  },
+  "enemies/plague_archer_v051": {
+    "w": 64,
+    "h": 69
   }
 }

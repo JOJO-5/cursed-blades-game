@@ -156,7 +156,7 @@ const gameContext = {
     };
   },
 };
-vm.runInNewContext(`${gameSource}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
+vm.runInNewContext(`${gameSource}\n${readFileSync(path.join(jsDir,'objectives.js'),'utf8')}\nglobalThis.__GAME__ = Game;`, gameContext, { filename: 'js/game.js' });
 const game = gameContext.__GAME__;
 
 assert.ok(config.LEVEL_VISUALS && config.LEVEL_VISUALS.village && config.LEVEL_VISUALS.mine && config.LEVEL_VISUALS.hell,
@@ -531,7 +531,7 @@ assert.ok(crowdedWeaponHud.y + crowdedWeaponHud.itemHeight <= landscapeVisible.y
     'level-up choices should weight weapon cards instead of forcing one every level');
   const swordUpgrade = game.getAvailableWeaponChoices(new Set()).find(choice => choice.weaponId === 'sword');
   const swordDesc = game.getChoiceDescription(swordUpgrade);
-  assert.ok(swordUpgrade && swordDesc.includes('伤害 +15%') && swordDesc.includes('范围 +5%'),
+  assert.ok(swordUpgrade && swordDesc.includes('伤害 +13%') && swordDesc.includes('范围 +4.8%'),
     'weapon upgrade descriptions should show concrete per-level stat gains');
   game.player.upgradeLevels = { damage: 2 };
   const damageDesc = game.getChoiceDescription(config.UPGRADES.find(upgrade => upgrade.id === 'damage'));

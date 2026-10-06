@@ -6,7 +6,9 @@
 
 ## 当前状态
 
-`v0.5.0-preview`，核心战斗闭环、三关流程、升级构筑、宝箱奖励、武器进化、本地存档和 GitHub Pages 自动预览已接入。
+`v0.6.0-preview`，核心战斗闭环、三关流程、升级构筑、宝箱奖励、武器进化、本地存档和 GitHub Pages 自动预览已接入。
+
+本版新增目标/下一事件 HUD、20 秒显现的失落营地、主动献祭生命换稀有宝箱的腐化祭坛；事件敌人、状态和未领取奖励均支持存档恢复。村庄使用连续地面与道路，降低重复纹理噪声。包含 v0.5.1 的战斗修复、手机布局和 22 个生成素材。版本推进见 [ROADMAP.md](ROADMAP.md)，测试证据和验收边界见 [V060_ACCEPTANCE.md](V060_ACCEPTANCE.md)。
 
 最近重点优化：
 
@@ -42,6 +44,19 @@ http://localhost:8888
 npm test
 ```
 
+桌面与手机模拟触控端到端回归：
+
+```powershell
+npm ci
+npm run test:e2e
+```
+
+Windows 使用本机 Chrome；Linux/CI 先运行 `npx playwright install --with-deps chromium`。测试自动启动临时本地服务，结束时关闭自己的浏览器和服务。结果与截图写入 `output/playwright/v060/`。三关 Boss 场景使用加速测试数据，实际执行正常生成、击杀、奖励等待、剧情和转场；自然通关、真机触控和音频听感需另行验收。
+
+`npm run test:opening` 使用三个随机种子，按真实时间和键盘输入测试首分钟，不修改生命、伤害、计时器或奖励。Windows PowerShell 设置 `$env:CURSED_TEST_URL='https://jojo-5.github.io/cursed-blades-game/'` 后，`npm run test:e2e` 可验证在线版本。
+
+生成正式静态目录：`npm run stage:site`，输出 `output/site/`，只包含入口、脚本、样式和清单中的运行时图片。生成素材的原图、提示词及制备方式见 [assets/source_sheets/v051-generation.md](assets/source_sheets/v051-generation.md)。
+
 测试会检查 JS 语法、配置结构、资源清单、PNG 文件、布局 helper、碰撞、存档恢复、经验磁铁、武器升级、召唤物和 GitHub Pages 相关关键路径。
 
 ## 操作方式
@@ -54,6 +69,7 @@ npm test
 | 空格 | 闪避，短暂无敌并加速 |
 | ESC / P | 暂停 |
 | 1 / 2 / 3 | 升级或奖励界面快速选择 |
+| E | 靠近祭坛后主动献祭挑战 |
 | 鼠标点击 | 菜单、剧情、升级、宝箱奖励交互 |
 
 ### 手机 / 触屏
@@ -65,6 +81,7 @@ npm test
 | 右上角按钮 | 暂停 |
 | 旋转按钮 | 手动切换移动端显示方向 |
 | 点击卡片 | 选择升级或宝箱奖励 |
+| 点击目标面板的挑战按钮 | 靠近祭坛后主动献祭挑战 |
 
 ## 核心玩法
 
@@ -136,9 +153,10 @@ npm test
 
 ```powershell
 npm test
+npm run test:e2e
 ```
 
-验证通过后自动部署到 GitHub Pages：
+验证通过后生成 `output/site` 并自动部署到 GitHub Pages：
 
 <https://jojo-5.github.io/cursed-blades-game/>
 

@@ -54,7 +54,7 @@ const Game = {
 
   saveKey: 'cursed_blades_save',
   metaKey: 'cursed_blades_meta',
-  saveSchemaVersion: 4,
+  saveSchemaVersion: 5,
 
   // Object pools (initialized in init() — reduce GC by reusing entities)
   particlePool: null,
@@ -254,11 +254,18 @@ const Game = {
   update(dt) {
     this.time += dt;
 
-    // Rotate button click (works in all states, both mouse and touch)
+    // Keep the rotation control outside modal content.
     const rotateButton = this.getRotateButtonRect();
-    if (Input.mouse.clicked && Input.isMouseInRect(rotateButton.x, rotateButton.y, rotateButton.w, rotateButton.h)) {
+    if (this.canShowRotateButton() && Input.mouse.clicked && Input.isMouseInRect(rotateButton.x, rotateButton.y, rotateButton.w, rotateButton.h)) {
       Input.mouse.clicked = false;
       this.toggleForcedLandscape();
+    }
+    if (this.state === 'playing') {
+      const pause = this.getPauseButtonRect();
+      if (Input.consumeClick(pause.x, pause.y, pause.w, pause.h)) {
+        this.state = 'paused';
+        Audio2.click();
+      }
     }
 
     // camera shake decay
@@ -419,6 +426,7 @@ const Game = {
 
     // phased spawning — data-driven, replaces fixed spawn/elite/boss timers
     this.updatePhase(dt);
+    this.updateLevelEncounters();
 
     // pause toggle
     if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
@@ -1111,6 +1119,7 @@ const Game = {
 
   // ---- Level up ----
   onLevelUp(levelsGained = 1) {
+    this._choiceDetails = null;
     const count = Math.max(1, Math.floor(Number(levelsGained) || 1));
     this.pendingLevelUps = (this.pendingLevelUps || 0) + Math.max(0, count - 1);
     Audio2.levelup();
@@ -1202,9 +1211,10 @@ const Game = {
 
   getWeaponUpgradeDescription(weapon, currentLevel, nextLevel) {
     const parts = [`${weapon.name} Lv.${currentLevel} → Lv.${nextLevel}`];
-    parts.push('伤害 +15%');
-    parts.push('范围 +5%');
-    if (weapon.type === 'orbit') parts.push('视觉/命中体积 +15%');
+    const gain = (step) => ((step / (1 + (currentLevel - 1) * step)) * 100).toFixed(1).replace('.0', '');
+    parts.push(`伤害 +${gain(0.15)}%`);
+    parts.push(`范围 +${gain(0.05)}%`);
+    if (weapon.type === 'orbit') parts.push(`体积 +${gain(0.15)}%`);
     return parts.join(' | ');
   },
 
@@ -1429,7 +1439,7 @@ const Game = {
     const maxRight = cardX + cardW - 10;
     const maxBadgeW = Math.min(92, cardW * 0.42);
     const rowH = 15;
-    const maxRows = cardW < 180 ? 1 : 2;
+    const maxRows = 1;
     let row = 0;
 
     ctx.font = 'bold 10px Courier New';
@@ -1628,7 +1638,7 @@ const Game = {
 
   // ---- Chest / Mimic ----
   // chestType: 0=normal, 1=rare, 2=suspicious
-  openChest(x, y, chestType) {
+  openChest(x, y, chestType, guaranteed = false) {
     this.chestsOpened++;
     const ct = chestType || 0;
     // suspicious chest: much higher mimic chance
@@ -1636,6 +1646,7 @@ const Game = {
     let mimicChance = this.levelData.mimicChance;
     if (ct === 2) mimicChance = 0.8;       // suspicious: 80% mimic
     else if (ct === 1) mimicChance = 0;    // rare: always safe
+    if (guaranteed) mimicChance = 0;       // finite objective rewards always pay out
 
     if (Math.random() < mimicChance) {
       // spawn mimic
@@ -1860,19 +1871,20 @@ const Game = {
     // settings overlay takes priority when open
     if (this._settingsOverlay) { this.updateSettingsOverlay(); return; }
 
-    // start button
-    if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 300, 200, 50)) {
+    const layout = this.getMenuLayout();
+    const clicked = (rect) => Input.consumeClick(rect.x, rect.y, rect.w, rect.h);
+    if (clicked(layout.start)) {
       this.startNewGame();
       Audio2.click();
     }
     // continue button
     if (this.hasSave()) {
-      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 370, 200, 50)) {
+      if (clicked(layout.continue)) {
         this.loadAndContinue();
         Audio2.click();
       }
       // reset save button (with confirmation)
-      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 440, 200, 36)) {
+      if (clicked(layout.reset)) {
         if (this.resetConfirmTimer > 0) {
           this.resetSave();
           this.addMessage('存档已清除', '#ff6060');
@@ -1883,13 +1895,13 @@ const Game = {
         }
       }
       // settings button
-      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 490, 200, 36)) {
+      if (clicked(layout.settings)) {
         this.openSettings();
         Audio2.click();
       }
     } else {
       // settings button (no save case)
-      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 370, 200, 36)) {
+      if (clicked(layout.settings)) {
         this.openSettings();
         Audio2.click();
       }
@@ -1931,11 +1943,12 @@ const Game = {
 
   // ---- Game Over ----
   updateGameOver() {
-    if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 340, 200, 45)) {
+    const {restart, menu} = this.getGameOverButtons();
+    if (Input.consumeClick(restart.x, restart.y, restart.w, restart.h)) {
       this.startNewGame();
       Audio2.click();
     }
-    if (Input.consumeClick(CONFIG.CANVAS_W/2 - 100, 400, 200, 45)) {
+    if (Input.consumeClick(menu.x, menu.y, menu.w, menu.h)) {
       this.state = 'menu';
       Audio2.playMusic('menu');
       Audio2.click();
@@ -1953,6 +1966,7 @@ const Game = {
 
   // ---- Level up UI ----
   updateLevelUp() {
+    if (this.updateChoiceDetails(this.upgradeChoices)) return;
     const layout = this.getChoiceLayout(this.upgradeChoices.length);
 
     for (let i = 0; i < this.upgradeChoices.length; i++) {
@@ -1970,11 +1984,16 @@ const Game = {
   },
 
   updateChestReward() {
+    if (this.updateChoiceDetails(this.chestRewardChoices)) return;
     const layout = this.getChoiceLayout(this.chestRewardChoices.length);
 
     for (let i = 0; i < this.chestRewardChoices.length; i++) {
       const card = layout.cards[i];
       if (Input.consumeClick(card.x, card.y, card.w, card.h)) {
+        this.selectChestReward(i);
+        return;
+      }
+      if (Input.wasPressed(['Digit1','Digit2','Digit3'][i])) {
         this.selectChestReward(i);
         return;
       }
@@ -1994,6 +2013,7 @@ const Game = {
     this.messages = [];
     this.minions = [];
     this.pendingLevelUps = 0;
+    this._choiceDetails = null;
     this.levelTime = 0;
     this.spawnTimer = 1;
     this.eliteTimer = 0;
@@ -2016,6 +2036,7 @@ const Game = {
 
   // ---- Load level ----
   loadLevel(levelId) {
+    this._choiceDetails = null;
     this.levelData = CONFIG.LEVELS[levelId];
     // reset level state
     this.levelTime = 0;
@@ -2124,7 +2145,7 @@ const Game = {
           if (y >= minY && y <= maxY && Math.abs(x - feature.x1) <= halfRail) return true;
         }
       }
-      if (feature.type === 'crystalVein' || feature.type === 'demonRift') {
+      if (feature.type === 'crystalVein' || feature.type === 'demonRift' || feature.type === 'encounterSite') {
         if (dist(x, y, feature.x, feature.y) <= (feature.radius || 60) + clearance + 20) return true;
       }
       if (feature.type === 'lavaFissure') {
@@ -2374,19 +2395,18 @@ const Game = {
       const oldAlpha = ctx.globalAlpha;
       ctx.globalAlpha = 1;
       const paintRoad = (color, radiusScale) => {
-        ctx.fillStyle = color;
-        for (let x = -60; x <= worldW + 60; x += 52) {
-          const wobble = Math.sin(x * 0.013) * 9 + Math.sin(x * 0.031) * 4;
-          ctx.beginPath();
-          ctx.ellipse(x, feature.y + wobble, 42, half * radiusScale, 0.03 * Math.sin(x), 0, TAU);
-          ctx.fill();
+        ctx.save();ctx.strokeStyle=color;ctx.lineWidth=half*2*radiusScale;
+        ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+        for (let x=-60;x<=worldW+60;x+=24) {
+          const wobble=Math.sin(x*.013)*9+Math.sin(x*.031)*4;
+          if(x===-60)ctx.moveTo(x,feature.y+wobble);else ctx.lineTo(x,feature.y+wobble);
         }
-        for (let y = -60; y <= worldH + 60; y += 52) {
-          const wobble = Math.sin(y * 0.015) * 8 + Math.sin(y * 0.027) * 4;
-          ctx.beginPath();
-          ctx.ellipse(feature.x + wobble, y, half * radiusScale, 42, 0.03 * Math.sin(y), 0, TAU);
-          ctx.fill();
+        ctx.stroke();ctx.beginPath();
+        for (let y=-60;y<=worldH+60;y+=24) {
+          const wobble=Math.sin(y*.015)*8+Math.sin(y*.027)*4;
+          if(y===-60)ctx.moveTo(feature.x+wobble,y);else ctx.lineTo(feature.x+wobble,y);
         }
+        ctx.stroke();ctx.restore();
       };
       paintRoad(feature.edgeColor || 'rgba(28,20,12,0.18)', 1.18);
       paintRoad(feature.pathColor || 'rgba(91,67,39,0.42)', 0.94);
@@ -2562,6 +2582,7 @@ const Game = {
 
   // ---- Map generation ----
   generateMap() {
+    this.initLevelEncounters();
     // Keep a run-stable seed so retries can differ while saves and level
     // transitions still rebuild the same map layout.
     let seed = Number.isFinite(this.runSeed) ? this.runSeed : 0;
@@ -2688,7 +2709,8 @@ const Game = {
     }
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
-    const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy);
+    const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy)
+      .concat(this.levelEncounters.map(site => ({type:'encounterSite',x:site.x,y:site.y,radius:190})));
     this.mapData.features = mapFeatures;
     for (const feature of mapFeatures) {
       this.drawMapFeature(gctx, feature);
@@ -2783,7 +2805,7 @@ const Game = {
     // helper: scatter a prop category, avoid spawning on top of player spawn
     const scatter = (count, categoryKey, categoryArr) => {
       for (let i = 0; i < count; i++) {
-        const type = pick(categoryArr);
+        const type = categoryArr[Math.floor(rng() * categoryArr.length)];
         const footprint = this.getPropCollisionFootprint(categoryKey, type);
         let px, py, tries = 0;
         do {
@@ -2894,6 +2916,7 @@ const Game = {
       bossDefeatedGraceTimer: this.bossDefeatedGraceTimer,
       currentPhase: this.currentPhase,
       triggeredPhases: this.triggeredPhases,
+      encounters: this.serializeEncounters(),
       eliteKills: this.eliteKills,
       bossKills: this.bossKills,
       chestsOpened: this.chestsOpened,
@@ -2901,7 +2924,7 @@ const Game = {
         .filter(p => p.alive)
         .map(p => ({
           x: p.x, y: p.y, type: p.type, sprite: p.sprite, value: p.value,
-          life: p.life, magnetized: p.magnetized,
+          life: p.life, magnetized: p.magnetized, objectiveId: p.objectiveId,
         })),
     };
     try {
@@ -3001,6 +3024,7 @@ const Game = {
       this.messages = [];
       this.minions = [];
       this.pendingLevelUps = 0;
+      this._choiceDetails = null;
       this.damageVignette = 0;
       this.player.level = data.level ?? 1;
       this.runSeed = Number.isFinite(data.runSeed) ? data.runSeed : 0;
@@ -3042,6 +3066,7 @@ const Game = {
           const pickup = this.pickupPool.obtain(p.x, p.y, p.type, p.sprite, p.value);
           pickup.life = p.life ?? pickup.life;
           pickup.magnetized = !!p.magnetized;
+          pickup.objectiveId = p.objectiveId || null;
           pickup.vx = 0;
           pickup.vy = 0;
           this.pickups.push(pickup);
@@ -3049,6 +3074,7 @@ const Game = {
       } else {
         this.spawnInitialChests();
       }
+      this.restoreLevelEncounters(data.encounters);
       if (data.bossSpawned && !data.bossDefeated) {
         const bossId = this.levelData.bossId || 'boss';
         const mapW = this.levelData.mapW * CONFIG.TILE_SIZE;
@@ -3123,7 +3149,23 @@ const Game = {
 
   getRotateButtonRect() {
     const visible = this.getVisibleCanvasRect();
-    return { x: visible.x + 12, y: visible.y + 52, w: 36, h: 36 };
+    return { x: visible.x + 12, y: visible.y + (this.isPortrait() ? 72 : 52), w: 36, h: 36 };
+  },
+
+  usesTouchControls() {
+    return !!(Input.touchMode || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches));
+  },
+
+  getMenuLayout() {
+    const v = this.getVisibleCanvasRect();
+    const width = Math.min(200, v.w - 32);
+    const x = v.x + (v.w - width) / 2;
+    const top = v.y + v.h * 0.55;
+    const gap = Math.min(56, (v.h * 0.39 - 36) / 3);
+    const button = (row, h = 36) => ({x, y: top + row * gap, w: width, h});
+    return { visible: v, start: button(0, 44), continue: button(1, 44),
+      settings: button(this.hasSave() ? 2 : 1), reset: button(3) };
   },
 
   getWeaponHudLayout(count) {
@@ -3236,6 +3278,7 @@ const Game = {
     const viewT = camY - 50, viewB = camY + CONFIG.CANVAS_H + 50;
 
     // draw pickups
+    this.renderEncounterSites(ctx);
     for (const p of this.pickups) p.draw(ctx);
 
     if (this.mapData) {
@@ -3295,6 +3338,7 @@ const Game = {
     if (!p) return;
     const visible = this.getVisibleCanvasRect();
     const portrait = this.isPortrait();
+    this.renderObjectiveHUD();
 
     // HP bar
     const hpBarW = portrait ? Math.min(80, visible.w - 155) : 200;
@@ -3326,7 +3370,8 @@ const Game = {
     ctx.fillRect(hpX, xpY, hpBarW * xpPct, 10);
     ctx.fillStyle = '#80ffa0';
     ctx.font = '10px Courier New';
-    ctx.fillText(`LV ${p.level}  XP ${Math.floor(p.xp)}/${p.xpToNext}`, hpX + 5, xpY + 8);
+    ctx.fillText(portrait ? `Lv.${p.level} · ${Math.floor(p.xp)}/${p.xpToNext}` :
+      `LV ${p.level}  XP ${Math.floor(p.xp)}/${p.xpToNext}`, hpX + 5, xpY + (portrait ? 22 : 8));
 
     // timer
     const min = Math.floor(this.levelTime / 60);
@@ -3350,9 +3395,10 @@ const Game = {
     ctx.fillStyle = '#8a7a5a';
     ctx.font = '12px Courier New';
     ctx.textAlign = 'right';
-    const infoX = visible.x + visible.w - 12;
-    ctx.fillText(`击杀: ${p.kills}`, infoX, visible.y + 25);
-    ctx.fillText(`敌人: ${this.enemies.length}`, infoX, visible.y + 40);
+    const infoX = portrait ? visible.x + visible.w - 12 : this.getPauseButtonRect().x - 10;
+    ctx.fillStyle = '#c4a87a';
+    ctx.fillText(`击杀: ${p.kills}`, infoX, visible.y + (portrait ? 62 : 25));
+    if (!portrait) ctx.fillText(`敌人: ${this.enemies.length}`, infoX, visible.y + 40);
 
     // weapon icons
     ctx.textAlign = 'left';
@@ -3401,13 +3447,16 @@ const Game = {
 
     // messages
     ctx.textAlign = 'center';
-    for (let i = 0; i < this.messages.length; i++) {
-      const m = this.messages[i];
+    const visibleMessages = this.messages.slice(-2);
+    for (let i = 0; i < visibleMessages.length; i++) {
+      const m = visibleMessages[i];
       const alpha = m.life / m.maxLife;
       ctx.globalAlpha = alpha;
       ctx.fillStyle = m.color;
       ctx.font = 'bold 14px Courier New';
-      ctx.fillText(m.text, visible.x + visible.w/2, visible.y + 80 + i * 22);
+      const text = this.fitChoiceBadgeText(ctx, m.text, visible.w - 24);
+      const objectivePanel = this.getObjectiveLayout();
+      ctx.fillText(text, visible.x + visible.w/2, objectivePanel.y + objectivePanel.h + 22 + i * 22);
     }
     ctx.globalAlpha = 1;
 
@@ -3419,17 +3468,14 @@ const Game = {
       ctx.fillText('WASD/摇杆移动  空格/按钮闪避  ESC暂停', visible.x + visible.w - 20, visible.y + visible.h - 10);
     }
 
-    // portrait orientation hint (show for first 30 seconds of gameplay)
-    if (this.isPortrait() && !this.forcedLandscape && this.levelTime < 30) {
-      const alpha = this.levelTime < 25 ? 0.8 : (0.8 * (30 - this.levelTime) / 5);
+    // Keep the brief orientation hint away from the hero.
+    if (this.usesTouchControls() && this.isPortrait() && !this.forcedLandscape && this.levelTime < 8) {
+      const alpha = this.levelTime < 6 ? 0.8 : (0.8 * (8 - this.levelTime) / 2);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#c4a87a';
-      ctx.font = 'bold 13px Courier New';
+      ctx.font = 'bold 10px Courier New';
       ctx.textAlign = 'center';
-      ctx.fillText('点击左上角按钮可旋转为横屏', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 40);
-      ctx.font = '11px Courier New';
-      ctx.fillStyle = '#8a7a5a';
-      ctx.fillText('← 摇杆移动    闪避 →', CONFIG.CANVAS_W / 2, CONFIG.CANVAS_H / 2 - 20);
+      ctx.fillText('左上角可切换横屏', visible.x + visible.w / 2 + 18, visible.y + 94);
       ctx.globalAlpha = 1;
     }
 
@@ -3439,7 +3485,7 @@ const Game = {
       const barW = Math.min(400, visible.w - 80);
       const barH = 14;
       const bx = visible.x + (visible.w - barW) / 2;
-      const by = visible.y + 56;
+      const by = visible.y + (portrait ? 116 : 56);
       // bg
       ctx.fillStyle = 'rgba(0,0,0,0.8)';
       ctx.fillRect(bx - 2, by - 2, barW + 4, barH + 4);
@@ -3481,6 +3527,7 @@ const Game = {
     // Only show during active gameplay
     if (this.state !== 'playing') return;
 
+    if (this.usesTouchControls()) {
     const j = Input.joystick;
     const d = Input.dashButton;
 
@@ -3523,6 +3570,7 @@ const Game = {
     ctx.textBaseline = 'middle';
     ctx.fillText('闪避', d.anchorX, d.anchorY);
     ctx.textBaseline = 'alphabetic';
+    }
 
     // ---- Pause button (top-right of the actually visible canvas) ----
     const pause = this.getPauseButtonRect();
@@ -3537,6 +3585,7 @@ const Game = {
 
   // Draw rotate button in all states (top-left corner)
   renderRotateButton() {
+    if (!this.canShowRotateButton()) return;
     const ctx = this.ctx;
     const button = this.getRotateButtonRect();
     const rx = button.x + button.w / 2;
@@ -3572,59 +3621,32 @@ const Game = {
   },
 
   renderMenu() {
-    const ctx = this.ctx;
-    // dark background
+    const ctx = this.ctx, layout = this.getMenuLayout(), v = layout.visible;
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
-
-    // draw scene backdrop — use death_knight_rider if village completed, otherwise village_forest
     const villageDone = this.meta && this.meta.levelsCompleted && this.meta.levelsCompleted.village;
-    const bgKey = villageDone ? 'backgrounds/scene_death_knight_rider' : 'backgrounds/scene_village_forest';
-    const bg = Assets.get(bgKey);
-    if (bg && bg.complete) {
-      ctx.globalAlpha = 0.4;
-      ctx.drawImage(bg, 0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-
-    // title logo
+    const bg = Assets.get(villageDone ? 'backgrounds/scene_death_knight_rider' : 'backgrounds/scene_village_forest');
+    if (bg && bg.complete) { ctx.globalAlpha = 0.32; ctx.drawImage(bg, 0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H); ctx.globalAlpha = 1; }
     const logo = Assets.get('ui/title_logo');
+    const logoY = v.y + v.h * 0.25;
     if (logo && logo.complete) {
-      const scale = Math.min(400 / logo.width, 1.5);
-      Assets.drawCentered(ctx, 'ui/title_logo', CONFIG.CANVAS_W/2, 150, scale, 0, 1);
+      const scale = Math.min(400 / logo.width, (v.w - 36) / logo.width, 1.5);
+      Assets.drawCentered(ctx, 'ui/title_logo', v.x + v.w/2, logoY, scale, 0, 1);
     } else {
-      ctx.fillStyle = '#c4a87a';
-      ctx.font = 'bold 48px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText('环刀旅者', CONFIG.CANVAS_W/2, 150);
+      ctx.fillStyle = '#c4a87a'; ctx.font = 'bold 30px Courier New'; ctx.textAlign = 'center';
+      ctx.fillText('环刀旅者', v.x + v.w/2, logoY);
     }
-
-    ctx.fillStyle = '#8a7a5a';
-    ctx.font = '14px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('CURSED BLADES — 诅咒之刃', CONFIG.CANVAS_W/2, 200);
-
-    // start button
-    this.drawButton(CONFIG.CANVAS_W/2 - 100, 300, 200, 50, '开始新游戏', '#c4a87a');
-    // continue button
+    ctx.fillStyle = '#c4a87a'; ctx.font = this.isPortrait() ? '10px Courier New' : '14px Courier New'; ctx.textAlign = 'center';
+    ctx.fillText('CURSED BLADES · 诅咒之刃', v.x + v.w/2, logoY + v.h * 0.11);
+    const button = (rect, text, color) => this.drawButton(rect.x, rect.y, rect.w, rect.h, text, color);
+    button(layout.start, '开始新游戏', '#c4a87a');
     if (this.hasSave()) {
-      this.drawButton(CONFIG.CANVAS_W/2 - 100, 370, 200, 50, '继续游戏', '#8aaa6a');
-      // reset save button with confirmation state
-      const confirmActive = this.resetConfirmTimer > 0;
-      this.drawButton(CONFIG.CANVAS_W/2 - 100, 440, 200, 36,
-        confirmActive ? '再次点击确认清除' : '重置存档',
-        confirmActive ? '#ff6060' : '#6a4a3a');
-      // settings button
-      this.drawButton(CONFIG.CANVAS_W/2 - 100, 490, 200, 36, '设置', '#6a6a8a');
-    } else {
-      // settings button (no save case)
-      this.drawButton(CONFIG.CANVAS_W/2 - 100, 370, 200, 36, '设置', '#6a6a8a');
+      button(layout.continue, '继续游戏', '#8aaa6a');
+      button(layout.reset, this.resetConfirmTimer > 0 ? '再次点击确认清除' : '重置存档', this.resetConfirmTimer > 0 ? '#ff6060' : '#aa8060');
     }
-
-    ctx.fillStyle = '#5a4a30';
-    ctx.font = '11px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('WASD / 摇杆移动  |  空格 / 按钮闪避  |  ESC / 图标暂停', CONFIG.CANVAS_W/2, CONFIG.CANVAS_H - 30);
+    button(layout.settings, '设置', '#b0a8c4');
+    ctx.fillStyle = '#b6a27a'; ctx.font = '10px Courier New'; ctx.textAlign = 'center';
+    ctx.fillText(this.usesTouchControls() ? '摇杆移动 · 右侧闪避' : 'WASD 移动 · 空格闪避 · ESC 暂停', v.x + v.w/2, v.y + v.h - 12);
   },
 
   drawButton(x, y, w, h, text, color) {
@@ -3636,10 +3658,14 @@ const Game = {
     ctx.lineWidth = hover ? 3 : 2;
     ctx.strokeRect(x, y, w, h);
     ctx.fillStyle = hover ? '#ffffff' : color;
-    ctx.font = 'bold 16px Courier New';
+    let buttonFont = Math.min(16, h - 6);
+    ctx.font = `bold ${buttonFont}px Courier New`;
+    while (buttonFont > 10 && ctx.measureText(text).width > w - 14) {
+      ctx.font = `bold ${--buttonFont}px Courier New`;
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, x + w/2, y + h/2);
+    ctx.fillText(this.fitChoiceBadgeText(ctx,text,w-14), x + w/2, y + h/2);
     ctx.textBaseline = 'alphabetic';
   },
 
@@ -3681,6 +3707,16 @@ const Game = {
   },
 
   // ---- Settings overlay ----
+  canShowRotateButton() {
+    return this.usesTouchControls() && !this._settingsOverlay && !['levelup', 'chestReward'].includes(this.state);
+  },
+
+  getSettingsLayout() {
+    const v = this.getVisibleCanvasRect(), w = Math.min(340, v.w - 24), h = Math.min(340, v.h - 32);
+    const x = v.x + (v.w - w)/2, y = v.y + (v.h - h)/2;
+    return {x, y, w, h, back: {x: x + (w - 160)/2, y: y + h - 70, w: 160, h: 40}};
+  },
+
   openSettings() {
     this._settingsOverlay = true;
     this._dragSlider = null;
@@ -3696,11 +3732,11 @@ const Game = {
 
   // slider geometry helper
   _getSliderRects() {
-    const cx = CONFIG.CANVAS_W / 2;
-    const trackW = 240;
-    const trackX = cx - trackW / 2;
-    const baseY = 220;
-    const gap = 60;
+    const panel = this.getSettingsLayout();
+    const trackW = Math.min(240, panel.w - 48);
+    const trackX = panel.x + (panel.w - trackW)/2;
+    const baseY = panel.y + 84;
+    const gap = Math.min(60, (panel.h - 184)/2);
     return [
       { key: 'master', label: '主音量',  val: this.settings.masterVolume, x: trackX, y: baseY,             w: trackW },
       { key: 'sfx',    label: '音效音量', val: this.settings.sfxVolume,    x: trackX, y: baseY + gap,       w: trackW },
@@ -3717,12 +3753,15 @@ const Game = {
         // clickable area: track + knob (expanded vertically for touch)
         if (Input.isMouseInRect(s.x - 10, s.y - 12, s.w + 20, 24)) {
           this._dragSlider = s.key;
+          this.settings[s.key + 'Volume'] = clamp((Input.mouse.x - s.x) / s.w, 0, 1);
+          Audio2.syncVolumes(this.settings);
           Input.mouse.clicked = false;
           break;
         }
       }
       // back button
-      if (Input.consumeClick(CONFIG.CANVAS_W/2 - 80, 420, 160, 40)) {
+      const back = this.getSettingsLayout().back;
+      if (Input.consumeClick(back.x, back.y, back.w, back.h)) {
         this.closeSettings();
         Audio2.click();
         return;
@@ -3757,10 +3796,7 @@ const Game = {
     ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
     // panel
-    const px = CONFIG.CANVAS_W/2 - 170;
-    const py = 150;
-    const pw = 340;
-    const ph = 320;
+    const {x: px, y: py, w: pw, h: ph, back} = this.getSettingsLayout();
     ctx.fillStyle = 'rgba(20,18,25,0.95)';
     ctx.fillRect(px, py, pw, ph);
     ctx.strokeStyle = '#6a6a8a';
@@ -3814,203 +3850,125 @@ const Game = {
     }
 
     // back button
-    this.drawButton(CONFIG.CANVAS_W/2 - 80, 420, 160, 40, '返回', '#6a6a8a');
+    this.drawButton(back.x, back.y, back.w, back.h, '返回', '#6a6a8a');
 
     // hint
     ctx.fillStyle = '#5a5a6a';
     ctx.font = '11px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('拖动滑块调节音量  |  ESC 返回', CONFIG.CANVAS_W/2, 475);
+    ctx.font = '10px Courier New';
+    ctx.fillText('点击/拖动调音量 · ESC 返回', CONFIG.CANVAS_W/2, py + ph - 12);
   },
 
   isPortrait() {
     return !this._rotate90 && window.innerHeight > window.innerWidth;
   },
 
-  renderLevelUp() {
-    const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(0,0,20,0.8)';
-    ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+  // Both reward screens share the same measured layout and details interaction.
+  renderLevelUp() { this.renderChoiceCards(this.upgradeChoices, '升级!', `等级 ${this.player.level} · 选择一项强化`); },
+  renderChestReward() { this.renderChoiceCards(this.chestRewardChoices, '宝箱奖励!', '选择一项奖励'); },
 
-    const layout = this.getChoiceLayout(this.upgradeChoices.length);
-    const portrait = layout.portrait;
-
-    ctx.fillStyle = '#ffd040';
-    ctx.font = 'bold 32px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('升级!', CONFIG.CANVAS_W/2, portrait ? 60 : 80);
-    ctx.fillStyle = '#c4a87a';
-    ctx.font = '14px Courier New';
-    ctx.fillText(`等级 ${this.player.level}  —  选择一项强化`, CONFIG.CANVAS_W/2, portrait ? 90 : 110);
-
-    // draw 3 cards
-    for (let i = 0; i < this.upgradeChoices.length; i++) {
-      const choice = this.upgradeChoices[i];
-      const card = layout.cards[i];
-      const cardX = card.x, cardY = card.y, cardW = card.w, cardH = card.h;
-      const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
-
-      // Rarity-based colors
-      const rarityKey = choice.rarity || 'common';
-      const rarity = CONFIG.RARITY[rarityKey] || CONFIG.RARITY.common;
-
-      ctx.fillStyle = hover ? 'rgba(40,35,20,0.95)' : 'rgba(20,18,12,0.9)';
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = hover ? rarity.glow : rarity.color;
-      ctx.lineWidth = hover ? 4 : 2;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
-
-      // Rarity label (top center)
-      ctx.fillStyle = rarity.color;
-      ctx.font = 'bold 10px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
-      this.drawChoiceBadges(ctx, choice, cardX, cardY, cardW);
-
-      // Evolution badge (top right) for evolution choices
-      if (choice.type === 'evolution') {
-        ctx.fillStyle = '#e080ff';
-        ctx.font = 'bold 10px Courier New';
-        ctx.textAlign = 'right';
-        ctx.fillText('★进化', cardX + cardW - 8, cardY + 16);
-      }
-
-      // Level indicator (top right) for weapon/stat upgrades
-      if (choice.weaponId && choice.isWeaponUpgrade) {
-        ctx.fillStyle = choice.nextLevel >= choice.maxLevel ? '#ffd040' : '#8a7a5a';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Lv.${choice.currentLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
-      } else if (!choice.weaponId && !choice.type && choice.maxLevel) {
-        const curLevel = this.player.upgradeLevels[choice.id] || 0;
-        ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Lv.${curLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
-      }
-
-      // Desc with fallback for weapon unlocks (fixes crash)
-      const descText = this.getChoiceDescription(choice);
-
-      if (portrait) {
-        // Horizontal card layout: icon on left, text on right
-        // Auto-fit icon scale to fit within available space (max 48px wide, cardH - 10px tall)
-        const iconMaxW = 48, iconMaxH = cardH - 10;
-        this.drawChoiceIcon(ctx, choice.icon, cardX + 30, cardY + cardH/2, iconMaxW, iconMaxH);
-
-        ctx.fillStyle = '#ffd040';
-        ctx.font = 'bold 14px Courier New';
-        ctx.textAlign = 'left';
-        this.drawTextWrapped(ctx, choice.name, cardX + 65, cardY + 42, cardW - 75, 17);
-
-        ctx.fillStyle = '#c4a87a';
-        ctx.font = '12px Courier New';
-        if (descText) this.drawTextWrapped(ctx, descText, cardX + 65, cardY + 68, cardW - 75, 15);
-      } else {
-        // Vertical card layout: icon on top, text below
-        // Auto-fit icon scale to fit within card (max 90% of cardW wide, 55px tall to leave room for text)
-        const iconMaxW = cardW * 0.9, iconMaxH = 55;
-        this.drawChoiceIcon(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, iconMaxW, iconMaxH);
-
-        ctx.fillStyle = '#ffd040';
-        ctx.font = 'bold 15px Courier New';
-        ctx.textAlign = 'center';
-        this.drawTextWrapped(ctx, choice.name, cardX + cardW/2, cardY + 130, cardW - 20, 18);
-
-        ctx.fillStyle = '#c4a87a';
-        ctx.font = '12px Courier New';
-        if (descText) this.drawTextWrapped(ctx, descText, cardX + cardW/2, cardY + 175, cardW - 20, 16);
-      }
-
-      // key hint
-      ctx.fillStyle = '#5a4a30';
-      ctx.font = '11px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText(`[${i+1}]`, cardX + cardW/2, cardY + cardH - 15);
-    }
+  getChoiceDetailButton(card) {
+    return {x: card.x + card.w - 50, y: card.y + card.h - 24, w: 40, h: 18};
   },
 
-  renderChestReward() {
-    const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(20,15,5,0.85)';
-    ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+  getChoiceDetailsLayout() {
+    const v = this.getVisibleCanvasRect();
+    const w = Math.min(620, v.w - 24), h = Math.min(360, v.h - 44);
+    const x = v.x + (v.w - w)/2, y = v.y + (v.h - h)/2;
+    return {x, y, w, h, close: {x: x + 16, y: y + h - 60, w: w - 32, h: 44}};
+  },
 
-    const layout = this.getChoiceLayout(this.chestRewardChoices.length);
-    const portrait = layout.portrait;
-
-    ctx.fillStyle = '#ffd040';
-    ctx.font = 'bold 32px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('宝箱奖励!', CONFIG.CANVAS_W/2, portrait ? 60 : 80);
-    ctx.fillStyle = '#c4a87a';
-    ctx.font = '14px Courier New';
-    ctx.fillText('选择一项奖励', CONFIG.CANVAS_W/2, portrait ? 90 : 110);
-
-    for (let i = 0; i < this.chestRewardChoices.length; i++) {
-      const choice = this.chestRewardChoices[i];
-      const card = layout.cards[i];
-      const cardX = card.x, cardY = card.y, cardW = card.w, cardH = card.h;
-      const hover = Input.isMouseInRect(cardX, cardY, cardW, cardH);
-
-      // Rarity-based colors
-      const rarityKey = choice.rarity || 'common';
-      const rarity = CONFIG.RARITY[rarityKey] || CONFIG.RARITY.common;
-
-      ctx.fillStyle = hover ? 'rgba(40,35,15,0.95)' : 'rgba(25,20,10,0.9)';
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = hover ? rarity.glow : rarity.color;
-      ctx.lineWidth = hover ? 4 : 2;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
-
-      // Rarity label (top center)
-      ctx.fillStyle = rarity.color;
-      ctx.font = 'bold 10px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText(rarity.name, cardX + cardW/2, cardY + 16);
-      this.drawChoiceBadges(ctx, choice, cardX, cardY, cardW);
-
-      // Level indicator (top right) for weapon/stat upgrades
-      if (choice.weaponId && choice.isWeaponUpgrade) {
-        ctx.fillStyle = choice.nextLevel >= choice.maxLevel ? '#ffd040' : '#8a7a5a';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Lv.${choice.currentLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
-      } else if (!choice.weaponId && choice.maxLevel) {
-        const curLevel = this.player.upgradeLevels[choice.id] || 0;
-        ctx.fillStyle = curLevel >= choice.maxLevel ? '#ff6040' : '#8a7a5a';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Lv.${curLevel}/${choice.maxLevel}`, cardX + cardW - 8, cardY + 16);
+  updateChoiceDetails(choices) {
+    if (this._choiceDetails) {
+      const b = this.getChoiceDetailsLayout().close;
+      if (Input.wasPressed('Escape') || Input.consumeClick(b.x, b.y, b.w, b.h)) {
+        this._choiceDetails = null;
       }
-
-      const descText = this.getChoiceDescription(choice);
-
-      if (portrait) {
-        const iconMaxW = 48, iconMaxH = cardH - 10;
-        this.drawChoiceIcon(ctx, choice.icon, cardX + 30, cardY + cardH/2, iconMaxW, iconMaxH);
-        ctx.fillStyle = '#ffd040';
-        ctx.font = 'bold 14px Courier New';
-        ctx.textAlign = 'left';
-        this.drawTextWrapped(ctx, choice.name, cardX + 65, cardY + 42, cardW - 75, 17);
-        if (descText) {
-          ctx.fillStyle = '#c4a87a';
-          ctx.font = '12px Courier New';
-          this.drawTextWrapped(ctx, descText, cardX + 65, cardY + 68, cardW - 75, 15);
-        }
-      } else {
-        const iconMaxW = cardW * 0.9, iconMaxH = 55;
-        this.drawChoiceIcon(ctx, choice.icon, cardX + cardW/2, cardY + 40 + iconMaxH/2, iconMaxW, iconMaxH);
-        ctx.fillStyle = '#ffd040';
-        ctx.font = 'bold 15px Courier New';
-        ctx.textAlign = 'center';
-        this.drawTextWrapped(ctx, choice.name, cardX + cardW/2, cardY + 130, cardW - 20, 18);
-        if (descText) {
-          ctx.fillStyle = '#c4a87a';
-          ctx.font = '12px Courier New';
-          this.drawTextWrapped(ctx, descText, cardX + cardW/2, cardY + 175, cardW - 20, 16);
-        }
+      return true;
+    }
+    const layout = this.getChoiceLayout(choices.length);
+    for (let i = 0; i < choices.length; i++) {
+      const b = this.getChoiceDetailButton(layout.cards[i]);
+      if (Input.consumeClick(b.x, b.y, b.w, b.h)) {
+        this._choiceDetails = choices[i];
+        return true;
       }
     }
+    return false;
+  },
+
+  wrapTextLines(ctx, text, maxW) {
+    const lines = []; let line = '';
+    for (const ch of String(text || '')) {
+      if (ch === '\n') { lines.push(line); line = ''; continue; }
+      if (line && ctx.measureText(line + ch).width > maxW) { lines.push(line); line = ch; }
+      else line += ch;
+    }
+    if (line) lines.push(line);
+    return lines;
+  },
+
+  drawTextBlock(ctx, text, x, y, maxW, lineH, maxLines) {
+    const lines = this.wrapTextLines(ctx, text, maxW);
+    const visible = lines.slice(0, maxLines);
+    if (lines.length > maxLines && visible.length) visible[visible.length - 1] = this.fitChoiceBadgeText(ctx, visible[visible.length - 1] + '…', maxW);
+    visible.forEach((line, i) => ctx.fillText(line, x, y + i * lineH));
+    return visible.length;
+  },
+
+  renderChoiceCards(choices, title, subtitle) {
+    const ctx = this.ctx, layout = this.getChoiceLayout(choices.length), portrait = layout.portrait;
+    const v = this.getVisibleCanvasRect();
+    ctx.fillStyle = 'rgba(8,8,18,0.90)'; ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#ffd040'; ctx.font = 'bold 28px Courier New';
+    ctx.fillText(title, CONFIG.CANVAS_W/2, portrait ? 52 : Math.max(v.y + 30, 80));
+    ctx.fillStyle = '#c4a87a'; ctx.font = '12px Courier New';
+    ctx.fillText(subtitle, CONFIG.CANVAS_W/2, portrait ? 82 : Math.max(v.y + 55, 110));
+    for (let i = 0; i < choices.length; i++) {
+      const choice = choices[i], card = layout.cards[i];
+      const rarity = CONFIG.RARITY[choice.rarity || 'common'] || CONFIG.RARITY.common;
+      const hover = Input.isMouseInRect(card.x, card.y, card.w, card.h);
+      ctx.fillStyle = hover ? '#292317' : '#17140f'; ctx.fillRect(card.x, card.y, card.w, card.h);
+      ctx.strokeStyle = hover ? rarity.glow : rarity.color; ctx.lineWidth = hover ? 3 : 2;
+      ctx.strokeRect(card.x, card.y, card.w, card.h);
+      ctx.textAlign = 'left'; ctx.fillStyle = rarity.color; ctx.font = 'bold 10px Courier New';
+      ctx.fillText(rarity.name, card.x + 10, card.y + 16);
+      const current = choice.currentLevel ?? (this.player.upgradeLevels[choice.id] || 0);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#c4a87a'; ctx.font = '10px Courier New';
+      if (choice.maxLevel) ctx.fillText(`Lv.${current}→${Math.min(current + 1, choice.maxLevel)}`, card.x + card.w - 10, card.y + 16);
+      this.drawChoiceBadges(ctx, choice, card.x, card.y + 8, card.w);
+      const textX = portrait ? card.x + 60 : card.x + card.w/2;
+      const textW = portrait ? card.w - 72 : card.w - 24;
+      this.drawChoiceIcon(ctx, choice.icon, portrait ? card.x + 29 : textX, card.y + (portrait ? 73 : 78), portrait ? 42 : 64, portrait ? 42 : 52);
+      ctx.fillStyle = '#ffd040'; ctx.font = portrait ? 'bold 12px Courier New' : 'bold 14px Courier New';
+      ctx.textAlign = portrait ? 'left' : 'center';
+      this.drawTextBlock(ctx, choice.name, textX, card.y + (portrait ? 52 : 128), textW, 17, portrait ? 1 : 2);
+      ctx.fillStyle = '#ded0b0'; ctx.font = portrait ? '10px Courier New' : '12px Courier New';
+      const desc = choice.desc || (choice.weaponId ? CONFIG.WEAPONS[choice.weaponId]?.desc : '') || '';
+      this.drawTextBlock(ctx, desc, textX, card.y + (portrait ? 73 : 176), textW, portrait ? 13 : 16, portrait ? 2 : 3);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#bca578'; ctx.font = '10px Courier New';
+      ctx.fillText(`[${i + 1}] 选择`, card.x + 10, card.y + card.h - 10);
+      const b = this.getChoiceDetailButton(card);
+      this.drawButton(b.x, b.y, b.w, b.h, '详情', '#c4a87a');
+    }
+    if (this._choiceDetails) this.renderChoiceDetails(this._choiceDetails);
+  },
+
+  renderChoiceDetails(choice) {
+    const ctx = this.ctx, {x, y, w, h, close} = this.getChoiceDetailsLayout();
+    ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
+    ctx.fillStyle = '#211b12'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#c4a87a'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#ffd040'; ctx.font = 'bold 14px Courier New';
+    this.drawTextBlock(ctx, choice.name, x + 16, y + 32, w - 32, 20, 3);
+    ctx.fillStyle = '#ead9b8'; ctx.font = '12px Courier New';
+    this.drawTextBlock(ctx, this.getChoiceDescription(choice).replaceAll('  |  ', '\n'), x + 16, y + 100, w - 32, 18, Math.floor((h - 160)/18));
+    this.drawButton(close.x, close.y, close.w, close.h, '返回选择 · ESC', '#c4a87a');
+  },
+
+  getGameOverButtons() {
+    return {restart: {x: CONFIG.CANVAS_W/2 - 100, y: 360, w: 200, h: 45},
+      menu: {x: CONFIG.CANVAS_W/2 - 100, y: 420, w: 200, h: 45}};
   },
 
   renderGameOver() {
@@ -4050,8 +4008,9 @@ const Game = {
     const bestTime = Math.floor(this.meta.bestSurvivalTime/60) + '分' + Math.floor(this.meta.bestSurvivalTime%60) + '秒';
     ctx.fillText(`最高记录: 等级${this.meta.bestLevel}  |  击杀${this.meta.bestKills}  |  存活${bestTime}`, CONFIG.CANVAS_W/2, 320);
 
-    this.drawButton(CONFIG.CANVAS_W/2 - 100, 360, 200, 45, '重新开始', '#c4a87a');
-    this.drawButton(CONFIG.CANVAS_W/2 - 100, 420, 200, 45, '返回主菜单', '#aa6a4a');
+    const {restart, menu} = this.getGameOverButtons();
+    this.drawButton(restart.x, restart.y, restart.w, restart.h, '重新开始', '#c4a87a');
+    this.drawButton(menu.x, menu.y, menu.w, menu.h, '返回主菜单', '#aa6a4a');
   },
 
   renderVictory() {

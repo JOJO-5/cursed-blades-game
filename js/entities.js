@@ -182,10 +182,11 @@ class Player {
     }
 
     // dash (keyboard or touch button)
-    if ((Input.wasPressed('Space') || Input.dashButton.pressed) && this.dashCooldown <= 0 && this.isMoving) {
+    if ((Input.wasPressed('Space') || Input.dashButton.pressed) && this.dashCooldown <= 0) {
       this.dashTimer = CONFIG.PLAYER.dashDuration;
       this.dashCooldown = CONFIG.PLAYER.dashCooldown * this.stats.dashCooldownMult;
-      this.dashDir = { x: mx, y: my };
+      this.dashDir = this.isMoving ? { x: mx, y: my } :
+        { x: Math.cos(this.moveAngle), y: Math.sin(this.moveAngle) };
       this.invuln = Math.max(this.invuln, CONFIG.PLAYER.dashDuration + 0.05);
       Audio2.play('sine', 400, 0.1, 0.06);
     }
@@ -325,6 +326,10 @@ class Weapon {
   getRange() {
     return this.def.range * Game.player.stats.rangeMult * (1 + (this.level - 1) * 0.05);
   }
+  getSize() {
+    return Math.min(80, Math.min(this.def.size || 40, 42) * (1 + (this.level - 1) * 0.15));
+  }
+  getHitRadius() { return this.getSize() / 2; }
   getRotateSpeed() {
     return this.def.rotateSpeed * Game.player.stats.rotateSpeedMult * Game.player.stats.attackSpeedMult;
   }
@@ -351,19 +356,19 @@ class Weapon {
       const dmg = this.getDamage();
       const crit = this.getCritChance();
       const pierce = this.getPierce();
-      const levelScale = 1 + (this.level - 1) * 0.15;
-      const sz = this.def.size * levelScale;
+      const sz = this.getSize();
+      const hitRadius = this.getHitRadius();
 
       for (let i = 0; i < count; i++) {
         const offset = (i / count) * TAU;
         const wx = player.x + Math.cos(this.angle + offset) * range;
         const wy = player.y + Math.sin(this.angle + offset) * range;
 
-        const nearby = Game.enemyGrid.query(wx, wy, 80);
+        const nearby = Game.enemyGrid.query(wx, wy, hitRadius + 100);
         for (const e of nearby) {
           if (!e.alive) continue;
           const d = dist(wx, wy, e.x, e.y);
-          if (d < (e.radius + 20)) {
+          if (d < (e.radius + hitRadius)) {
             const hitId = e.id + '_' + Math.floor(this.angle / 0.5);
             if (!this.hitSet.has(hitId)) {
               this.hitSet.add(hitId);
@@ -629,8 +634,7 @@ class Weapon {
     if (this.def.type !== 'orbit') return;
     const range = this.getRange();
     const count = 1 + player.stats.weaponCountBonus;
-    const levelScale = 1 + (this.level - 1) * 0.15;
-    const sz = Math.min(this.def.size * levelScale, 42);
+    const sz = this.getSize();
     const trailSegments = count > 2 ? 2 : 3;
     const trailAlphaBase = count > 2 ? 0.12 : 0.18;
 
@@ -2609,6 +2613,7 @@ class Pickup {
   reset(x, y, type, sprite, value) {
     this.x = x; this.y = y;
     this.type = type; // 'xp', 'heart', 'chest', 'magnet'
+    this.objectiveId = null;
     this.sprite = sprite;
     this.value = value || 0;
     this.alive = true;
@@ -2681,7 +2686,7 @@ class Pickup {
       Audio2.pickup();
       if (Game.collectAllXpPickups) Game.collectAllXpPickups(this.x, this.y);
     } else if (this.type === 'chest') {
-      Game.openChest(this.x, this.y, this.value);
+      Game.openChest(this.x, this.y, this.value, !!this.objectiveId);
     }
   }
 
