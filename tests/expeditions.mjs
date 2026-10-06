@@ -14,6 +14,10 @@ for(const id of ['warden','ranger','arcanist']){
   assert.equal(run('Game.player.characterId'),id,'Continue restores saved character, not current menu choice');
   assert.equal(run('JSON.stringify(Game.player.stats)'),before,'Character perks cannot be applied twice on load');
   assert.equal(run('Game.player.getSpritePose().direction'),'north');assert.equal(run('Game.getRunSummary().complete'),true);
+  run('Game.selectedExpedition="campaign";Game.state="gameover";Game.startNewGame()');
+  assert.equal(run('Game.player.characterId'),id,'Restart after continue keeps the active character');
+  assert.equal(run('Game.levelData.theme'),'frost','Restart after continue keeps the active expedition');
+  assert.equal(run('JSON.stringify(Game.player.stats)'),before,'Restart applies starting perks only once');
 }
 run('Game.levelTime=33;Game.updateThemeHazards(.1)');assert.equal(run('Game.environmentSpeedMult'),.72,'Storm slows an exposed hero');
 run('const beacon=Game.levelEncounters[0];beacon.status="complete";Game.player.x=beacon.x;Game.player.y=beacon.y;Game.updateThemeHazards(.1)');assert.equal(run('Game.environmentSpeedMult'),1,'Completed torch protects from cold');

@@ -21,6 +21,9 @@ async page => {
       }
       const stats=await p.evaluate(()=>JSON.stringify(Game.player.stats));await p.evaluate(()=>Game.saveProgress());await p.reload();await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});await click(p,await p.evaluate(()=>Game.getMenuLayout().continue));
       check(`${hero}: saved character and perks survive refresh once`,await p.evaluate(({hero,stats})=>Game.player.characterId===hero&&JSON.stringify(Game.player.stats)===stats,{hero,stats}));
+      await p.evaluate(()=>{Game.player.invuln=0;Game.player.takeDamage(9999);});await p.waitForFunction(()=>Game.state==='gameover');
+      await click(p,await p.evaluate(()=>Game.getGameOverButtons().restart));await story(p);
+      check(`${hero}: death restart after refresh keeps character and starting perks`,await p.evaluate(({hero,stats})=>Game.player.characterId===hero&&JSON.stringify(Game.player.stats)===stats,{hero,stats}));
     }catch(e){await shot(p,`expansion-${hero}-failure`).catch(()=>{});return{passed:false,checks,errors,screenshots,failure:String(e.stack||e)};}finally{await context.close();}
   }
   for(const theme of ['frost','marsh']){
@@ -32,6 +35,9 @@ async page => {
       check(`${theme}: advertised weather affects exposed player`,weather.speed<1&&(theme==='frost'||weather.hurt));await shot(p,`weather-${theme}`);
       const safe=await p.evaluate(()=>{const s=Game.levelEncounters[0];s.status='complete';Game.player.x=s.x;Game.player.y=s.y;Game.player.invuln=0;const hp=Game.player.hp;Game.updateThemeHazards(1);Game.saveProgress();return Game.environmentSpeedMult===1&&Game.player.hp===hp;});check(`${theme}: completed sanctuary prevents weather penalty`,safe);
       await p.reload();await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});await click(p,await p.evaluate(()=>Game.getMenuLayout().continue));check(`${theme}: map, sanctuary and complete history survive reload`,await p.evaluate(t=>Game.levelData.theme===t&&Game.levelEncounters[0].status==='complete'&&Game.getRunSummary().complete,theme));
+      await p.evaluate(()=>{Game.player.invuln=0;Game.player.takeDamage(9999);});await p.waitForFunction(()=>Game.state==='gameover');
+      await click(p,await p.evaluate(()=>Game.getGameOverButtons().restart));await story(p);
+      check(`${theme}: death restart after refresh keeps independent expedition`,await p.evaluate(t=>Game.levelData.theme===t&&Game.levelData.challenge&&Game.levelEncounters[0].status!=='complete',theme));
       await p.evaluate(()=>{Game.levelTime=Game.levelData.bossSpawnTime+.1;Game.player.invuln=999;Game.enemies=[];Game.updatePhase(.1);});await story(p);
       await p.evaluate(()=>{const b=Game.enemies.find(e=>e.isBoss);b.hp=1;const w=Game.player.weapons[0];b.x=Game.player.x+Math.cos(w.angle)*w.getRange();b.y=Game.player.y+Math.sin(w.angle)*w.getRange();});
       await p.waitForFunction(()=>Game.bossDefeated,null,{timeout:15000});

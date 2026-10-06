@@ -62,7 +62,10 @@
       if(this.hasSave()){const r=l.continue;this.drawButton(r.x,r.y,r.w,r.h,'继续存档中的旅途','#8fc7ae');const b=l.reset;this.drawButton(b.x,b.y,b.w,b.h,this.resetConfirmTimer>0?'再次点击确认清除':'重置存档','#aa8060');}
       const s=l.settings;this.drawButton(s.x,s.y,s.w,s.h,'设置','#b0a8c4');text(this.usesTouchControls()?'摇杆移动 · 右侧闪避':'WASD 移动 · 空格闪避 · ESC 暂停',531,9,'#87988d');c.restore();
     },
-    startNewGame(...args){this._startingExpedition=true;try{return old.startNewGame.apply(this,args);}finally{this._startingExpedition=false;}},
+    startNewGame(...args){
+      if(this.state==='gameover'&&this.player){this.selectedCharacter=this.player.characterId;this.selectedExpedition=this.levelData.challenge?this.levelData.theme:'campaign';}
+      this._startingExpedition=true;try{return old.startNewGame.apply(this,args);}finally{this._startingExpedition=false;}
+    },
     loadLevel(id){
       if(this._startingExpedition){const character=CONFIG.CHARACTERS[this.selectedCharacter]||CONFIG.CHARACTERS.warden;
         this.player.characterId=CONFIG.CHARACTERS[this.selectedCharacter]?this.selectedCharacter:'warden';this.player.stats={...this.player.stats,...character.stats};
