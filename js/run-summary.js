@@ -23,7 +23,7 @@
       this.runHistoryComplete=data.runHistoryComplete!==false&&(current===0||this.runHistory.length===current);
       this._runTracking=true;
     },
-    getEndingText(){const name=CONFIG.ENEMIES[this.levelData.bossId]?.name||'最终首领';return `${name}已被击败，诅咒的源头彻底消散！`;},
+    getEndingText(){const name=CONFIG.ENEMIES[this.levelData.bossId]?.name||'最终首领';return `${name}已被击败，诅咒已消散。`;},
     formatRunTime(){const summary=this.getRunSummary(),seconds=Math.floor(summary.seconds);return `${summary.complete?'总用时':'已记录用时'}: ${Math.floor(seconds/60)}分${seconds%60}秒`;},
     getEndingLayout(){const v=this.getVisibleCanvasRect(),w=Math.min(220,v.w-32),x=v.x+(v.w-w)/2;return {visible:v,x:v.x+16,w:v.w-32,cx:v.x+v.w/2,restart:{x,y:v.y+v.h-116,w,h:42},menu:{x,y:v.y+v.h-60,w,h:42}};},
     getGameOverButtons(){const l=this.getEndingLayout();return {restart:l.restart,menu:l.menu};},
@@ -41,7 +41,7 @@
       summary.levels.slice(-3).forEach((r,i)=>line(`${CONFIG.LEVELS[r.theme].name} · ${Math.floor(r.seconds/60)}:${String(Math.floor(r.seconds%60)).padStart(2,'0')}`,237+i*20,'#8fa991',compact?11:13));
       c.font='11px Courier New';c.textAlign='center';c.fillStyle='#a8bdd1';
       this.drawTextBlock(c,this.player.weapons.map(w=>`${w.def.name} Lv.${w.level}`).join(' · '),l.cx,v.y+315,Math.min(l.w,600),16,3);
-      if(victory)line('旅者带着环刀，踏上新的旅途……',402,'#8a7a5a',11);
+      if(victory)line('旅者继续踏上新的旅途。',402,'#8a7a5a',11);
       else this.drawButton(l.restart.x,l.restart.y,l.restart.w,l.restart.h,'重新开始','#c4a87a');
       this.drawButton(l.menu.x,l.menu.y,l.menu.w,l.menu.h,'返回主菜单',victory?'#c4a87a':'#aa6a4a');c.restore();
     },
