@@ -2716,6 +2716,9 @@ const Game = {
     // Ground is continuous. Tile-border gradients used to create a visible
     // translucent checkerboard even when ground tiles were disabled.
     this.drawContinuousGround(gctx, theme, mapW * ts, mapH * ts);
+    // Keep the old random stream position: removing visual patches must not
+    // move obstacles under players or encounter guards in existing saves.
+    for(let i=0;i<(visual.patchCount ?? 30)*5;i++)rng();
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
     const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy)
