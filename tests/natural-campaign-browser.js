@@ -22,7 +22,7 @@ async page => {
           const owned=new Set(a.weapons.map(w=>w.id));
           const rank=c=>{
             if(c.type==='evolution')return 200;
-            if(c.weaponId){const type=CONFIG.WEAPONS[c.weaponId].type,wanted=profile.id==='orbit'?type==='orbit':profile.id==='projectile'?['ranged','projectile','homing'].includes(type):type==='summon';return (wanted?105:55)+(owned.has(c.weaponId)?15:0);}
+            if(c.weaponId){const type=CONFIG.WEAPONS[c.weaponId].type,wanted=profile.id==='orbit'?type==='orbit':profile.id==='projectile'?['ranged','projectile','homing'].includes(type):type==='summon';return (wanted?175:55)+(owned.has(c.weaponId)?15:0);}
             return ({regen:145,armor:135,damage:130,weaponcount:125,attackspeed:120,rotatespeed:profile.id==='orbit'?115:70,orbit_mastery:profile.id==='orbit'?120:60,projectile_barrage:profile.id==='projectile'?125:60,summoner_pact:profile.id==='summon'?150:50,maxhp:a.hp<a.getMaxHp()*.6?140:90,pickuprange:90,xpbonus:100}[c.id]||70);
           };
           const list=g.state==='levelup'?g.upgradeChoices:g.chestRewardChoices;
@@ -33,11 +33,13 @@ async page => {
           let target={x:g.levelData.mapW*24+Math.cos(g.levelTime*.12)*150,y:g.levelData.mapH*24+Math.sin(g.levelTime*.12)*150};
           const objective=g.levelEncounters.find(e=>!['complete','expired'].includes(e.status));
           const treasure=g.pickups.filter(e=>e.alive&&e.type==='chest'&&e.value!==2).sort((x,y)=>dist(a.x,a.y,x.x,x.y)-dist(a.x,a.y,y.x,y.y))[0];
-          const xp=g.pickups.filter(e=>e.alive&&['xp','heart','magnet'].includes(e.type)).sort((x,y)=>dist(a.x,a.y,x.x,x.y)-dist(a.x,a.y,y.x,y.y))[0];
-          if(objective&&g.levelTime>=20){const guard=g.enemies.find(e=>e.alive&&e.encounterId===objective.id);const offset=objective.id==='rift'?103:guard?70:0;target={x:objective.x+Math.cos(g.levelTime*.7)*offset,y:objective.y+Math.sin(g.levelTime*.7)*offset};}
+          const pickupScore=e=>dist(a.x,a.y,e.x,e.y)-(e.type==='heart'&&a.hp<a.getMaxHp()*.7?200:e.type==='magnet'?100:0);
+          const xp=g.pickups.filter(e=>e.alive&&['xp','heart','magnet'].includes(e.type)).sort((x,y)=>pickupScore(x)-pickupScore(y))[0];
+          if(objective&&objective.status!=='waiting'){const guard=g.enemies.find(e=>e.alive&&e.encounterId===objective.id);const offset=objective.id==='rift'?103:guard?70:0;target={x:objective.x+Math.cos(g.levelTime*.7)*offset,y:objective.y+Math.sin(g.levelTime*.7)*offset};}
           else if(treasure)target=treasure;
           else if(xp)target=xp;
-          if(boss){const radius=profile.id==='orbit'?125:200,angle=angleTo(boss.x,boss.y,a.x,a.y)+.18;target={x:boss.x+Math.cos(angle)*radius,y:boss.y+Math.sin(angle)*radius};}
+          if(boss){const hasReach=a.weapons.some(w=>['ranged','projectile','homing','summon'].includes(w.def.type)),radius=hasReach?200:Math.min(125,Math.max(60,Math.max(...a.weapons.map(w=>w.getRange()))*.9+boss.radius)),angle=angleTo(boss.x,boss.y,a.x,a.y)+.18;target={x:boss.x+Math.cos(angle)*radius,y:boss.y+Math.sin(angle)*radius};}
+          if(xp?.type==='heart'&&a.hp<a.getMaxHp()*.5)target=xp;
           const options=[[0,0],[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
           let best=options[0],bestScore=-Infinity;
           for(const v of options){const len=Math.hypot(...v)||1,dx=v[0]/len*32,dy=v[1]/len*32,x=a.x+dx,y=a.y+dy;
@@ -49,7 +51,7 @@ async page => {
             if(score>bestScore){bestScore=score;best=v;}
           }
           return {state:g.state,theme,time:g.levelTime,hp:a.hp,maxHp:a.getMaxHp(),level:a.level,kills:a.kills,bosses:g.bossKills,chests:g.chestsOpened,
-            alive:a.alive,choice,choiceId:list[choice]?.id||list[choice]?.weaponId||list[choice]?.resultWeapon,row,
+            alive:a.alive,choice,choiceId:list[choice]?.id||list[choice]?.weaponId||list[choice]?.resultWeapon,offered:list.map(c=>c.id||c.weaponId||c.resultWeapon),row,
             keys:[...(best[0]?[best[0]>0?'KeyD':'KeyA']:[]),...(best[1]?[best[1]>0?'KeyS':'KeyW']:[])],
             dash:a.dashCooldown<=0&&g.enemies.some(e=>e.alive&&dist(e.x,e.y,a.x,a.y)<e.radius+a.radius+25),
             action:g.getCurrentObjective()?.action,storyReady:g.storyTimer>.31,
@@ -60,7 +62,7 @@ async page => {
         if(s.state==='victory'||s.state==='gameover'||s.alive===false){outcome=s;break;}
         if(s.state==='story'){await release();if(s.storyReady)await p.keyboard.press('Space');await p.waitForTimeout(80);continue;}
         if(['levelup','chestReward'].includes(s.state)) {
-          await release();choices.push({theme:s.theme,time:s.time,id:s.choiceId});
+          await release();choices.push({theme:s.theme,time:s.time,id:s.choiceId,offered:s.offered});
           if(s.row){const b=await p.locator('canvas').boundingBox(),r=s.row;await p.mouse.click(b.x+(r.x+r.w/2)/960*b.width,b.y+(r.y+r.h/2)/540*b.height);}
           else await p.keyboard.press(`Digit${s.choice+1}`);
           await p.waitForTimeout(80);continue;
