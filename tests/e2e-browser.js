@@ -48,8 +48,23 @@ async page => {
   };
   const finishStories = async (p, touch=false) => {
     await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));
-    for(let i=0;i<16;i++) {
-      if(await p.evaluate(()=>Game.state !== 'story')) return;
+    for(let i=0;i<40;i++) {
+      const state=await p.evaluate(()=>Game.state);
+      if(state==='levelup'||state==='chestReward') {
+        const replacement=await p.evaluate(()=>!!Game._weaponReplacement);
+        if(replacement)await clickRect(p,await p.evaluate(()=>Game.getBuildPanelLayout().rows[0]),touch);
+        else {
+          const index=await p.evaluate(()=>{const choices=Game.state==='levelup'?Game.upgradeChoices:Game.chestRewardChoices;return Math.max(0,choices.findIndex(c=>c.apply&&!c.weaponId));});
+          if(touch)await clickRect(p,await p.evaluate(i=>Game.getChoiceLayout((Game.state==='levelup'?Game.upgradeChoices:Game.chestRewardChoices).length).cards[i],index),true);
+          else await p.keyboard.press(`Digit${index+1}`);
+        }
+        await p.waitForTimeout(60);continue;
+      }
+      if(state !== 'story') {
+        await p.waitForTimeout(50);
+        if(await p.evaluate(s=>Game.state===s,state))return;
+        continue;
+      }
       await p.waitForFunction(()=>Game.storyTimer > .31);
       if(touch) await p.touchscreen.tap(150,300); else await p.keyboard.press('Space');
       await p.waitForTimeout(60);
