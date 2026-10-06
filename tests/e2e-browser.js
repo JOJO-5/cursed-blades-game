@@ -8,7 +8,7 @@ async page => {
     if (!condition) throw new Error(name);
   };
   const waitState = (p, state) => p.waitForFunction(s => typeof Game !== 'undefined' && Game.state === s, state, {timeout:15000});
-  const capture = async (p, name) => { const filename=`output/playwright/v060/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
+  const capture = async (p, name) => { const filename=`output/playwright/v070/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
   const clickRect = async (p, rect, touch=false) => {
     const pos = await p.evaluate(r => {
       const b=Game.canvas.getBoundingClientRect(), x=r.x+r.w/2, y=r.y+r.h/2;
@@ -100,7 +100,7 @@ async page => {
     await page.keyboard.press('Escape'); await waitState(page,'paused');
     const time=await page.evaluate(()=>Game.levelTime); await page.waitForTimeout(300);
     check('Pause freezes gameplay time',await page.evaluate(t=>Game.levelTime===t,time));
-    await clickRect(page,{x:380,y:280,w:200,h:45}); await waitState(page,'menu');
+    await clickRect(page,await page.evaluate(()=>Game.getPauseMenuButtons().find(r=>r.key==='save'))); await waitState(page,'menu');
     const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem(Game.saveKey)));
     check('Save and exit persists position and timer',saved.levelTime>0 && !!saved.playerPosition);
     await page.reload(); await waitState(page,'menu'); await clickMenu(page,'continue'); await waitState(page,'playing');
@@ -114,7 +114,7 @@ async page => {
     }),'seeded-timer + keyboard');
     await capture(page,'camp-challenge');await page.keyboard.press('Escape');await waitState(page,'paused');
     const propSignature=await page.evaluate(()=>JSON.stringify(Game.mapData.props.map(p=>[p.type,p.x,p.y])));
-    await clickRect(page,{x:380,y:280,w:200,h:45});await waitState(page,'menu');
+    await clickRect(page,await page.evaluate(()=>Game.getPauseMenuButtons().find(r=>r.key==='save')));await waitState(page,'menu');
     const encounterSave=await page.evaluate(()=>JSON.parse(localStorage.getItem(Game.saveKey)));
     await page.reload();await waitState(page,'menu');await clickMenu(page,'continue');await waitState(page,'playing');
     check('Reload reproduces the same prop types and positions',await page.evaluate(signature=>JSON.stringify(Game.mapData.props.map(p=>[p.type,p.x,p.y]))===signature,propSignature),'seeded-map + reload');

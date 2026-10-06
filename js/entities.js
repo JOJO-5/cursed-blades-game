@@ -26,6 +26,8 @@ class Player {
     this.xpToNext = CONFIG.XP_CURVE[0];
 
     // weapons
+    this.weaponCapacity = 6;
+    this.summonPactGranted = false;
     this.weapons = [];
     this.addWeapon('sword');
 
@@ -78,14 +80,16 @@ class Player {
 
   addWeapon(weaponId) {
     const wdef = CONFIG.WEAPONS[weaponId];
-    if (!wdef) return;
+    if (!wdef) return false;
     // check if already owned
     const existing = this.weapons.find(w => w.id === weaponId);
     if (existing) {
       existing.level += 1;
-      return;
+      return true;
     }
+    if (this.weapons.length >= this.weaponCapacity) return false;
     this.weapons.push(new Weapon(weaponId, wdef));
+    return true;
   }
 
   gainXp(amount) {
@@ -225,9 +229,10 @@ class Player {
   }
 
   ensureSummonPactWeapon() {
-    if ((this.upgradeLevels.summoner_pact || 0) <= 0) return;
+    if ((this.upgradeLevels.summoner_pact || 0) <= 0 || this.summonPactGranted) return;
     if (this.weapons.some(w => w.id === 'shadow_imp')) return;
-    this.addWeapon('shadow_imp');
+    if (!this.addWeapon('shadow_imp')) return;
+    this.summonPactGranted = true;
     if (!this._summonPactGrantedMessage && Game && Game.addMessage) {
       Game.addMessage('召唤契约唤来了暗影小鬼', '#c080ff');
       this._summonPactGrantedMessage = true;

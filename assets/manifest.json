@@ -978,5 +978,17 @@
   "enemies/plague_archer_v051": {
     "w": 64,
     "h": 69
+  },
+  "tiles/ground_village_v070": {
+    "w": 128,
+    "h": 128
+  },
+  "tiles/ground_mine_v070": {
+    "w": 128,
+    "h": 128
+  },
+  "tiles/ground_hell_v070": {
+    "w": 128,
+    "h": 128
   }
 }

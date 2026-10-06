@@ -3,7 +3,7 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 245,
+    "totalAssets": 248,
     "categories": {
       "props": 44,
       "ui": 41,
@@ -11,7 +11,7 @@
       "enemies": 32,
       "player": 5,
       "bosses": 3,
-      "tiles": 16,
+      "tiles": 19,
       "effects": 15,
       "items": 5,
       "weapons": 54
@@ -3313,6 +3313,48 @@
       },
       "animation": null,
       "source": "Built-in imagegen; source and prompts in assets/source_sheets/v051-generation.md"
+    },
+    "tiles/ground_village_v070": {
+      "id": "tiles/ground_village_v070",
+      "name": "Village Ground v0.7",
+      "category": "tiles",
+      "path": "assets/tiles/ground_village_v070.png",
+      "w": 128,
+      "h": 128,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null,
+      "source": "assets/source_sheets/v070_ground_atlas.png"
+    },
+    "tiles/ground_mine_v070": {
+      "id": "tiles/ground_mine_v070",
+      "name": "Mine Ground v0.7",
+      "category": "tiles",
+      "path": "assets/tiles/ground_mine_v070.png",
+      "w": 128,
+      "h": 128,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null,
+      "source": "assets/source_sheets/v070_ground_atlas.png"
+    },
+    "tiles/ground_hell_v070": {
+      "id": "tiles/ground_hell_v070",
+      "name": "Hell Ground v0.7",
+      "category": "tiles",
+      "path": "assets/tiles/ground_hell_v070.png",
+      "w": 128,
+      "h": 128,
+      "anchor": {
+        "x": 0,
+        "y": 0
+      },
+      "animation": null,
+      "source": "assets/source_sheets/v070_ground_atlas.png"
     }
   }
 }

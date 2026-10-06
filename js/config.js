@@ -469,6 +469,7 @@ const CONFIG = {
         p.stats.summonDamageMult *= 1.20;
         p.stats.summonLifetimeBonus += 1.0;
         if (!p.weapons.some(w => w.id === 'shadow_imp')) p.addWeapon('shadow_imp');
+        p.summonPactGranted = p.weapons.some(w => w.id === 'shadow_imp');
       } },
     { id:'guard_counter', name:'守势反击', icon:'ui/upgrade_armor_v051', desc:'护甲 +1，受击时有概率释放近身反击波',
       rarity:'epic', weight:16, maxLevel:3, prerequisite:'armor', buildTags:['guard','orbit'],

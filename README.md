@@ -6,9 +6,9 @@
 
 ## 当前状态
 
-`v0.6.0-preview`，核心战斗闭环、三关流程、升级构筑、宝箱奖励、武器进化、本地存档和 GitHub Pages 自动预览已接入。
+`v0.7.0-preview`，核心战斗闭环、三关流程、升级构筑、宝箱奖励、武器进化、本地存档和 GitHub Pages 自动预览已接入。
 
-本版新增目标/下一事件 HUD、20 秒显现的失落营地、主动献祭生命换稀有宝箱的腐化祭坛；事件敌人、状态和未领取奖励均支持存档恢复。村庄使用连续地面与道路，降低重复纹理噪声。包含 v0.5.1 的战斗修复、手机布局和 22 个生成素材。版本推进见 [ROADMAP.md](ROADMAP.md)，测试证据和验收边界见 [V060_ACCEPTANCE.md](V060_ACCEPTANCE.md)。
+本版新增暂停构筑面板（武器、遗物、进化进度、三种流派指南）和六个武器槽。满槽获取新武器可选择替换或返回奖励，进化保留原槽位与等级，旧存档额外武器完整保留。地图移除透明棋盘线与大片色斑，新增生成的泥土、矿石、玄武岩纹理，道路采用同材质与碎石边缘。版本推进见 [ROADMAP.md](ROADMAP.md)，验收边界见 [V070_ACCEPTANCE.md](V070_ACCEPTANCE.md)。
 
 最近重点优化：
 
@@ -51,7 +51,7 @@ npm ci
 npm run test:e2e
 ```
 
-Windows 使用本机 Chrome；Linux/CI 先运行 `npx playwright install --with-deps chromium`。测试自动启动临时本地服务，结束时关闭自己的浏览器和服务。结果与截图写入 `output/playwright/v060/`。三关 Boss 场景使用加速测试数据，实际执行正常生成、击杀、奖励等待、剧情和转场；自然通关、真机触控和音频听感需另行验收。
+Windows 使用本机 Chrome；Linux/CI 先运行 `npx playwright install --with-deps chromium`。测试自动启动临时本地服务，结束时关闭自己的浏览器和服务。结果与截图写入 `output/playwright/v070/`。三关 Boss 场景使用加速测试数据，实际执行正常生成、击杀、奖励等待、剧情和转场；自然通关、真机触控和音频听感需另行验收。
 
 `npm run test:opening` 使用三个随机种子，按真实时间和键盘输入测试首分钟，不修改生命、伤害、计时器或奖励。Windows PowerShell 设置 `$env:CURSED_TEST_URL='https://jojo-5.github.io/cursed-blades-game/'` 后，`npm run test:e2e` 可验证在线版本。
 

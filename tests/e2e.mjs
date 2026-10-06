@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const output = path.join(root, 'output/playwright/v060');
+const output = path.join(root, 'output/playwright/v070');
 const natural = process.argv.includes('--natural');
 const resultFile = natural ? 'natural-results.json' : 'results.json';
 const failureFile = natural ? 'natural-failure.json' : 'failure.json';
@@ -51,10 +51,19 @@ try {
   const resultMatch = response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
   if (!resultMatch) throw new Error('Missing browser test result');
   const result = JSON.parse(resultMatch[1]);
+  for(const file of natural ? [] : ['tests/build-browser.js','tests/build-campaign.js']) {
+    if(!result.passed)break;
+    const response = await run(['run-code','--filename',file]);
+    const match=response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
+    if(!match)throw new Error('Missing build browser result');
+    const build=JSON.parse(match[1]);
+    result.checks.push(...build.checks);result.screenshots.push(...build.screenshots);result.errors.push(...build.errors);
+    result.passed=build.passed;if(!build.passed)result.failure=build.failure;
+  }
   await writeFile(path.join(output,resultFile),JSON.stringify({started,url,...result},null,2));
   if (!result.passed) throw new Error(result.failure || 'Browser assertions failed');
   await rm(path.join(output,failureFile),{force:true});
-  if(!natural)await rm(path.join(output,'failure.png'),{force:true});
+  if(!natural)for(const name of ['failure.png','build-failure.png',...['orbit','projectile','summon'].map(id=>`campaign-${id}-failure.png`)])await rm(path.join(output,name),{force:true});
   console.log(`E2E passed: ${result.checks.length} checks; results and screenshots: ${output}`);
 } catch (error) {
   console.error(String(error));

@@ -54,7 +54,7 @@ const Game = {
 
   saveKey: 'cursed_blades_save',
   metaKey: 'cursed_blades_meta',
-  saveSchemaVersion: 5,
+  saveSchemaVersion: 6,
 
   // Object pools (initialized in init() — reduce GC by reusing entities)
   particlePool: null,
@@ -96,7 +96,7 @@ const Game = {
     };
 
     // load manifest
-    fetch('assets/manifest.json')
+    fetch('assets/manifest.json', {cache:'no-cache'})
       .then(r => r.json())
       .then(manifest => Assets.loadList(manifest))
       .then(() => {
@@ -1749,11 +1749,9 @@ const Game = {
       if (baseIdx >= 0) {
         const baseWeapon = this.player.weapons[baseIdx];
         const evolvedLevel = baseWeapon.level; // preserve weapon level
-        this.player.weapons.splice(baseIdx, 1);
-        this.player.addWeapon(choice.resultWeapon);
-        // restore level (addWeapon sets level=1 for new weapons)
-        const newWeapon = this.player.weapons[this.player.weapons.length - 1];
+        const newWeapon = new Weapon(choice.resultWeapon, CONFIG.WEAPONS[choice.resultWeapon]);
         newWeapon.level = evolvedLevel;
+        this.player.weapons[baseIdx] = newWeapon;
       }
       this.addMessage('武器进化! ' + choice.name, '#e080ff');
       Audio2.boss(); // dramatic sound for evolution
@@ -2161,6 +2159,39 @@ const Game = {
     return false;
   },
 
+  drawContinuousGround(ctx, theme, width, height) {
+    const image = Assets.get('tiles/ground_' + theme + '_v070');
+    ctx.save();
+    ctx.globalAlpha = 1;
+    if (image && image.complete && ctx.createPattern) {
+      // Mirror all edges: no hard seam even if source art is imperfectly tiled.
+      const tile = document.createElement('canvas');
+      tile.width = tile.height = 256;
+      const t = tile.getContext('2d');
+      t.imageSmoothingEnabled = false;
+      for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
+        t.save();t.translate(x ? 256 : 0, y ? 256 : 0);t.scale(x ? -1 : 1, y ? -1 : 1);
+        t.drawImage(image, 0, 0, 128, 128);t.restore();
+      }
+      ctx.fillStyle = ctx.createPattern(tile, 'repeat');
+      ctx.fillRect(0, 0, width, height);
+      if(theme==='village') {
+        t.fillStyle='rgba(105,81,48,.42)';t.fillRect(0,0,256,256);
+        this.villageRoadPattern=ctx.createPattern(tile,'repeat');
+      }
+    } else {
+      const colors = { village: ['#332c20','#3a3224','#29271d'], mine: ['#1c272b','#243034','#182226'], hell: ['#291d1a','#33231e','#211a19'] };
+      const palette = colors[theme] || colors.village;
+      ctx.fillStyle = palette[0];ctx.fillRect(0,0,width,height);
+      const noise = makeRNG((this.runSeed || 0) + 701);
+      for(let i=0;i<width*height/90;i++) {
+        ctx.fillStyle=palette[i%2+1];
+        ctx.fillRect(Math.floor(noise()*width/2)*2,Math.floor(noise()*height/2)*2,2+Math.floor(noise()*2)*2,2);
+      }
+    }
+    ctx.restore();
+  },
+
   drawThemeTerrainBase(ctx, theme, visual, rng, mapW, mapH, ts, cx, cy) {
     if (!ctx) return;
     const worldW = mapW * ts;
@@ -2408,18 +2439,27 @@ const Game = {
         }
         ctx.stroke();ctx.restore();
       };
-      paintRoad(feature.edgeColor || 'rgba(28,20,12,0.18)', 1.18);
-      paintRoad(feature.pathColor || 'rgba(91,67,39,0.42)', 0.94);
-      ctx.fillStyle = feature.rutColor || 'rgba(20,14,9,0.20)';
-      for (let x = 20; x < worldW; x += 108) {
-        const wobble = Math.sin(x * 0.013) * 9;
-        ctx.fillRect(x, feature.y + wobble - half * 0.35, 42, 3);
-        ctx.fillRect(x, feature.y + wobble + half * 0.35, 42, 3);
+      paintRoad('#322a1d', 1.08);
+      paintRoad(this.villageRoadPattern || '#4a3d28', 0.94);
+      // Fine irregular grit ties the road to the pixel-art buildings.
+      const grit = makeRNG(701 + (this.runSeed || 0));
+      for(let i=0;i<(worldW+worldH)*half/36;i++) {
+        const horizontal=i%2===0, along=grit()*(horizontal?worldW:worldH), across=(grit()-.5)*half*1.86;
+        const wobble=horizontal?Math.sin(along*.013)*9+Math.sin(along*.031)*4:Math.sin(along*.015)*8+Math.sin(along*.027)*4;
+        const x=horizontal?along:feature.x+wobble+across,y=horizontal?feature.y+wobble+across:along;
+        ctx.fillStyle=i%3===0?'#55462e':i%3===1?'#403624':'#483d29';
+        ctx.fillRect(Math.round(x/2)*2,Math.round(y/2)*2,2+(i%2)*2,2);
       }
-      for (let y = 20; y < worldH; y += 108) {
-        const wobble = Math.sin(y * 0.015) * 8;
-        ctx.fillRect(feature.x + wobble - half * 0.35, y, 3, 42);
-        ctx.fillRect(feature.x + wobble + half * 0.35, y, 3, 42);
+      // Broken soil edges avoid a smooth vector ribbon beneath pixel sprites.
+      for(let along=0;along<Math.max(worldW,worldH);along+=5) {
+        for(const side of [-1,1]) {
+          const offset=side*(half*.94+(grit()-.5)*9);
+          ctx.fillStyle=grit()<.5?'#382f21':'#443824';
+          const hx=along,hy=feature.y+Math.sin(along*.013)*9+Math.sin(along*.031)*4+offset;
+          const vx=feature.x+Math.sin(along*.015)*8+Math.sin(along*.027)*4+offset,vy=along;
+          if(along<worldW)ctx.fillRect(Math.round(hx/2)*2,Math.round(hy/2)*2,4,2);
+          if(along<worldH)ctx.fillRect(Math.round(vx/2)*2,Math.round(vy/2)*2,2,4);
+        }
       }
       ctx.globalAlpha = oldAlpha;
       return;
@@ -2673,40 +2713,9 @@ const Game = {
       gctx.fillRect(0, 0, mapW * ts, mapH * ts);
     }
 
-    // Smooth tile edges: draw soft gradient strips between tiles to hide grid lines
-    const tileEdgeAlpha = visual.tileEdgeAlpha ?? 0.18;
-    const edgeGrad = gctx.createLinearGradient(0, 0, ts, 0);
-    edgeGrad.addColorStop(0, `rgba(0,0,0,${tileEdgeAlpha})`);
-    edgeGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
-    edgeGrad.addColorStop(1, `rgba(0,0,0,${tileEdgeAlpha})`);
-    for (let ty = 0; ty < mapH; ty++) {
-      for (let tx = 1; tx < mapW; tx++) {
-        gctx.fillStyle = edgeGrad;
-        gctx.fillRect(tx * ts - 3, ty * ts, 6, ts);
-      }
-    }
-    const edgeGradV = gctx.createLinearGradient(0, 0, 0, ts);
-    edgeGradV.addColorStop(0, `rgba(0,0,0,${tileEdgeAlpha})`);
-    edgeGradV.addColorStop(0.5, 'rgba(0,0,0,0)');
-    edgeGradV.addColorStop(1, `rgba(0,0,0,${tileEdgeAlpha})`);
-    for (let tx = 0; tx < mapW; tx++) {
-      for (let ty = 1; ty < mapH; ty++) {
-        gctx.fillStyle = edgeGradV;
-        gctx.fillRect(tx * ts, ty * ts - 3, ts, 6);
-      }
-    }
-
-    // add some dark patches / paths (theme-tinted)
-    const patchColor = visual.patchColor || (theme === 'mine' ? 'rgba(8,5,12,0.35)' : 'rgba(15,10,5,0.3)');
-    const patchCount = visual.patchCount ?? 30;
-    gctx.fillStyle = patchColor;
-    for (let i = 0; i < patchCount; i++) {
-      const x = rng() * mapW * ts;
-      const y = rng() * mapH * ts;
-      gctx.beginPath();
-      gctx.ellipse(x, y, 40 + rng() * 60, 30 + rng() * 40, rng() * TAU, 0, TAU);
-      gctx.fill();
-    }
+    // Ground is continuous. Tile-border gradients used to create a visible
+    // translucent checkerboard even when ground tiles were disabled.
+    this.drawContinuousGround(gctx, theme, mapW * ts, mapH * ts);
 
     // map center (player spawn) — must be defined before wall/decoration code uses it
     const mapFeatures = this.generateThemeMapFeatures(theme, visual, rng, mapW, mapH, ts, cx, cy)
@@ -2902,6 +2911,8 @@ const Game = {
       hp: this.player.hp,
       kills: this.player.kills,
       weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level })),
+      weaponCapacity: this.player.weaponCapacity,
+      summonPactGranted: this.player.summonPactGranted,
       stats: this.player.stats,
       upgradeLevels: this.player.upgradeLevels,
       runSeed: this.runSeed,
@@ -3051,6 +3062,8 @@ const Game = {
       this.bossKills = data.bossKills ?? 0;
       this.chestsOpened = data.chestsOpened ?? 0;
       // load weapons
+      this.player.weaponCapacity = data.weaponCapacity || 6;
+      this.player.summonPactGranted = !!data.summonPactGranted;
       this.player.weapons = [];
       if (data.weapons) {
         for (const w of data.weapons) {
@@ -3708,7 +3721,7 @@ const Game = {
 
   // ---- Settings overlay ----
   canShowRotateButton() {
-    return this.usesTouchControls() && !this._settingsOverlay && !['levelup', 'chestReward'].includes(this.state);
+    return this.usesTouchControls() && !this._settingsOverlay && !this._buildOpen && !['levelup', 'chestReward'].includes(this.state);
   },
 
   getSettingsLayout() {
