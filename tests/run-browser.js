@@ -1,7 +1,7 @@
 async page => {
   const checks=[],screenshots=[],errors=[],url=page.url();
   const check=(name,ok,evidence)=>{checks.push({name,passed:!!ok,mode:'seeded accounting fixture + actual save/reload and touch',evidence});if(!ok)throw new Error(name);};
-  const wait=s=>page.waitForFunction(s=>Game.state===s,s);
+  const wait=s=>page.waitForFunction(s=>Game.state===s,s,{timeout:s==='menu'?65000:30000});
   const story=async()=>{for(let i=0;i<40;i++){if(await page.evaluate(()=>Game.state!=='story'))return;await page.waitForFunction(()=>Game.storyTimer>.31);await page.keyboard.press('Space');await page.waitForTimeout(70);}};
   const click=async(r,touch=false)=>{const b=await page.locator('canvas').boundingBox(),x=b.x+(r.x+r.w/2)/960*b.width,y=b.y+(r.y+r.h/2)/540*b.height;if(touch)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await page.waitForTimeout(60);};
   const capture=async name=>{const path=`output/playwright/v090/${name}.png`;await page.screenshot({path});screenshots.push(path);};

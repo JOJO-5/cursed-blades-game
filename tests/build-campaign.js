@@ -20,7 +20,7 @@ async page => {
       await p.keyboard.press(choice.replace?'Escape':`Digit${choice.index+1}`);
     };
     try {
-      await p.goto(url);await p.waitForFunction(()=>typeof Game!=='undefined'&&Game.state==='menu');
+      await p.goto(url);await p.waitForFunction(()=>typeof Game!=='undefined'&&Game.state==='menu',null,{timeout:65000});
       const r=await p.evaluate(()=>Game.getMenuLayout().start),b=await p.locator('canvas').boundingBox();
       await p.mouse.click(b.x+(r.x+r.w/2)/960*b.width,b.y+(r.y+r.h/2)/540*b.height);
       await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));await story();

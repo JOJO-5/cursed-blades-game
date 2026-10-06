@@ -1,7 +1,7 @@
 async page => {
   const checks=[],screenshots=[],errors=[],url=page.url();
   const check=(name,value)=>{checks.push({name,passed:!!value,mode:'seeded-state + browser-input'});if(!value)throw new Error(name);};
-  const wait=s=>page.waitForFunction(s=>typeof Game!=='undefined'&&Game.state===s,s);
+  const wait=s=>page.waitForFunction(s=>typeof Game!=='undefined'&&Game.state===s,s,{timeout:s==='menu'?65000:30000});
   const click=async(rect,touch=false)=>{
     const p=await page.evaluate(r=>{const b=Game.canvas.getBoundingClientRect(),x=r.x+r.w/2,y=r.y+r.h/2;return Game._rotate90?{x:b.left+(1-y/540)*b.width,y:b.top+x/960*b.height}:{x:b.left+x/960*b.width,y:b.top+y/540*b.height};},rect);
     if(touch)await page.touchscreen.tap(p.x,p.y);else await page.mouse.click(p.x,p.y);

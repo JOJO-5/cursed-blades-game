@@ -1,13 +1,13 @@
 async page => {
-  const checks = [], errors = [], screenshots = [];
+  const checks = [], errors = [], screenshots = [], networkEvents=[];
   const baseURL = page.url();
-  const watch = p => { p.on('pageerror', e => errors.push(String(e))); p.on('console', m => {if(m.type()==='error') errors.push(m.text());}); };
+  const watch = p => { p.on('pageerror', e => errors.push(String(e))); p.on('console', m => {if(m.type()==='error'){if(m.text().startsWith('Failed to load resource')&&m.location().url.includes('/assets/'))networkEvents.push({message:m.text(),url:m.location().url});else errors.push(m.text());}}); };
   watch(page);
   const check = (name, condition, mode='user-input', evidence=null) => {
     checks.push({name, passed:!!condition, mode, evidence});
     if (!condition) throw new Error(name);
   };
-  const waitState = (p, state) => p.waitForFunction(s => typeof Game !== 'undefined' && Game.state === s, state, {timeout:15000});
+  const waitState = (p, state) => p.waitForFunction(s => typeof Game !== 'undefined' && Game.state === s, state, {timeout:state==='menu'?65000:15000});
   const capture = async (p, name) => { const filename=`output/playwright/v090/${name}.png`; await p.screenshot({path:filename}); screenshots.push(filename); };
   const clickRect = async (p, rect, touch=false) => {
     const pos = await p.evaluate(r => {
@@ -307,15 +307,20 @@ async page => {
       });
       check(`Menu fits ${width}x${height}`,fits,'viewport-layout');await capture(page,`menu-${width}x${height}`);
     }
+    const recovered=await page.context().newPage();watch(recovered);let assetAttempts=0;
+    await recovered.route('**/assets/player/hero.png*',route=>++assetAttempts===1?route.fulfill({status:503,headers:{'cache-control':'no-store'},body:'Temporary unavailable'}):route.continue());
+    await recovered.goto(baseURL);await waitState(recovered,'menu');
+    check('Temporary asset 503 recovers without user reload',assetAttempts===2&&await recovered.evaluate(()=>Assets.failed.length===0&&Assets.loaded===Assets.total),'network-transient');
+    check('Recovered resource has a usable image',await recovered.evaluate(()=>Assets.get('player/hero').complete&&Assets.get('player/hero').naturalWidth>0),'network-transient');await recovered.close();
     const failed=await page.context().newPage();
-    await failed.route('**/assets/player/hero.png',route=>route.abort());
+    await failed.route('**/assets/player/hero.png*',route=>route.abort());
     await failed.goto(baseURL);await failed.waitForSelector('.load-error');
     check('Missing resource blocks combat with readable retry',await failed.getByRole('button',{name:'重新加载'}).isVisible(),'network-failure');
-    await capture(failed,'asset-error');await failed.unroute('**/assets/player/hero.png');
+    await capture(failed,'asset-error');await failed.unroute('**/assets/player/hero.png*');
     await failed.getByRole('button',{name:'重新加载'}).click();await waitState(failed,'menu');
     check('Retry recovers after asset is available',true,'network-failure + user-input');await failed.close();
-    check('Runtime has no console errors',errors.length===0,'console',errors);
-    return {passed:true,checks,screenshots,errors,limits:['Boss and progression use accelerated fixtures, not natural complete runs.','Touch is emulated Chromium input, not physical-device or audio acceptance.']};
+    check('Runtime has no JavaScript errors',errors.length===0,'console',errors);
+    return {passed:true,checks,screenshots,errors,networkEvents,limits:['Boss and progression use accelerated fixtures, not natural complete runs.','Touch is emulated Chromium input, not physical-device or audio acceptance.','Asset network errors are recorded separately; menu entry still requires complete successful loading.']};
   } catch(error) {
     await capture(page,'failure').catch(()=>{});
     return {passed:false,checks,screenshots,errors,failure:String(error)};

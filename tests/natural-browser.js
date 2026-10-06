@@ -9,7 +9,7 @@ async page => {
       let s=seed>>>0;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
     },seed);
     try {
-      await p.goto(baseURL);await p.waitForFunction(()=>Game.state==='menu');
+      await p.goto(baseURL);await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});
       const rect=await p.evaluate(()=>Game.getMenuLayout().start),b=await p.locator('canvas').boundingBox();
       await p.mouse.click(b.x+(rect.x+rect.w/2)/960*b.width,b.y+(rect.y+rect.h/2)/540*b.height);
       await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));

@@ -257,33 +257,59 @@ const Assets = {
   total: 0,
   failed: [],
   onProgress: null,
+  loadConcurrency: 8,
+  maxLoadAttempts: 3,
+  retryDelayMs: 200,
+  attemptTimeoutMs: 12000,
+  loadTimeoutMs: 60000,
 
-  loadList(manifest) {
-    return new Promise((resolve) => {
-      const keys = Object.keys(manifest);
+  async loadList(manifest) {
+    const keys = Object.keys(manifest);
     this.total = keys.length;
     this.loaded = 0;
     this.failed = [];
-      if (this.total === 0) { resolve(); return; }
-      for (const key of keys) {
-        const path = 'assets/' + key + '.png';
-        const img = new Image();
-        img.onload = () => {
-          this.loaded++;
-          if (this.onProgress) this.onProgress(this.loaded, this.total);
-          if (this.loaded >= this.total) resolve();
-        };
-        img.onerror = () => {
-          console.warn('Failed to load: ' + path);
-          this.failed.push(key);
-          this.loaded++;
-          if (this.onProgress) this.onProgress(this.loaded, this.total);
-          if (this.loaded >= this.total) resolve();
-        };
-        img.src = path;
-        this.images[key] = img;
+    if (!keys.length) return;
+    const deadline = Date.now() + this.loadTimeoutMs;
+    let cursor = 0;
+    const loadOne = async key => {
+      const path = 'assets/' + key + '.png';
+      for (let attempt = 0; attempt < this.maxLoadAttempts; attempt++) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) break;
+        const success = await new Promise(resolve => {
+          const img = new Image();
+          this.images[key] = img;
+          let settled = false, timer;
+          const finish = ok => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            img.onload = img.onerror = null;
+            resolve(ok);
+          };
+          img.onload = () => finish(true);
+          img.onerror = () => finish(false);
+          timer = setTimeout(() => { finish(false); img.src = ''; }, Math.min(this.attemptTimeoutMs, remaining));
+          // Retry URLs avoid retaining a temporary CDN error in the image cache.
+          img.src = path + (attempt ? '?retry=' + attempt : '');
+        });
+        if (success) return;
+        if (attempt + 1 < this.maxLoadAttempts && Date.now() < deadline) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(this.retryDelayMs * (attempt + 1), deadline - Date.now())));
+        }
       }
-    });
+      console.warn('Failed to load: ' + path);
+      this.failed.push(key);
+    };
+    const worker = async () => {
+      while (cursor < keys.length) {
+        const key = keys[cursor++];
+        await loadOne(key);
+        this.loaded++;
+        if (this.onProgress) this.onProgress(this.loaded, this.total);
+      }
+    };
+    await Promise.all(Array.from({length:Math.min(this.loadConcurrency,keys.length)}, worker));
   },
 
   get(key) { return this.images[key]; },

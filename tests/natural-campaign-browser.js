@@ -11,7 +11,7 @@ async page => {
     const samples=[],choices=[],started=Date.now();let held=[],lastSample='',outcome,lastSeen;
     const release=async()=>{for(const k of held)await p.keyboard.up(k);held=[];};
     try {
-      await p.goto(url);await p.waitForFunction(()=>Game.state==='menu');
+      await p.goto(url);await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});
       const r=await p.evaluate(()=>Game.getMenuLayout().start),b=await p.locator('canvas').boundingBox();
       await p.mouse.click(b.x+(r.x+r.w/2)/960*b.width,b.y+(r.y+r.h/2)/540*b.height);
       await p.evaluate(()=>{Game._naturalTiming={update:[],render:[],separation:[],frame:[]};const record=(key,value)=>{const a=Game._naturalTiming[key];if(a.length<4000)a.push(value);else a[(Game._naturalTiming[key+'Index']=(Game._naturalTiming[key+'Index']||0)+1)%4000]=value;};for(const [method,key] of [['updatePlaying','update'],['render','render'],['separateEnemies','separation']]){const original=Game[method];Game[method]=function(...args){const t=performance.now();try{return original.apply(this,args);}finally{if(this.state==='playing'){record(key,performance.now()-t);if(key==='render'){if(this._naturalFrameTime)record('frame',this._lastTime-this._naturalFrameTime);this._naturalFrameTime=this._lastTime;}}else if(key==='render')this._naturalFrameTime=0;}};}});
