@@ -735,6 +735,15 @@ const CONFIG = {
       projectileSpeed: 220, projectileColor: '#c040c0',
       projectileSprite: 'effects/void_particle_small',
       summonCooldown: 6, summonCount: 4,
+      // This boss uses the shared state machine, including phase-two attacks.
+      cleaveRange: 110, cleaveDamage: 1.1, cleaveCooldown: 4.0, cleaveWindup: 0.7, cleaveArc: 1.4,
+      fanShotCooldown: 3.0, fanShotWindup: 0.6, fanShotCount: 5,
+      chargeCooldown: 5.5, chargeWindup: 0.9, chargeSpeed: 380, chargeDamage: 1.4,
+      orbitWeaponCooldown: 6.0, orbitWeaponCount: 3, orbitWeaponSpeed: 3.2, orbitWeaponDamage: 22,
+      swordThrowCooldown: 5.0, swordThrowWindup: 0.8, swordThrowDamage: 1.3,
+      soldierSummonCooldown: 8.0, soldierSummonCount: 2,
+      hazardCooldown: 7.0, hazardRadius: 90, hazardDamage: 14, hazardDuration: 4.0,
+      abilityInterval: 1.2,
     },
     // ---- Level 3: Hell enemies ----
     imp: {

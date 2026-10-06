@@ -37,6 +37,15 @@ async page => {
           if(s.boss)break;if(s.state==='levelup'||s.state==='chestReward')await rewards();await p.waitForTimeout(80);
         }
         await story();await p.waitForFunction(()=>Game.state==='playing');
+        if(profile.id==='projectile'&&theme==='mine') {
+          const probe=await p.evaluate(()=>Object.keys(CONFIG.ENEMIES).filter(id=>CONFIG.ENEMIES[id].behavior==='boss').map(id=>{
+            const b=new Enemy(id,Game.player.x+100,Game.player.y);b.phase=2;
+            b.doHazard(Game.player);b.drawBossExtras(Game.ctx);b.doCharge(Game.player);
+            return {id,hazard:b.hazards[0],finite:Number.isFinite(b.chargeVx)&&Number.isFinite(b.chargeVy)&&['cleave','fanShot','charge','swordThrow'].every(a=>Number.isFinite(b.getWindupDuration(a)))};
+          }));
+          check('All boss phase-two hazards render on the actual canvas',probe.every(b=>['r','life','maxLife','damage'].every(k=>Number.isFinite(b.hazard[k])&&b.hazard[k]>0)));
+          check('All boss charges and windups remain finite',probe.every(b=>b.finite));
+        }
         await p.evaluate(()=>{
           const b=Game.enemies.find(e=>e.isBoss&&e.alive),w=Game.player.weapons[0];
           Game.enemies=[b];b.hp=1;b.x=Game.player.x+Math.cos(w.angle)*Math.min(w.getRange(),100);b.y=Game.player.y+Math.sin(w.angle)*Math.min(w.getRange(),100);

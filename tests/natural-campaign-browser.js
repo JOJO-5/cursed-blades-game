@@ -6,7 +6,7 @@ async page => {
   const profiles=[{id:'orbit',seed:77},{id:'projectile',seed:123},{id:'summon',seed:909}].filter(p=>!selected||p.id===selected);
   for(const profile of profiles) {
     const context=await page.context().browser().newContext({viewport:{width:1280,height:720}});
-    const p=await context.newPage();p.on('pageerror',e=>errors.push(String(e)));
+    const p=await context.newPage();p.on('pageerror',e=>errors.push(e.stack||String(e)));
     await p.addInitScript(seed=>{let s=seed>>>0;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};},profile.seed);
     const samples=[],choices=[],started=Date.now();let held=[],lastSample='',outcome,lastSeen;
     const release=async()=>{for(const k of held)await p.keyboard.up(k);held=[];};
@@ -59,6 +59,7 @@ async page => {
             timing:Object.fromEntries(Object.entries(g._naturalTiming||{}).filter(([,v])=>Array.isArray(v)).map(([k,v])=>{const a=[...v].sort((a,b)=>a-b);return [k,{samples:a.length,mean:a.reduce((s,x)=>s+x,0)/(a.length||1),p95:a[Math.floor(a.length*.95)]||0,max:a.at(-1)||0}];}))};
         },profile);
         lastSeen=s;
+        if(errors.length){outcome=s;throw new Error('Game runtime error: '+errors.at(-1));}
         if(s.state==='victory'||s.state==='gameover'||s.alive===false){outcome=s;break;}
         if(s.state==='story'){await release();if(s.storyReady)await p.keyboard.press('Space');await p.waitForTimeout(80);continue;}
         if(['levelup','chestReward'].includes(s.state)) {
@@ -76,6 +77,7 @@ async page => {
         await p.waitForTimeout(100);
       }
       await release();
+      if(!outcome){outcome=lastSeen;const path=`output/playwright/v090/natural-${profile.id}-timeout.png`;await p.screenshot({path});screenshots.push(path);}
       results.push({profile,...outcome,samples,choices,wallSeconds:(Date.now()-started)/1000});
       checks.push({name:`Natural full campaign: ${profile.id}`,passed:outcome?.state==='victory',mode:'real-time seeded random + keyboard, unchanged stats/timers'});
       if(outcome?.state!=='victory')return {passed:false,checks,results,screenshots,errors,failure:`${profile.id}: ${outcome?.state||'timeout'} in ${outcome?.theme} at ${outcome?.time}s`};
