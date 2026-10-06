@@ -42,7 +42,11 @@
       c.font='11px Courier New';c.textAlign='center';c.fillStyle='#a8bdd1';
       this.drawTextBlock(c,this.player.weapons.map(w=>`${w.def.name} Lv.${w.level}`).join(' · '),l.cx,v.y+315,Math.min(l.w,600),16,3);
       if(victory)line('旅者继续踏上新的旅途。',402,'#8a7a5a',11);
-      else this.drawButton(l.restart.x,l.restart.y,l.restart.w,l.restart.h,'重新开始','#c4a87a');
+      else {
+        line(`最佳 Lv.${this.meta.bestLevel} · ${this.meta.bestKills}击杀`,379,'#8fa991',11);
+        const best=Math.floor(this.meta.bestSurvivalTime||0);line(`最长记录 ${Math.floor(best/60)}分${best%60}秒`,398,'#8fa991',11);
+        this.drawButton(l.restart.x,l.restart.y,l.restart.w,l.restart.h,'重新开始','#c4a87a');
+      }
       this.drawButton(l.menu.x,l.menu.y,l.menu.w,l.menu.h,'返回主菜单',victory?'#c4a87a':'#aa6a4a');c.restore();
     },
     renderGameOver(){this.renderEnding(false);},renderVictory(){this.renderEnding(true);},
