@@ -124,6 +124,11 @@ const Input = {
           this._justPressed['Escape'] = true;
           continue;
         }
+        const skill = Game.getHeroSkillButton?.();
+        if (skill && tx >= skill.x && tx <= skill.x + skill.w && ty >= skill.y && ty <= skill.y + skill.h) {
+          this._justPressed.KeyQ = true;
+          continue;
+        }
         if (Game.getCurrentObjective()?.action) {
           const action = Game.getEncounterActionButton();
           if (tx >= action.x && tx <= action.x + action.w && ty >= action.y && ty <= action.y + action.h) {
