@@ -6,7 +6,7 @@ const ctx=vm.createContext({console,Math,window:{innerWidth:1280,innerHeight:720
 for(const f of ['config','core','entities','game','objectives','builds','world','run-summary','expansion','scene'])vm.runInContext(readFileSync(new URL(`../js/${f}.js`,import.meta.url),'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 run('Assets.get=()=>undefined;Audio2.playMusic=()=>{};Audio2.syncVolumes=()=>{};Audio2.play=()=>{};Game.pickupPool=new ObjectPool(Pickup,10);Game.particlePool=new ObjectPool(Particle,10);Game.damageNumberPool=new ObjectPool(DamageNumber,10);Game.startNewGame();');
-for(const theme of ['mine','hell','frost','marsh'])for(const seed of [0,1,77,123,909,65535,987654]){
+for(const theme of ['mine','hell','frost','marsh'])for(const seed of [0,1,77,123,367,881,909,65535,987654]){
  ctx.theme=theme;ctx.seed=seed;run('Game.runSeed=seed;Game.loadLevel(theme)');
  assert.equal(run('Game.mapLayoutVersion'),3,'New four-biome scenes use layout 3');
  const before=run('JSON.stringify(Game.collisionProps)');
@@ -20,4 +20,4 @@ for(const theme of ['mine','hell','frost','marsh'])for(const seed of [0,1,77,123
  run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.mapLayoutVersion'),3);assert.equal(run('JSON.stringify(Game.collisionProps)'),before);assert.equal(run('Game.isCircleBlocked(Game.player.x,Game.player.y,Game.player.radius)'),false);
 }
 for(const version of [0,1,2,3]){ctx.version=version;assert.equal(run('Game.migrateSave({schemaVersion:8,levelId:"mine",mapLayoutVersion:version}).mapLayoutVersion'),version);}
-console.log('Four biome scenes, 28 seeds, actual-radius routes, landmark compounds and exact saves passed.');
+console.log('Four biome scenes, 36 seeds, actual-radius routes, landmark compounds and exact saves passed.');

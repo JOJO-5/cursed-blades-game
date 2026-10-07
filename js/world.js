@@ -214,6 +214,12 @@
     moss_arch_v100:[134,130,43,17,'stonework'],tide_monument_v120:[94,120,26,17,'stonework'],marsh_tree_v100:[118,144,23,15,'trees'],reeds_urn_v100:[46,56,14,9,'stonework'],barrels_v110:[62,54,22,14,'stonework'],torch_v110:[34,72,8,8,'stonework'],wall_v110:[92,44,35,11,'stonework']
   };
   const secondary={mine:['wooden_workbench','barrels_v110','torch_v110','stone_arch_broken'],hell:['hell_ai_chain_pile','hell_ai_lava_rock','hell_ai_obsidian_obelisk','torch_v110'],frost:['frost_grave_v120','frost_pine_v100','frost_rock_v120','frost_grave_v120'],marsh:['reeds_urn_v120','marsh_tree_v100','reeds_urn_v120','moss_arch_v100']};
+  // Keep successful historic placements identical; only exhaust extra positions
+  // when hazards and routes consume every original landmark candidate.
+  const preferredPositions=[[0,0],[0,32],[0,-32],[0,64],[0,-64],[64,0],[-64,0],[112,64],[-112,-64],[176,0],[-176,0],[0,176],[0,-176],[176,176],[-176,-176]];
+  const fallbackPositions=[];
+  for(let y=-320;y<=320;y+=32)for(let x=-320;x<=320;x+=32)fallbackPositions.push([x,y]);
+  fallbackPositions.sort((a,b)=>a[0]*a[0]+a[1]*a[1]-b[0]*b[0]-b[1]*b[1]);
   Object.assign(Game,{
     migrateSave(data){const version=data?.mapLayoutVersion;const result=old.migrateSave.call(this,data);if(result&&version===3)result.mapLayoutVersion=3;return result;},
     getLevelVisualProfile(theme){const p=old.getLevelVisualProfile.call(this,theme);return this.mapLayoutVersion===3&&themes.includes(theme)?{...p,interiorWallSegments:0,decorationCount:0}:p;},
@@ -269,7 +275,7 @@
       const candidates=[[0,-112,true],[-112,-94,false],[112,-94,false],[-144,104,false],[130,114,false],[12,160,false],[-210,-20,false]];
       for(const region of regions)for(const [index,[dx,dy,landmark]] of candidates.entries()){
         const id=landmark?region.asset:secondary[theme][(index-1)%4],spec=specs[id],sx=region.x<cx?1:-1,sy=region.y<cy?1:-1,jitter=landmark?0:Math.round((rng()-.5)*12);let placed;
-        for(const [ox,offset] of [[0,0],[0,32],[0,-32],[0,64],[0,-64],[64,0],[-64,0],[112,64],[-112,-64],[176,0],[-176,0],[0,176],[0,-176],[176,176],[-176,-176]]){
+        for(const [ox,offset] of (landmark?preferredPositions.concat(fallbackPositions):preferredPositions)){
           const [drawW,drawH,halfW,halfH,category]=spec,x=region.x+(dx+jitter+ox)*sx,y=region.y+(dy+offset)*sy;
           const p={type:'props/'+id,x,y,category,scene:true,drawW,drawH,halfW,halfH,radius:Math.max(halfW,halfH),collisionOffsetY:-halfH,collisionX:x,collisionY:y-halfH,regionId:region.id,landmark};
           if(x<110||x>w-110||y<110||y>h-110||this.footprintOverlapsCircle(x,y,p,cx,cy,120)||this.levelEncounters.some(s=>this.footprintOverlapsCircle(x,y,p,s.x,s.y,125))||this.isPointNearThemeFeature(x,y,Math.max(halfW,halfH)+8,this.mapData.features.filter(f=>f.type!=='biomeRegion'))||props.some(q=>this.footprintOverlapsCircle(q.x,q.y,q,p.collisionX,p.collisionY,p.radius+10)))continue;
