@@ -62,7 +62,7 @@ try {
   const resultMatch = response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
   if (!resultMatch) throw new Error('Missing browser test result');
   const result = JSON.parse(resultMatch[1]);
-  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js','tests/expansion-browser.js','tests/scene-browser.js','tests/biome-browser.js','tests/combat-visual-browser.js','tests/weapon-visual-browser.js','tests/weapon-combat-browser.js','tests/campaign-browser.js']) {
+  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js','tests/expansion-browser.js','tests/scene-browser.js','tests/biome-browser.js','tests/combat-visual-browser.js','tests/weapon-visual-browser.js','tests/weapon-combat-browser.js','tests/campaign-browser.js','tests/boss-signatures-browser.js']) {
     if(!result.passed)break;
     const response = await run(['run-code','--filename',file]);
     const match=response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
