@@ -2,7 +2,7 @@
 const RunProfiles={normal:{name:'普通旅程',desc:'完整分支战役与自由构筑',hp:1,damage:1,speed:1},nightmare:{name:'噩梦远征',desc:'敌人生命 +35% · 伤害 +20% · 速度 +5%',hp:1.35,damage:1.2,speed:1.05},iron:{name:'铁誓挑战',desc:'最多三件武器 · 禁止治疗 · 保留闪避与技能',hp:1,damage:1,speed:1}};
 const RunAchievements={first:'旅途终章',nightmare:'噩梦旅者',iron:'铁誓守约',warden:'守卫凯旋',ranger:'游侠凯旋',arcanist:'术士凯旋',orbit:'环刃大师',projectile:'远射大师',summon:'契约大师'};
 (() => {
-  const old={};for(const k of ['startNewGame','loadLevel','loadAndContinue','saveProgress','loadMeta','finishCampaignStage','getMenuLayout','updateMenu','renderMenu','renderHUD','update','selectUpgrade','selectChestReward','upgradePrerequisiteMet','createRecoveryChoice','updateMeta'])old[k]=Game[k];
+  const old={};for(const k of ['startNewGame','loadLevel','loadAndContinue','saveProgress','loadMeta','finishCampaignStage','getMenuLayout','updateMenu','renderMenu','renderHUD','update','selectUpgrade','selectChestReward','upgradePrerequisiteMet','createRecoveryChoice','updateMeta','canShowRotateButton'])old[k]=Game[k];
   const enemyUpdate=Enemy.prototype.update,enemyTake=Enemy.prototype.takeDamage,heal=Player.prototype.heal;
   const finite=(v,lo,hi,fallback=lo)=>Number.isFinite(v)?clamp(v,lo,hi):fallback;
   Object.assign(Game,{
@@ -33,6 +33,7 @@ const RunAchievements={first:'旅途终章',nightmare:'噩梦旅者',iron:'铁�
       const b=this.enemies.find(e=>e.alive&&e.isBoss),s=d?.bossSnapshot;if(b&&s?.type===b.type){b.x=finite(s.x,50,this.levelData.mapW*48-50,b.x);b.y=finite(s.y,50,this.levelData.mapH*48-50,b.y);b.hp=finite(s.hp,1,b.maxHp,b.maxHp);b.enraged=!!s.enraged;b.phase=b.enraged?2:1;if(b.enraged){b.speed*=1.25;b.damage*=1.15;}b.signatureIndex=Math.floor(finite(s.signatureIndex,0,100000));b.bossState='recover';b.stateTimer=1.1;b.abilityTimer=1.1;b.signatureEffects=[];this.resolvePropCollision(b);}
       if(this.campaignFinished&&!this.challengeAwarded){this.finishCampaignStage();this.saveProgress();}
     },
+    canShowRotateButton(){return !this._challengeMenu&&old.canShowRotateButton.call(this);},
     getMenuLayout(){const l=old.getMenuLayout.call(this);l.challenge={x:l.start.x,y:l.visible.y+312*l.scale,w:l.start.w,h:30*l.scale};return l;},
     getChallengeLayout(){const v=this.getVisibleCanvasRect(),w=Math.min(580,v.w-28),x=v.x+(v.w-w)/2;return {v,cards:Object.keys(RunProfiles).map((id,i)=>({id,x,y:v.y+90+i*76,w,h:65})),back:{x,y:v.y+v.h-48,w,h:34}};},
     updateMenu(){if(this._settingsOverlay)return old.updateMenu.call(this);if(this._challengeMenu){const l=this.getChallengeLayout();for(const r of l.cards)if(Input.consumeClick(r.x,r.y,r.w,r.h)){if(this.selectRunProfile(r.id)){this._challengeMenu=false;Audio2.click();}else this.addMessage('完成三段战役后解锁','#c9ac72');return;}const r=l.back;if(Input.wasPressed('Escape')||Input.consumeClick(r.x,r.y,r.w,r.h))this._challengeMenu=false;return;}const r=this.getMenuLayout().challenge;if(Input.consumeClick(r.x,r.y,r.w,r.h)){this._challengeMenu=true;Audio2.click();return;}return old.updateMenu.call(this);},
