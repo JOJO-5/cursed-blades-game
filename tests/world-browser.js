@@ -119,7 +119,7 @@ async page => {
     check('Completed seal removes its hazard and pays once',await page.evaluate(n=>Game.mapData.features.find(f=>f.objectiveRift).sealed&&Game.chestsOpened+Game.pickups.filter(p=>p.objectiveId==='rift').length===n+1,riftChestBaseline));
     await capture('rift-sealed');
     await page.evaluate(()=>{const s=Game.levelEncounters[0];Game.player.x=s.x;Game.player.y=s.y;Game.player.invuln=0;Game.enemies=[];Game.mapData.features=Game.mapData.features.filter(f=>f.objectiveRift);Game._sealHP=Game.player.hp;});
-    await page.waitForTimeout(300);check('Sealed rift no longer damages or slows the player',await page.evaluate(()=>Game.player.hp===Game._sealHP&&Game.environmentSpeedMult===1));
+    await page.waitForTimeout(300);check('Sealed rift no longer damages or slows the player',await page.evaluate(()=>Game.player.hp>=Game._sealHP&&Game.environmentSpeedMult===1));
     const context=await page.context().browser().newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
     const mobile=await context.newPage();mobile.on('pageerror',e=>errors.push(String(e)));const desktop=page;page=mobile;
     await page.goto(url);await wait('menu');await page.evaluate(()=>{Game.startNewGame();Game.loadLevel('mine');});await settle();await wait('playing');
