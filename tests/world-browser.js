@@ -19,6 +19,16 @@ async page => {
     }
     throw new Error('State did not settle');
   };
+  const waitEncounter=async predicate=>{
+    const deadline=Date.now()+30000;
+    while(Date.now()<deadline){
+      if(await page.evaluate(predicate))return;
+      const state=await page.evaluate(()=>Game.state);
+      if(['story','levelup','chestReward'].includes(state))await settle();
+      else await page.waitForTimeout(100);
+    }
+    throw new Error('Encounter progress timed out: '+JSON.stringify(await page.evaluate(()=>({state:Game.state,encounters:Game.levelEncounters.map(s=>({id:s.id,status:s.status,progress:s.progress}))}))));
+  };
   const clearGuards=async id=>{
     for(let i=0;i<70;i++) {
       await settle();
@@ -101,7 +111,7 @@ async page => {
     const held=await page.evaluate(()=>Game.levelEncounters[0].progress);await page.waitForTimeout(250);
     check('Leaving sealing circle pauses progress',await page.evaluate(p=>Game.levelEncounters[0].progress===p,held));
     await page.evaluate(()=>{const s=Game.levelEncounters[0];Game.player.x=s.x+100;Game.player.y=s.y;});
-    await page.waitForFunction(()=>Game.levelEncounters[0].progress>.2);await page.keyboard.press('Escape');await wait('paused');
+    await waitEncounter(()=>Game.levelEncounters[0].progress>.2);await page.keyboard.press('Escape');await wait('paused');
     const seal=await page.evaluate(()=>Game.levelEncounters[0].progress);await click(await page.evaluate(()=>Game.getPauseMenuButtons().find(r=>r.key==='save')));await wait('menu');
     await page.reload();await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));await settle();await wait('playing');
     check('Partial rift sealing survives save and reload',await page.evaluate(p=>Game.levelEncounters[0].progress>=p&&Game.levelEncounters[0].progress<p+.1,seal));
