@@ -13,6 +13,15 @@
     getCurrentStageRecord(){return {theme:this.levelData.theme,seconds:nonnegative(this.levelTime),kills:Math.max(0,(this.player?.kills||0)-this.runStartKills),chests:Math.max(0,(this.chestsOpened||0)-this.runStartChests),completed:!!this.bossDefeated};},
     getRunSummary(){const levels=[...this.runHistory,this.getCurrentStageRecord()];return {levels,seconds:levels.reduce((sum,r)=>sum+r.seconds,0),complete:this.runHistoryComplete};},
     restoreRunHistory(data){
+      const tiers=[['village'],['mine','frost'],['hell','marsh']];
+      const route=Array.isArray(data.campaignRoute)?data.campaignRoute:[];
+      const valid=data.campaignMode===true&&route.length>=1&&route.length<=3&&route.every((id,i)=>tiers[i].includes(id))&&route.at(-1)===data.levelId;
+      this.campaignMode=valid;this.campaignRoute=valid?[...route]:[];this.campaignFinished=valid&&route.length===3&&data.campaignFinished===true;
+      if(valid){
+        const history=Array.isArray(data.runHistory)?data.runHistory:[];
+        this.runHistory=route.slice(0,-1).flatMap(theme=>{const r=history.find(r=>r?.theme===theme&&Number.isFinite(r.seconds)&&r.seconds>=0);return r?[{theme,seconds:r.seconds,kills:Math.floor(nonnegative(r.kills)),chests:Math.floor(nonnegative(r.chests)),completed:!!r.completed}]:[];});
+        this.runStartKills=Math.floor(nonnegative(data.runStartKills));this.runStartChests=Math.floor(nonnegative(data.runStartChests));this.runHistoryComplete=data.runHistoryComplete!==false&&this.runHistory.length===route.length-1;this._runTracking=true;return;
+      }
       const current=['village','mine','hell'].indexOf(data.levelId),seen=new Set();
       this.runHistory=(Array.isArray(data.runHistory)?data.runHistory:[]).filter(r=>{
         const index=['village','mine','hell'].indexOf(r?.theme);
@@ -32,7 +41,7 @@
       const c=this.ctx,l=this.getEndingLayout(),v=l.visible,compact=v.w<400,summary=this.getRunSummary();
       c.save();c.fillStyle=victory?'#07120b':'#160a0a';c.fillRect(0,0,960,540);
       const line=(text,y,color='#c4a87a',size=compact?12:15)=>{c.font=`${size}px Courier New`;c.textAlign='center';c.fillStyle=color;c.fillText(this.fitChoiceBadgeText(c,text,l.w),l.cx,v.y+y);};
-      line(victory?(this.levelData.challenge?'远征完成！':'最终通关！'):'旅途止步',65,victory?'#7dd8a0':'#ff7060',compact?30:44);
+      line(victory?(this.levelData.challenge&&!this.campaignMode?'远征完成！':'最终通关！'):'旅途止步',65,victory?'#7dd8a0':'#ff7060',compact?30:44);
       c.font=`${compact?12:15}px Courier New`;c.textAlign='center';c.fillStyle='#c4a87a';
       this.drawTextBlock(c,victory?this.getEndingText():'整理构筑，下一次再挑战。',l.cx,v.y+105,Math.min(l.w,540),18,2);
       line(`等级 ${this.player.level} · 击杀 ${this.player.kills}`,157);

@@ -56,14 +56,14 @@
         c.fillStyle=selected?d.color:'#b3b8ac';c.textAlign='center';c.font=`bold ${compact?11:14}px Courier New`;c.fillText(d.name,r.x+r.w/2,r.y+86*scale);c.font='10px Courier New';c.fillText(d.role,r.x+r.w/2,r.y+103*scale);
       }
       const hero=CONFIG.CHARACTERS[this.selectedCharacter];text(`${hero.perk} · ${CONFIG.WEAPONS[hero.weapon].name}`,240,compact?10:13,hero.color);
-      for(const r of l.expeditions)this.drawButton(r.x,r.y,r.w,r.h,r.id==='campaign'?'三关战役':CONFIG.LEVELS[r.id].name,r.id===this.selectedExpedition?'#dfbf72':'#82968d');
-      text(this.selectedExpedition==='campaign'?'村庄 → 矿洞 → 地狱':this.selectedExpedition==='frost'?'4 分钟首领 · 暴风雪 / 火炬避风':'4.5 分钟首领 · 潮汐 / 净潮石碑',328,compact?10:12,'#a0b1aa');
+      for(const r of l.expeditions)this.drawButton(r.x,r.y,r.w,r.h,r.id==='campaign'?'分支战役':CONFIG.LEVELS[r.id].name,r.id===this.selectedExpedition?'#dfbf72':'#82968d');
+      text(this.selectedExpedition==='campaign'?'五张地图 · 三段旅程 · 首领后选择路线':this.selectedExpedition==='frost'?'4 分钟首领 · 暴风雪 / 火炬避风':'4.5 分钟首领 · 潮汐 / 净潮石碑',328,compact?10:12,'#a0b1aa');
       this.drawButton(l.start.x,l.start.y,l.start.w,l.start.h,'开始远征','#dfbf72');
       if(this.hasSave()){const r=l.continue;this.drawButton(r.x,r.y,r.w,r.h,'继续存档中的旅途','#8fc7ae');const b=l.reset;this.drawButton(b.x,b.y,b.w,b.h,this.resetConfirmTimer>0?'再次点击确认清除':'重置存档','#aa8060');}
       const s=l.settings;this.drawButton(s.x,s.y,s.w,s.h,'设置','#b0a8c4');text(this.usesTouchControls()?'摇杆移动 · 右侧闪避':'WASD 移动 · 空格闪避 · ESC 暂停',531,9,'#87988d');c.restore();
     },
     startNewGame(...args){
-      if(this.state==='gameover'&&this.player){this.selectedCharacter=this.player.characterId;this.selectedExpedition=this.levelData.challenge?this.levelData.theme:'campaign';}
+      if(this.state==='gameover'&&this.player){this.selectedCharacter=this.player.characterId;this.selectedExpedition=this.campaignMode?'campaign':this.levelData.challenge?this.levelData.theme:'campaign';}
       this._startingExpedition=true;try{return old.startNewGame.apply(this,args);}finally{this._startingExpedition=false;}
     },
     loadLevel(id){
@@ -73,7 +73,7 @@
       }
       this.trialTickTimer=0;return old.loadLevel.call(this,id);
     },
-    loadAndContinue(){old.loadAndContinue.call(this);if(this.levelData.challenge){this.runHistory=[];this.runHistoryComplete=true;this.runStartKills=0;this.runStartChests=0;}},
+    loadAndContinue(){old.loadAndContinue.call(this);if(this.levelData.challenge&&!this.campaignMode){this.runHistory=[];this.runHistoryComplete=true;this.runStartKills=0;this.runStartChests=0;}},
     drawContinuousGround(ctx,theme,w,h){
       const suffix=theme==='village'?'_v110':theme==='frost'&&this.mapLayoutVersion===3?'_v120':'_v100';
       const image=Assets.get('tiles/ground_'+theme+suffix);

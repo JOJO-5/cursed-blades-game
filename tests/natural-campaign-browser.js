@@ -70,6 +70,7 @@ async page => {
         if(s.state==='victory'||s.state==='gameover'||s.alive===false){outcome=s;break;}
         if(villageOnly&&s.summary?.levels.some(r=>r.theme==='village'&&r.completed)&&s.theme==='mine'){outcome={...s,villageCompleted:true};break;}
         if(s.state==='story'){await release();if(s.storyReady)await p.keyboard.press('Space');await p.waitForTimeout(80);continue;}
+        if(s.state==='routeChoice'){await release();await p.keyboard.press('Digit1');await p.waitForTimeout(80);continue;}
         if(['levelup','chestReward'].includes(s.state)) {
           await release();choices.push({theme:s.theme,time:s.time,id:s.choiceId,offered:s.offered});
           if(s.row){const b=await p.locator('canvas').boundingBox(),r=s.row;await p.mouse.click(b.x+(r.x+r.w/2)/960*b.width,b.y+(r.y+r.h/2)/540*b.height);}

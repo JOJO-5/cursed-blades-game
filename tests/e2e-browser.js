@@ -80,6 +80,7 @@ async page => {
     await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));
     for(let i=0;i<40;i++) {
       const state=await p.evaluate(()=>Game.state);
+      if(state==='routeChoice'){await clickRect(p,await p.evaluate(()=>Game.getCampaignRouteLayout().cards[0]),touch);await p.waitForTimeout(100);continue;}
       if(state==='levelup'||state==='chestReward') {
         const replacement=await p.evaluate(()=>!!Game._weaponReplacement);
         if(replacement)await clickRect(p,await p.evaluate(()=>Game.getBuildPanelLayout().rows[0]),touch);

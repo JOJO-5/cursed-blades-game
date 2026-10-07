@@ -2910,6 +2910,9 @@ const Game = {
     if (!this.player || !this.player.alive) return;
     const data = {
       schemaVersion: this.saveSchemaVersion,
+      campaignMode: !!this.campaignMode,
+      campaignRoute: this.campaignRoute,
+      campaignFinished: !!this.campaignFinished,
       mapLayoutVersion: this.mapLayoutVersion ?? 0,
       runHistory: this.runHistory,
       runStartKills: this.runStartKills,

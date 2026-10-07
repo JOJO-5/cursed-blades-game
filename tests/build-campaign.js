@@ -6,7 +6,9 @@ async page => {
     const p=await context.newPage();p.on('pageerror',e=>errors.push(String(e)));
     const story=async()=>{
       for(let i=0;i<30;i++) {
-        if(await p.evaluate(()=>Game.state!=='story'))return;
+        const state=await p.evaluate(()=>Game.state);
+        if(state==='routeChoice'){await p.keyboard.press('Digit1');await p.waitForTimeout(100);continue;}
+        if(state!=='story')return;
         await p.waitForFunction(()=>Game.storyTimer>.31);await p.keyboard.press('Space');await p.waitForTimeout(70);
       }
       throw new Error('Story did not advance');
