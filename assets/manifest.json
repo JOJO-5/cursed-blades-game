@@ -1314,5 +1314,145 @@
   "tiles/ground_frost_v120": {
     "w": 256,
     "h": 256
+  },
+  "bosses/cursed_knight_v120": {
+    "w": 118,
+    "h": 128
+  },
+  "bosses/brood_matriarch_v120": {
+    "w": 128,
+    "h": 119
+  },
+  "bosses/infernal_dragon_v120": {
+    "w": 128,
+    "h": 122
+  },
+  "bosses/frost_warden_v120": {
+    "w": 128,
+    "h": 127
+  },
+  "bosses/tide_keeper_v120": {
+    "w": 128,
+    "h": 127
+  },
+  "player/warden_south_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_south_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_south_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_south_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_south_4_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_east_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_east_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_east_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_east_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/warden_east_4_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_south_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_south_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_south_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_south_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_south_4_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_east_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_east_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_east_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_east_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/ranger_east_4_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_south_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_south_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_south_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_south_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_south_4_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_east_1_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_east_2_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_east_0_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_east_3_v120": {
+    "w": 96,
+    "h": 96
+  },
+  "player/arcanist_east_4_v120": {
+    "w": 96,
+    "h": 96
   }
 }

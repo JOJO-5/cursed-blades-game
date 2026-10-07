@@ -314,6 +314,34 @@ const Assets = {
 
   get(key) { return this.images[key]; },
 
+  // Tint the isolated sprite, never the already opaque world canvas.
+  tintCache: new Map(),
+  getTinted(key, color) {
+    const img = this.get(key);
+    if (!img || !img.complete || !img.width) return null;
+    const id = key + ':' + color, cached = this.tintCache.get(id);
+    if (cached && cached.source === img) return cached.canvas;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width; canvas.height = img.height;
+    const c = canvas.getContext('2d');
+    c.drawImage(img, 0, 0);
+    c.globalCompositeOperation = 'source-in';
+    c.fillStyle = color; c.fillRect(0, 0, canvas.width, canvas.height);
+    if (this.tintCache.size >= 128) this.tintCache.delete(this.tintCache.keys().next().value);
+    this.tintCache.set(id, {source:img, canvas});
+    return canvas;
+  },
+
+  drawTinted(ctx, key, x, y, scale, color, alpha) {
+    const img = this.getTinted(key, color);
+    if (!img) return;
+    ctx.save(); ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = alpha; ctx.imageSmoothingEnabled = false;
+    ctx.translate(x, y);
+    ctx.drawImage(img, -img.width*scale/2, -img.height*scale/2, img.width*scale, img.height*scale);
+    ctx.restore();
+  },
+
   draw(ctx, key, x, y, scale, rotation, alpha) {
     const img = this.images[key];
     if (!img || !img.complete) return;

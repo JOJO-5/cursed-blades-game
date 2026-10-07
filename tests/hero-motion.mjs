@@ -15,3 +15,11 @@ for(const [key,dir,flip] of [['KeyW','north',false],['KeyS','south',false],['Key
 run('Game.resolvePropCollision=a=>{a.x=a.prevX;a.y=a.prevY;};Input.keys={KeyD:true};p.update(.1)');
 assert.equal(run('p.getSpritePose().frame'),0,'Blocked movement cannot keep sliding feet');
 console.log('Directional motion, stable visible height, idle facing and blocked-foot behavior passed.');
+
+run("p.spriteDirection='south';p.isMoving=true;p.stepDistance=0");
+const first=run('p.getSpritePose()');run('p.stepDistance=36');const opposite=run('p.getSpritePose()');
+assert.equal(first.key,opposite.key);assert.notEqual(first.walkFlip,opposite.walkFlip,'Opposite front contacts must exchange feet');
+run('p.spriteDirection="east"');
+for(let phase=0;phase<4;phase++){ctx.distance=phase*18;run('p.stepDistance=distance');assert.equal(run('p.getSpritePose().frame'),phase+1);}
+run('p.stepDistance=72');assert.equal(run('p.getSpritePose().frame'),1,'A complete stride repeats without a stutter');
+console.log('Alternating front contacts and 72-unit side stride passed.');

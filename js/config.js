@@ -676,7 +676,7 @@ const CONFIG = {
     },
     // boss — 无头骑士 (Headless Knight), two-phase boss
     boss: {
-      name: '无头骑士', sprite: 'bosses/dark_knight_flame',
+      name: '无头骑士', sprite: 'bosses/cursed_knight_v120', spriteHeight:120,
       hp: 1000, speed: 42, damage: 28, xp: 120, radius: 38,
       color: '#3a1a2a', behavior: 'boss',
       phases: 2, enrageHpPct: 0.5,
@@ -727,7 +727,7 @@ const CONFIG = {
     },
     // level 2 boss
     bossSpider: {
-      name: '腐化巨蛛', sprite: 'enemies/bone_spider',
+      name: '腐化巨蛛', sprite: 'bosses/brood_matriarch_v120', spriteHeight:110, orbitSprite:'weapons/crystal_weapon',
       hp: 1200, speed: 50, damage: 35, xp: 150, radius: 42,
       color: '#4a2a3a', behavior: 'boss',
       phases: 3, enrageHpPct: 0.4,
@@ -789,7 +789,7 @@ const CONFIG = {
     },
     // Level 3 Boss — 地狱炎龙 (Hell Dragon)
     bossDragon: {
-      name: '地狱炎龙', sprite: 'bosses/dark_knight_flame',
+      name: '地狱炎龙', sprite: 'bosses/infernal_dragon_v120', spriteHeight:132, orbitSprite:'effects/fire_projectile',
       hp: 1800, speed: 38, damage: 40, xp: 200, radius: 48,
       color: '#ff3020', behavior: 'boss',
       phases: 3, enrageHpPct: 0.33,

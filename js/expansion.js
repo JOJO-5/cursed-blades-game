@@ -6,8 +6,8 @@
     arcanist:{name:'余烬术士',role:'火焰法术',weapon:'fireball',color:'#c6a0d0',perk:'弹幕伤害 +15%',stats:{projectileDamageMult:1.15}}
   };
   for(const id of ['sword','hammer','scythe','shield'])CONFIG.WEAPONS[id].icon='weapons/'+id;
-  CONFIG.ENEMIES.frostWarden={...CONFIG.ENEMIES.boss,name:'寒霜守卫',hp:800,damage:25,speed:30,color:'#8bbfdb',projectileColor:'#8bbfdb'};
-  CONFIG.ENEMIES.tideKeeper={...CONFIG.ENEMIES.bossSpider,name:'沉渊守卫',hp:900,damage:28,speed:38,color:'#6bbaa4',projectileColor:'#6bbaa4'};
+  CONFIG.ENEMIES.frostWarden={...CONFIG.ENEMIES.boss,sprite:'bosses/frost_warden_v120',spriteHeight:124,orbitSprite:'effects/ice_orb',name:'寒霜守卫',hp:800,damage:25,speed:30,color:'#8bbfdb',projectileColor:'#8bbfdb'};
+  CONFIG.ENEMIES.tideKeeper={...CONFIG.ENEMIES.bossSpider,sprite:'bosses/tide_keeper_v120',spriteHeight:116,orbitSprite:'effects/spirit_orbs_blue',name:'沉渊守卫',hp:900,damage:28,speed:38,color:'#6bbaa4',projectileColor:'#6bbaa4'};
   const phases=(pool,ranged,time)=>[
     {time:0,name:'踏入禁地',enemyPool:pool.slice(0,2),rangedPool:[],maxEnemies:12,spawnInterval:2.7,events:[]},
     {time:60,name:'迷雾围猎',enemyPool:pool,rangedPool:ranged,maxEnemies:18,spawnInterval:2.2,events:[{type:'chest',rare:false,mimic:false}]},

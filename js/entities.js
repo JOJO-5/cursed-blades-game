@@ -249,9 +249,14 @@ class Player {
   }
 
   getSpritePose() {
-    const frame = this.isMoving ? 1 + Math.floor(this.stepDistance / 12) % 4 : 0;
-    return {key:`player/${this.characterId || 'warden'}_${this.spriteDirection}_${frame}_v100`,
-      direction:this.spriteDirection,flip:this.spriteFlip,frame,height:64};
+    const modern = this.spriteDirection !== 'north';
+    const frame = this.isMoving ? 1 + Math.floor(this.stepDistance / (modern ? 18 : 12)) % 4 : 0;
+    // Front contact/pass pairs are mirrored on the second half of the stride:
+    // this guarantees alternating feet rather than trusting duplicate generated poses.
+    const walkFlip = this.spriteDirection === 'south' && frame > 2;
+    const assetFrame = walkFlip ? frame - 2 : frame;
+    return {key:`player/${this.characterId || 'warden'}_${this.spriteDirection}_${assetFrame}_${modern ? 'v120' : 'v100'}`,
+      direction:this.spriteDirection,flip:this.spriteFlip,walkFlip,frame,height:64};
   }
 
   draw(ctx) {
@@ -279,20 +284,18 @@ class Player {
     const spriteKey = Assets.get(pose.key) ? pose.key : 'player/hero';
     const spriteImg = Assets.get(spriteKey);
     if (spriteImg && spriteImg.complete && spriteImg.width > 0) {
-      ctx.save();ctx.translate(this.x + sx, this.y + 14 + sy);ctx.scale(pose.flip ? -1 : 1, 1);
+      ctx.save();ctx.globalAlpha=1;ctx.translate(this.x + sx, this.y + 14 + sy);ctx.scale(pose.flip !== !!pose.walkFlip ? -1 : 1, 1);
       Game.drawCroppedAsset(ctx,spriteKey,0,-pose.height/2,64,pose.height,{alpha,imageSmoothingEnabled:false});
       ctx.restore();
     } else {
       this.drawFallback(ctx, this.x + sx, this.y + bob + sy, alpha);
     }
 
-    // hit flash overlay (red tint on sprite)
-    if (this.hitFlash > 0) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.globalAlpha = alpha * 0.7 * (this.hitFlash / 0.2);
-      ctx.fillStyle = '#ff2020';
-      ctx.fillRect(this.x + sx - 24, this.y + 14 + sy - pose.height, 48, pose.height);
+    // Same transform and alpha mask as the body, including left-facing mirroring.
+    if (this.hitFlash > 0 && spriteImg) {
+      ctx.save();ctx.translate(this.x + sx, this.y + 14 + sy);ctx.scale(pose.flip !== !!pose.walkFlip ? -1 : 1, 1);
+      const size = Math.min(64 / spriteImg.width, pose.height / spriteImg.height);
+      Assets.drawTinted(ctx,spriteKey,0,-pose.height/2,size,'#ff2020',alpha*.7*Math.min(1,this.hitFlash/.2));
       ctx.restore();
     }
 
@@ -1442,7 +1445,7 @@ class Enemy {
           this.orbitWeapons.push({ angle: (i / wCount) * TAU, radius: this.radius + 30 });
         }
         Audio2.boss();
-        Game.addMessage('无头骑士拔出腐化巨剑！第二阶段！', '#ff4040');
+        Game.addMessage(`${this.def.name}进入第二阶段！`, '#ff8060');
         Game.shakeScreen(12, 0.4);
       }
     }
@@ -2022,23 +2025,18 @@ class Enemy {
 
     // bob animation
     const bob = Math.sin(this.animTime * 6) * 2;
-    const scale = this.isBoss ? 1.5 : (this.isElite ? 1.2 : 1.0);
+    const sprite = Assets.get(this.def.sprite);
+    const anchored = this.isBoss && this.def.spriteHeight && sprite && sprite.height;
+    const scale = anchored ? this.def.spriteHeight / sprite.height : this.isBoss ? 1.5 : (this.isElite ? 1.2 : 1.0);
+    const spriteY = anchored ? this.y + this.radius*.7 - this.def.spriteHeight/2 + bob : this.y+bob;
+    const labelY = anchored ? spriteY-this.def.spriteHeight/2-12 : this.y-this.radius-12;
 
     ctx.save();
-    if (this.hitFlash > 0) {
-      ctx.globalCompositeOperation = 'source-over';
-    }
     const spriteKey = this.def.sprite;
-    Assets.drawCentered(ctx, spriteKey, this.x, this.y + bob, scale, 0, 1);
+    Assets.drawCentered(ctx, spriteKey, this.x, spriteY, scale, 0, 1);
 
-    // hit flash overlay - use collision radius so it matches enemy size
     if (this.hitFlash > 0) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = '#ffffff';
-      // Use the enemy's collision radius for the flash area
-      const flashR = this.radius * scale;
-      ctx.fillRect(this.x - flashR, this.y - flashR + bob, flashR * 2, flashR * 2);
+      Assets.drawTinted(ctx,spriteKey,this.x,spriteY,scale,'#ffffff',.6);
     }
     ctx.restore();
 
@@ -2069,7 +2067,7 @@ class Enemy {
       const barW = this.isBoss ? 60 : 30;
       const barH = this.isBoss ? 6 : 4;
       const bx = this.x - barW/2;
-      const by = this.y - this.radius - 12;
+      const by = labelY;
       ctx.fillStyle = '#1a0a0a';
       ctx.fillRect(bx-1, by-1, barW+2, barH+2);
       ctx.fillStyle = '#3a1a1a';
@@ -2084,7 +2082,7 @@ class Enemy {
       ctx.fillStyle = '#ff4040';
       ctx.font = 'bold 12px Courier New';
       ctx.textAlign = 'center';
-      ctx.fillText(this.def.name, this.x, this.y - this.radius - 18);
+      ctx.fillText(this.def.name, this.x, labelY - 6);
     }
   }
 
@@ -2185,7 +2183,7 @@ class Enemy {
         ctx.save();
         ctx.translate(wx, wy);
         ctx.rotate(w.angle + this.orbitAngle + Math.PI / 4);
-        const img = Assets.get('weapons/sword');
+        const img = Assets.get(this.def.orbitSprite || 'weapons/sword');
         if (img && img.complete) {
           ctx.drawImage(img, -12, -12, 24, 24);
         } else {
@@ -2762,14 +2760,7 @@ class Pickup {
       Assets.drawCentered(ctx, 'items/chest', this.x + tx, this.y + bobY + ty, 1, 0, 1);
       // rare chest: golden tint overlay
       if (isRare) {
-        ctx.globalCompositeOperation = 'source-atop';
-        ctx.globalAlpha = 0.3;
-        ctx.fillStyle = '#ffd040';
-        const img = Assets.get('items/chest');
-        const sz = img ? img.width : 32;
-        ctx.fillRect(this.x + tx - sz/2, this.y + bobY + ty - sz/2, sz, sz);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
+        Assets.drawTinted(ctx,'items/chest',this.x+tx,this.y+bobY+ty,1,'#ffd040',.3);
       }
     }
 

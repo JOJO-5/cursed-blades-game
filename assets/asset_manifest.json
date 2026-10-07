@@ -3,14 +3,14 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 329,
+    "totalAssets": 364,
     "categories": {
       "props": 67,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
-      "player": 54,
-      "bosses": 3,
+      "player": 84,
+      "bosses": 8,
       "tiles": 28,
       "effects": 15,
       "items": 5,
@@ -4437,6 +4437,461 @@
         "y": 0.5
       },
       "source": "assets/source_sheets/v120_ground_frost.png"
+    },
+    "bosses/cursed_knight_v120": {
+      "id": "bosses/cursed_knight_v120",
+      "name": "cursed_knight_v120",
+      "category": "bosses",
+      "path": "assets/bosses/cursed_knight_v120.png",
+      "w": 118,
+      "h": 128,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_cursed_knight.png"
+    },
+    "bosses/brood_matriarch_v120": {
+      "id": "bosses/brood_matriarch_v120",
+      "name": "brood_matriarch_v120",
+      "category": "bosses",
+      "path": "assets/bosses/brood_matriarch_v120.png",
+      "w": 128,
+      "h": 119,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_brood_matriarch.png"
+    },
+    "bosses/infernal_dragon_v120": {
+      "id": "bosses/infernal_dragon_v120",
+      "name": "infernal_dragon_v120",
+      "category": "bosses",
+      "path": "assets/bosses/infernal_dragon_v120.png",
+      "w": 128,
+      "h": 122,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_infernal_dragon.png"
+    },
+    "bosses/frost_warden_v120": {
+      "id": "bosses/frost_warden_v120",
+      "name": "frost_warden_v120",
+      "category": "bosses",
+      "path": "assets/bosses/frost_warden_v120.png",
+      "w": 128,
+      "h": 127,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_frost_warden.png"
+    },
+    "bosses/tide_keeper_v120": {
+      "id": "bosses/tide_keeper_v120",
+      "name": "tide_keeper_v120",
+      "category": "bosses",
+      "path": "assets/bosses/tide_keeper_v120.png",
+      "w": 128,
+      "h": 127,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_tide_keeper.png"
+    },
+    "player/warden_south_1_v120": {
+      "id": "player/warden_south_1_v120",
+      "name": "warden_south_1_v120",
+      "category": "player",
+      "path": "assets/player/warden_south_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_south_2_v120": {
+      "id": "player/warden_south_2_v120",
+      "name": "warden_south_2_v120",
+      "category": "player",
+      "path": "assets/player/warden_south_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_south_0_v120": {
+      "id": "player/warden_south_0_v120",
+      "name": "warden_south_0_v120",
+      "category": "player",
+      "path": "assets/player/warden_south_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_south_3_v120": {
+      "id": "player/warden_south_3_v120",
+      "name": "warden_south_3_v120",
+      "category": "player",
+      "path": "assets/player/warden_south_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_south_4_v120": {
+      "id": "player/warden_south_4_v120",
+      "name": "warden_south_4_v120",
+      "category": "player",
+      "path": "assets/player/warden_south_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_east_1_v120": {
+      "id": "player/warden_east_1_v120",
+      "name": "warden_east_1_v120",
+      "category": "player",
+      "path": "assets/player/warden_east_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_east_2_v120": {
+      "id": "player/warden_east_2_v120",
+      "name": "warden_east_2_v120",
+      "category": "player",
+      "path": "assets/player/warden_east_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_east_0_v120": {
+      "id": "player/warden_east_0_v120",
+      "name": "warden_east_0_v120",
+      "category": "player",
+      "path": "assets/player/warden_east_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_east_3_v120": {
+      "id": "player/warden_east_3_v120",
+      "name": "warden_east_3_v120",
+      "category": "player",
+      "path": "assets/player/warden_east_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/warden_east_4_v120": {
+      "id": "player/warden_east_4_v120",
+      "name": "warden_east_4_v120",
+      "category": "player",
+      "path": "assets/player/warden_east_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_warden.png"
+    },
+    "player/ranger_south_1_v120": {
+      "id": "player/ranger_south_1_v120",
+      "name": "ranger_south_1_v120",
+      "category": "player",
+      "path": "assets/player/ranger_south_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_south_2_v120": {
+      "id": "player/ranger_south_2_v120",
+      "name": "ranger_south_2_v120",
+      "category": "player",
+      "path": "assets/player/ranger_south_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_south_0_v120": {
+      "id": "player/ranger_south_0_v120",
+      "name": "ranger_south_0_v120",
+      "category": "player",
+      "path": "assets/player/ranger_south_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_south_3_v120": {
+      "id": "player/ranger_south_3_v120",
+      "name": "ranger_south_3_v120",
+      "category": "player",
+      "path": "assets/player/ranger_south_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_south_4_v120": {
+      "id": "player/ranger_south_4_v120",
+      "name": "ranger_south_4_v120",
+      "category": "player",
+      "path": "assets/player/ranger_south_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_east_1_v120": {
+      "id": "player/ranger_east_1_v120",
+      "name": "ranger_east_1_v120",
+      "category": "player",
+      "path": "assets/player/ranger_east_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_east_2_v120": {
+      "id": "player/ranger_east_2_v120",
+      "name": "ranger_east_2_v120",
+      "category": "player",
+      "path": "assets/player/ranger_east_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_east_0_v120": {
+      "id": "player/ranger_east_0_v120",
+      "name": "ranger_east_0_v120",
+      "category": "player",
+      "path": "assets/player/ranger_east_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_east_3_v120": {
+      "id": "player/ranger_east_3_v120",
+      "name": "ranger_east_3_v120",
+      "category": "player",
+      "path": "assets/player/ranger_east_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/ranger_east_4_v120": {
+      "id": "player/ranger_east_4_v120",
+      "name": "ranger_east_4_v120",
+      "category": "player",
+      "path": "assets/player/ranger_east_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_ranger.png"
+    },
+    "player/arcanist_south_1_v120": {
+      "id": "player/arcanist_south_1_v120",
+      "name": "arcanist_south_1_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_south_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_south_2_v120": {
+      "id": "player/arcanist_south_2_v120",
+      "name": "arcanist_south_2_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_south_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_south_0_v120": {
+      "id": "player/arcanist_south_0_v120",
+      "name": "arcanist_south_0_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_south_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_south_3_v120": {
+      "id": "player/arcanist_south_3_v120",
+      "name": "arcanist_south_3_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_south_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_south_4_v120": {
+      "id": "player/arcanist_south_4_v120",
+      "name": "arcanist_south_4_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_south_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_east_1_v120": {
+      "id": "player/arcanist_east_1_v120",
+      "name": "arcanist_east_1_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_east_1_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_east_2_v120": {
+      "id": "player/arcanist_east_2_v120",
+      "name": "arcanist_east_2_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_east_2_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_east_0_v120": {
+      "id": "player/arcanist_east_0_v120",
+      "name": "arcanist_east_0_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_east_0_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_east_3_v120": {
+      "id": "player/arcanist_east_3_v120",
+      "name": "arcanist_east_3_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_east_3_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
+    },
+    "player/arcanist_east_4_v120": {
+      "id": "player/arcanist_east_4_v120",
+      "name": "arcanist_east_4_v120",
+      "category": "player",
+      "path": "assets/player/arcanist_east_4_v120.png",
+      "w": 96,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583
+      },
+      "source": "assets/source_sheets/v120_walk_arcanist.png"
     }
   }
 }

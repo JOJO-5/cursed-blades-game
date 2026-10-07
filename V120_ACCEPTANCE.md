@@ -32,3 +32,7 @@
 - 单元、完整浏览器、三角色自然开局 CI 通过后，核对完整提交号、资源版本和公开网页实际交互；保存 `ci-runs.json`、`online-results.json`、`deployment-verification.json`。
 - 当前仍为 preview。38 武器全池平衡、更多种子/构筑的自然通关矩阵、长局性能、手机真机与真实音响听感属于 v0.13-beta。
 - 触控与三视口是 Chromium 模拟，桌面受控 p95 不代表手机 60fps；少量自动操作通关不等于人工平衡验收。
+
+## 用户反馈补丁
+
+v0.12.0-preview.2 的 Boss 独立素材、步态与透明命中特效修复另见 [V120_COMBAT_ACCEPTANCE.md](V120_COMBAT_ACCEPTANCE.md)。运行素材总数更新为 364；此文上方 329 张、293 项和自然通关/性能结果属于原场景精修批次。
