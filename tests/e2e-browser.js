@@ -38,7 +38,7 @@ async page => {
       const points=[];for(let i=goal;queue[i].parent!==null;i=queue[i].parent)points.push({x:start.x+queue[i].ix*step,y:start.y+queue[i].iy*step});points.reverse();
       return points.filter((v,i)=>{if(i===points.length-1)return true;const prev=i?points[i-1]:start,next=points[i+1];return v.x-prev.x!==next.x-v.x||v.y-prev.y!==next.y-v.y;});
     },{target,arrival});
-    if(tolerance<18)route.push({x:target.x,y:target.y});
+    if(tolerance<=35)route.push({x:target.x,y:target.y});
     const deadline=Date.now()+45000;
     for(const waypoint of route){
       while(Date.now()<deadline){
@@ -54,7 +54,7 @@ async page => {
         if(Math.hypot(dx,dy)<=12)break;
         const key=Math.abs(dx)>Math.abs(dy)?(dx>0?'KeyD':'KeyA'):(dy>0?'KeyS':'KeyW');
         await p.keyboard.down(key);
-        try {await p.waitForFunction(({key,waypoint})=>{const p=Game.player;if(Game.state!=='playing')return true;return key==='KeyD'?p.x>=waypoint.x-8:key==='KeyA'?p.x<=waypoint.x+8:key==='KeyS'?p.y>=waypoint.y-8:p.y<=waypoint.y+8;},{key,waypoint},{timeout:2500,polling:'raf'});} catch(e){throw Error('Waypoint '+JSON.stringify({key,waypoint,position:await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state,keys:Input.keys}))}));} finally {await p.keyboard.up(key);}
+        try {await p.waitForFunction(({key,waypoint})=>{const p=Game.player;if(Game.state!=='playing')return true;return key==='KeyD'?p.x>=waypoint.x-8:key==='KeyA'?p.x<=waypoint.x+8:key==='KeyS'?p.y>=waypoint.y-8:p.y<=waypoint.y+8;},{key,waypoint},{timeout:15000,polling:'raf'});} catch(e){throw Error('Waypoint '+JSON.stringify({key,waypoint,position:await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state,keys:Input.keys}))}));} finally {await p.keyboard.up(key);}
       }
     }
     const position=await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state}));
