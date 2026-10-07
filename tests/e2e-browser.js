@@ -323,6 +323,6 @@ async page => {
     return {passed:true,checks,screenshots,errors,networkEvents,limits:['Boss and progression use accelerated fixtures, not natural complete runs.','Touch is emulated Chromium input, not physical-device or audio acceptance.','Asset network errors are recorded separately; menu entry still requires complete successful loading.']};
   } catch(error) {
     await capture(page,'failure').catch(()=>{});
-    return {passed:false,checks,screenshots,errors,failure:String(error)};
+    return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};
   }
 }

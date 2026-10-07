@@ -79,6 +79,10 @@ try {
   console.log(`E2E passed: ${result.checks.length} checks; results and screenshots: ${output}`);
 } catch (error) {
   console.error(String(error));
+  try {
+    const report=JSON.parse(await readFile(path.join(output,resultFile),'utf8'));
+    console.error(JSON.stringify({failure:report.failure,errors:report.errors,recentChecks:report.checks?.slice(-5)},null,2));
+  } catch { /* A startup failure may not have produced a report. */ }
   await writeFile(path.join(output,failureFile),JSON.stringify({started,error:String(error)},null,2));
   process.exitCode = 1;
 } finally {

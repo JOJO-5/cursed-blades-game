@@ -1,4 +1,4 @@
-﻿// Combat silhouettes share the collision center. Rendering never changes damage or reach.
+// Combat silhouettes share the collision center. Rendering never changes damage or reach.
 (() => {
   const particleDraw=Particle.prototype.draw;
   Particle.prototype.draw=function(ctx){
@@ -126,4 +126,3 @@
     ctx.restore();
   };
 })();
-

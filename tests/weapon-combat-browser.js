@@ -13,4 +13,3 @@ async page => {
  }
  await page.evaluate(()=>{Game.state='menu';Game.enemies=[];Game.projectiles=[];Game.minions=[];});const checks=results.map(r=>({name:r.id+': real frames produce damage or summons and finite projectiles',passed:r.state==='playing'&&r.finite&&(r.damage>0||r.summons>0),evidence:r,mode:'stationary durable target fixture'}));return {passed:checks.every(c=>c.passed)&&!errors.length,checks,errors,screenshots:['hammer','hammer_meteor','poison_aura','holy_cross','scythe','blade_dual'].map(id=>'weapon-live-'+id+'.png')};
 }
-
