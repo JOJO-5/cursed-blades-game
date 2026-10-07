@@ -102,7 +102,7 @@ const RandomEvents={
     render(){old.render.call(this);if(this.state==='eventChoice')this.renderRandomEvent();},
     renderHUD(){old.renderHUD.call(this);const c=this.ctx,v=this.getVisibleCanvasRect();c.save();c.fillStyle='#dbc58b';c.textAlign='right';c.font='11px Courier New';c.fillText(`旅途币 ${this.runCoins}`,v.x+v.w-12,v.y+78);c.restore();},
     renderRandomEvent(){const c=this.ctx,s=this.activeEvent;if(!s)return;const d=RandomEvents[s.kind],l=this.getRandomEventLayout(),v=l.visible;c.save();c.fillStyle='rgba(8,15,13,.94)';c.fillRect(0,0,960,540);c.textAlign='center';c.fillStyle=d.color;c.font='bold 22px Courier New';c.fillText(d.name,v.x+v.w/2,v.y+52);c.font='12px Courier New';c.fillText(`旅途币 ${this.runCoins} · 生命 ${Math.ceil(this.player.hp)}/${this.player.getMaxHp()}`,v.x+v.w/2,v.y+80);
-      const p=l.panel;c.fillStyle='#1c2923';c.fillRect(p.x,p.y,p.w,p.h);c.strokeStyle=d.color;c.strokeRect(p.x,p.y,p.w,p.h);c.fillStyle='#d7ddc9';this.drawTextBlock(c,d.desc,p.x+p.w/2,p.y+32,p.w-28,21,8);
+      const p=l.panel;c.fillStyle='#1c2923';c.fillRect(p.x,p.y,p.w,p.h);c.strokeStyle=d.color;c.strokeRect(p.x,p.y,p.w,p.h);c.fillStyle='#d7ddc9';this.drawTextBlock(c,this.runProfile==='iron'&&s.kind==='rescue'?d.desc.replace('回血和 ','')+'（铁誓禁止治疗）':d.desc,p.x+p.w/2,p.y+32,p.w-28,21,8);
       for(const [i,r] of l.cards.entries())this.drawButton(r.x,r.y,r.w,r.h,i?'2 · 离开':'1 · 接受',i?'#a7b6aa':d.color);
       c.restore();}
   });

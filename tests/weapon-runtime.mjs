@@ -25,3 +25,6 @@ assert.ok(run('Game.particles.filter(p=>p.weaponImpact).every(p=>p.x===272&&p.y=
 run('const reused=new Particle(0,0,0,0,"#fff",1,1);reused.weaponImpact=true;reused.reset(0,0,0,0,"#fff",1,1)');
 assert.equal(run('reused.weaponImpact'),false,'A reused normal particle cannot retain a heavy impact shape');
 console.log('Crowded heavy strikes preserve damage, bound camera shake, anchor impacts and reset pooled effects.');
+
+for(const id of run('Object.keys(CONFIG.WEAPONS)')){ctx.id=id;const result=run(`(()=>{const w=new Weapon(id,CONFIG.WEAPONS[id]);const base={damage:w.getDamage(),range:w.getRange(),size:w.getSize()};w.level=6;const high={damage:w.getDamage(),range:w.getRange(),size:w.getSize()};Game.projectiles=[];Game.minions=[];w.update(1/60,Game.player);return {base,high,shots:Game.projectiles.map(p=>p.damage)}})()`);for(const key of ['damage','range','size']){assert.ok(Number.isFinite(result.high[key]),id+': max-level '+key);assert.ok(result.high[key]>=result.base[key],id+': progression '+key);}assert.ok(result.shots.every(Number.isFinite),id+': finite max-level shot damage');}
+console.log('All 38 weapons also execute at level 6 with finite increasing damage, range and size.');

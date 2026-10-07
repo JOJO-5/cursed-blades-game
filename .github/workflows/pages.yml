@@ -3,6 +3,8 @@ name: Validate and deploy GitHub Pages
 on:
   push:
     branches: [main, agent/fix-core-and-pages-preview]
+    paths-ignore:
+      - '**/*.md'
   pull_request:
   workflow_dispatch:
 
