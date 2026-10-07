@@ -36,6 +36,9 @@ for(const middle of ['mine','frost'])for(const end of ['hell','marsh']){
 }
 run('Game.selectedExpedition="frost";Game.state="menu";Game.startNewGame();Game.bossDefeated=true;Game.startVictorySequence()');
 assert.equal(run('Game.state'),'victory','Standalone expedition remains one stage');
+run('Game.state="menu";Game.selectedExpedition="frost";Game.startNewGame();Game.saveProgress();Game.selectedExpedition="campaign";Game.loadAndContinue();Game.state="gameover";Game.startNewGame()');
+assert.equal(run('Game.levelData.theme'),'frost','Independent expedition death after refresh restarts its own map');
+assert.equal(run('Game.campaignMode'),false);
 run('Game.selectedExpedition="campaign";Game.state="menu";Game.startNewGame();Game.campaignMode=false;Game.saveProgress();Game.loadAndContinue();Game.bossDefeated=true;Game.startVictorySequence()');
 assert.equal(run('Game.levelData.theme'),'mine','Legacy save keeps linear progression');
 run('Game.state="menu";Game.selectedCharacter="ranger";Game.selectedExpedition="campaign";Game.startNewGame();Game.bossDefeated=true;Game.startVictorySequence();Game.chooseCampaignRoute("frost");Game.state="gameover";Game.startNewGame()');

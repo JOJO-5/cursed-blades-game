@@ -10,7 +10,7 @@
   Object.assign(Game,{
     campaignMode:false,campaignRoute:[],campaignFinished:false,_victoryPending:false,
     startNewGame(...args){
-      if(this.state==='gameover'&&this.campaignMode)this.selectedExpedition='campaign';
+      if(this.state==='gameover'&&this.player)this.selectedExpedition=this.campaignMode?'campaign':this.levelData.challenge?this.levelData.theme:'campaign';
       this.campaignMode=this.selectedExpedition==='campaign';this.campaignRoute=this.campaignMode?['village']:[];this.campaignFinished=false;this._victoryPending=false;
       return old.startNewGame.apply(this,args);
     },
