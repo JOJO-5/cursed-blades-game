@@ -3,9 +3,9 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 364,
+    "totalAssets": 366,
     "categories": {
-      "props": 67,
+      "props": 69,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
@@ -4892,6 +4892,34 @@
         "y": 0.9583
       },
       "source": "assets/source_sheets/v120_walk_final_arcanist.png"
+    },
+    "props/merchant_v150": {
+      "id": "props/merchant_v150",
+      "name": "Merchant NPC",
+      "category": "props",
+      "path": "assets/props/merchant_v150.png",
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/V150_GENERATION.md",
+      "w": 1122,
+      "h": 1402,
+      "animation": null
+    },
+    "props/traveler_v150": {
+      "id": "props/traveler_v150",
+      "name": "Traveler NPC",
+      "category": "props",
+      "path": "assets/props/traveler_v150.png",
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/V150_GENERATION.md",
+      "w": 1122,
+      "h": 1402,
+      "animation": null
     }
   }
 }

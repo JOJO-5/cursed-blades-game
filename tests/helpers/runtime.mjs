@@ -6,5 +6,5 @@ export function runtime(extra=[]){
   for(const f of ['config','core','entities','game','objectives','builds','world','run-summary','expansion','campaign',...extra])vm.runInContext(readFileSync(new URL(`../../js/${f}.js`,import.meta.url),'utf8'),ctx);
   const run=s=>vm.runInContext(s,ctx);
   run(`Audio2.playMusic=()=>{};Audio2.syncVolumes=()=>{};Audio2.play=()=>{};Audio2.click=()=>{};Audio2.hitMaterial=()=>{};Audio2.boss=()=>{};Assets.get=()=>undefined;Game.pickupPool=new ObjectPool(Pickup,10);Game.particlePool=new ObjectPool(Particle,10);Game.damageNumberPool=new ObjectPool(DamageNumber,10);Game.enemyProjectilePool=new ObjectPool(EnemyProjectile,10);Game.projectilePool=new ObjectPool(Projectile,10);Game.startStory=(lines,done)=>done();Game.startNewGame();`);
-  return {ctx,run,storage,drawing};
+  run('Game.enemyGrid=new SpatialGrid(128)');return {ctx,run,storage,drawing};
 }

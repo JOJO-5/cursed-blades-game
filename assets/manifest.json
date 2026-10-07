@@ -1454,5 +1454,13 @@
   "player/arcanist_east_4_v120": {
     "w": 96,
     "h": 96
+  },
+  "props/merchant_v150": {
+    "w": 1122,
+    "h": 1402
+  },
+  "props/traveler_v150": {
+    "w": 1122,
+    "h": 1402
   }
 }
