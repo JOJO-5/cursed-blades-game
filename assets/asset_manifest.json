@@ -4514,7 +4514,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_south_2_v120": {
       "id": "player/warden_south_2_v120",
@@ -4527,7 +4527,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_south_0_v120": {
       "id": "player/warden_south_0_v120",
@@ -4540,7 +4540,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_south_3_v120": {
       "id": "player/warden_south_3_v120",
@@ -4553,7 +4553,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_south_4_v120": {
       "id": "player/warden_south_4_v120",
@@ -4566,7 +4566,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_east_1_v120": {
       "id": "player/warden_east_1_v120",
@@ -4579,7 +4579,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_east_2_v120": {
       "id": "player/warden_east_2_v120",
@@ -4592,7 +4592,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_east_0_v120": {
       "id": "player/warden_east_0_v120",
@@ -4605,7 +4605,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_east_3_v120": {
       "id": "player/warden_east_3_v120",
@@ -4618,7 +4618,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/warden_east_4_v120": {
       "id": "player/warden_east_4_v120",
@@ -4631,7 +4631,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_warden.png"
+      "source": "assets/source_sheets/v120_walk_final_warden.png"
     },
     "player/ranger_south_1_v120": {
       "id": "player/ranger_south_1_v120",
@@ -4644,7 +4644,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_south_2_v120": {
       "id": "player/ranger_south_2_v120",
@@ -4657,7 +4657,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_south_0_v120": {
       "id": "player/ranger_south_0_v120",
@@ -4670,7 +4670,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_south_3_v120": {
       "id": "player/ranger_south_3_v120",
@@ -4683,7 +4683,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_south_4_v120": {
       "id": "player/ranger_south_4_v120",
@@ -4696,7 +4696,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_east_1_v120": {
       "id": "player/ranger_east_1_v120",
@@ -4709,7 +4709,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_east_2_v120": {
       "id": "player/ranger_east_2_v120",
@@ -4722,7 +4722,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_east_0_v120": {
       "id": "player/ranger_east_0_v120",
@@ -4735,7 +4735,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_east_3_v120": {
       "id": "player/ranger_east_3_v120",
@@ -4748,7 +4748,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/ranger_east_4_v120": {
       "id": "player/ranger_east_4_v120",
@@ -4761,7 +4761,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_ranger.png"
+      "source": "assets/source_sheets/v120_walk_final_ranger.png"
     },
     "player/arcanist_south_1_v120": {
       "id": "player/arcanist_south_1_v120",
@@ -4774,7 +4774,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_south_2_v120": {
       "id": "player/arcanist_south_2_v120",
@@ -4787,7 +4787,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_south_0_v120": {
       "id": "player/arcanist_south_0_v120",
@@ -4800,7 +4800,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_south_3_v120": {
       "id": "player/arcanist_south_3_v120",
@@ -4813,7 +4813,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_south_4_v120": {
       "id": "player/arcanist_south_4_v120",
@@ -4826,7 +4826,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_east_1_v120": {
       "id": "player/arcanist_east_1_v120",
@@ -4839,7 +4839,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_east_2_v120": {
       "id": "player/arcanist_east_2_v120",
@@ -4852,7 +4852,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_east_0_v120": {
       "id": "player/arcanist_east_0_v120",
@@ -4865,7 +4865,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_east_3_v120": {
       "id": "player/arcanist_east_3_v120",
@@ -4878,7 +4878,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     },
     "player/arcanist_east_4_v120": {
       "id": "player/arcanist_east_4_v120",
@@ -4891,7 +4891,7 @@
         "x": 0.5,
         "y": 0.9583
       },
-      "source": "assets/source_sheets/v120_walk_arcanist.png"
+      "source": "assets/source_sheets/v120_walk_final_arcanist.png"
     }
   }
 }

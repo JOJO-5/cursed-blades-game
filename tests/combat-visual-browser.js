@@ -29,6 +29,11 @@ async page => {
   for(const hero of ['warden','ranger','arcanist']) {
    const p=new Player(192,230);p.characterId=hero;p.invuln=1;p.animTime=0;const c=make();p.draw(c);const d=c.getImageData(145,170,94,60).data;let maxAlpha=0;for(let i=3;i<d.length;i+=4)maxAlpha=Math.max(maxAlpha,d[i]);add(hero+': hurt blink alpha applies once',maxAlpha>=80&&maxAlpha<=92,{maxAlpha});
   }
+  for(const hero of ['warden','ranger','arcanist']) {
+   const sample=frame=>{const c=make();Assets.drawCentered(c,`player/${hero}_east_${frame}_v120`,48,48,1,0,1);const d=c.getImageData(0,0,96,96).data;const sum=[0,0],count=[0,0];let headWidth=0;
+    for(let y=4;y<92;y++){let min=96,max=-1;for(let x=0;x<96;x++){const i=(y*96+x)*4,luma=d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722;if(d[i+3]>192){if(y<27){min=Math.min(min,x);max=Math.max(max,x)}if(y>=70&&luma>20){const side=x>=48?1:0;sum[side]+=luma;count[side]++}}}if(y<27)headWidth=Math.max(headWidth,max-min+1)}return {legs:sum.map((v,i)=>v/count[i]),headWidth};};
+   const a=sample(1),b=sample(3);add(hero+': side contacts exchange foreground legs',a.legs[1]>a.legs[0]&&b.legs[0]>b.legs[1],{first:a.legs,opposite:b.legs});add(hero+': side contact head size remains stable',Math.abs(a.headWidth-b.headWidth)<=2,{first:a.headWidth,opposite:b.headWidth});
+  }
   const gallery=document.createElement('canvas');gallery.width=1100;gallery.height=650;const g=gallery.getContext('2d');g.fillStyle='#274356';g.fillRect(0,0,1100,650);g.imageSmoothingEnabled=false;
   bossTypes.forEach((t,i)=>{const e=new Enemy(t,110+i*220,210);e.animTime=0;e.draw(g)});
   for(const [row,hero] of ['warden','ranger','arcanist'].entries())for(const [column,direction] of ['south','east'].entries())for(let frame=0;frame<4;frame++){

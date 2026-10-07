@@ -9,13 +9,14 @@ def save(key,im,source):
 for name in ['cursed_knight','brood_matriarch','infernal_dragon','frost_warden','tide_keeper']:
  source=f'v120_{name}.png';im=Image.open(root/'assets/source_sheets'/source).convert('RGBA');im=im.crop(im.getchannel('A').point(lambda a:255 if a>12 else 0).getbbox());im.thumbnail((128,128),Image.Resampling.NEAREST);save(f'bosses/{name}_v120',im,source)
 for hero in ['warden','ranger','arcanist']:
- source=f'v120_walk_{hero}.png';sheet=Image.open(root/'assets/source_sheets'/source).convert('RGBA')
+ source=f'v120_walk_final_{hero}.png';sheet=Image.open(root/'assets/source_sheets'/source).convert('RGBA')
  for row,direction in enumerate(['south','east']):
   for col in range(4):
+   frame_source = source
    im=sheet.crop((round(sheet.width*col/4),round(sheet.height*row/2),round(sheet.width*(col+1)/4),round(sheet.height*(row+1)/2)))
    im=im.crop(im.getchannel('A').point(lambda a:255 if a>24 else 0).getbbox());im=im.resize((round(im.width*88/im.height),88),Image.Resampling.NEAREST)
-   canvas=Image.new('RGBA',(96,96));canvas.alpha_composite(im,((96-im.width)//2,4));save(f'player/{hero}_{direction}_{col+1}_v120',canvas,source)
-   if col==1:save(f'player/{hero}_{direction}_0_v120',canvas,source)
+   canvas=Image.new('RGBA',(96,96));canvas.alpha_composite(im,((96-im.width)//2,4));save(f'player/{hero}_{direction}_{col+1}_v120',canvas,frame_source)
+   if col==1:save(f'player/{hero}_{direction}_0_v120',canvas,frame_source)
 e['_meta']['totalAssets']=len(e['assets'])
 for cat in e['_meta']['categories']:e['_meta']['categories'][cat]=sum(a['category']==cat for a in e['assets'].values())
 for name,data in [('manifest.json',m),('asset_manifest.json',e)]: (root/'assets'/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n','utf-8')
