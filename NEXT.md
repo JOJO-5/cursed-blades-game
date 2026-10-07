@@ -1,6 +1,6 @@
 # 后续任务 (NEXT)
 
-当前线上版本为 **v0.12.0-preview.2 四地图场景精修与战斗视觉修复**，范围见 [V120_PLAN.md](V120_PLAN.md)，实际验证与发布状态见 [V120_ACCEPTANCE.md](V120_ACCEPTANCE.md)。历史阶段记录保留，旧数量描述可能早于当前版本。
+当前线上版本为 **v0.12.0-preview.3 四地图场景精修、战斗视觉与全武器检查修复**，范围见 [V120_PLAN.md](V120_PLAN.md)，实际验证与发布状态见 [V120_ACCEPTANCE.md](V120_ACCEPTANCE.md)。武器专项与实景验证见 [V120_WEAPONS.md](V120_WEAPONS.md)，上线核验见 [V120_RELEASE.md](V120_RELEASE.md)。历史阶段记录保留，旧数量描述可能早于当前版本。
 
 ## 下一版：v0.13-beta 平衡与发布准备
 
