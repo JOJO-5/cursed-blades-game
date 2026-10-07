@@ -21,7 +21,7 @@
 - 已实现守卫格挡反击、游侠闪避齐射、术士蓄力爆发，Q 键与独立触控按钮。
 - 冷却与蓄力状态保存；暂停冻结，切关重置，死亡拒绝施放。
 - 单元检查与实景专项 19 项通过，包括触控不触发普通闪避、真实格挡 / 箭矢 / 爆发伤害。
-- 发布与线上核验记录待 CI 完成补入。
+- v0.16 构建 `454eed575344ad21ab4ec76ee5cec65e4cb52086`；[CI 37630275694](https://github.com/JOJO-5/cursed-blades-game/actions/runs/37630275694) 验证与部署成功，完整浏览器 582 项、真实开局 3 项通过。线上技能 19 项通过，18 个资源缓存参数、触控入口和技能源码一致。
 
 ## v0.17 通关挑战
 
@@ -48,3 +48,24 @@
 - `npm run test:e2e`：桌面 / 触控浏览器回归与 90 秒敌潮压力样本。
 - `npm run test:opening`：三个角色真实首分钟；不等同完整通关。
 - `npm run test:matrix -- --route=mine-hell`：三角色的真实完整战役 / 死亡结果与 90 秒保存刷新；分别使用 `mine-marsh`、`frost-hell`、`frost-marsh` 重跑其他路线，最长每行 40 分钟。结果标记实际到达的地图，首关死亡不计作后三段覆盖。
+
+## 三角色 × 四路线自然流程结果
+
+固定随机种子、真实键盘选择、原始生命 / 数值 / 计时：12 胜利，0 死亡，12/12 完成保存 / 刷新 / 继续，运行错误 0。自动操作不能代替人工平衡判断。
+
+| 角色 | 计划路线 | 实际地图 | 结果 | 游戏秒数 | 保存刷新 |
+|---|---|---|---|---|---|
+| ranger | mine-hell | village → mine → hell | victory | 1474 | 通过 |
+| warden | mine-hell | village → mine → hell | victory | 1479 | 通过 |
+| arcanist | mine-hell | village → mine → hell | victory | 1479 | 通过 |
+| arcanist | mine-marsh | village → mine → marsh | victory | 1210 | 通过 |
+| ranger | mine-marsh | village → mine → marsh | victory | 1207 | 通过 |
+| warden | mine-marsh | village → mine → marsh | victory | 1210 | 通过 |
+| ranger | frost-hell | village → frost → hell | victory | 1301 | 通过 |
+| warden | frost-hell | village → frost → hell | victory | 1306 | 通过 |
+| arcanist | frost-hell | village → frost → hell | victory | 1308 | 通过 |
+| ranger | frost-marsh | village → frost → marsh | victory | 1028 | 通过 |
+| warden | frost-marsh | village → frost → marsh | victory | 1036 | 通过 |
+| arcanist | frost-marsh | village → frost → marsh | victory | 1043 | 通过 |
+
+机器记录：`output/playwright/v120/v170-natural-matrix.json` 与各路线结果、截图。自然死亡若发生在首关，不计后续路线的自然覆盖。
