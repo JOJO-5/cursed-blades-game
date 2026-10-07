@@ -353,7 +353,7 @@ class Weapon {
   }
   getHitRadius() { return this.getSize() / 2; }
   getRotateSpeed() {
-    return this.def.rotateSpeed * Game.player.stats.rotateSpeedMult * Game.player.stats.attackSpeedMult;
+    return (this.def.rotateSpeed ?? 2.8) * Game.player.stats.rotateSpeedMult * Game.player.stats.attackSpeedMult;
   }
   getCooldown() {
     return this.def.cooldown / Game.player.stats.attackSpeedMult * Game.player.stats.cooldownMult;
@@ -369,6 +369,7 @@ class Weapon {
   }
 
   update(dt, player) {
+    this.visualShakeCooldown = Math.max(0, (this.visualShakeCooldown || 0) - dt);
     if (this.def.type === 'orbit') {
       this.angle += this.getRotateSpeed() * dt;
 
@@ -411,6 +412,11 @@ class Weapon {
 
               const hitX = wx;
               const hitY = wy;
+              if (['hammer','war_hammer_double','hammer_meteor','flail','mace_fire','axe'].includes(this.id) && Game.particles.length < 480) {
+                const impact = Game.particlePool.obtain(e.x, e.y, 0, 0, this.def.color, 0.22, this.def.splash || hitRadius);
+                impact.weaponImpact = true;
+                Game.particles.push(impact);
+              }
 
               // 粒子数量上限守卫，防止性能爆炸
               if (Game.particles.length < 480) {
@@ -429,8 +435,9 @@ class Weapon {
 
               }
 
-              if (isCrit || damage > 30) {
-                Game.shakeScreen(isCrit ? 8 : 4, isCrit ? 0.2 : 0.1);
+              if ((isCrit || damage > 30) && !this.visualShakeCooldown) {
+                Game.shakeScreen(isCrit ? 4 : 2, isCrit ? 0.1 : 0.06);
+                this.visualShakeCooldown = 0.22;
               }
 
               if (this.def.splash) {
@@ -447,12 +454,12 @@ class Weapon {
                   }
                 }
                 if (Game.particles.length < 800) {
-                  for (let p = 0; p < 12; p++) {
+                  for (let p = 0; p < 6; p++) {
                     const pa = Math.random() * TAU;
                     const ps = rand(60, 150);
                     Game.particles.push(Game.particlePool.obtain(
                       e.x, e.y, Math.cos(pa) * ps, Math.sin(pa) * ps,
-                      this.def.color, rand(0.4, 0.7), rand(3, 6)
+                      this.def.color, rand(0.16, 0.28), rand(1, 3)
                     ));
                   }
                 }
@@ -2784,6 +2791,7 @@ class Particle {
     this.vx = vx; this.vy = vy;
     this.color = color;
     this.maxLife = life;
+    this.weaponImpact = false;
     this.life = life;
     this.size = size;
     this.alive = true;
