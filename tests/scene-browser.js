@@ -55,12 +55,12 @@ async page => {
         for(const p of Game.projectiles)p.update(.12);
         Game.camera.x=Game.player.x-480;Game.camera.y=Game.player.y-270;Game.render();
       },character);
-      const path=`output/playwright/v110/scene-${character}-weapons.png`;await page.screenshot({path});screenshots.push(path);
+      const path=`output/playwright/v120/scene-${character}-weapons.png`;await page.screenshot({path});screenshots.push(path);
       check(`Scene renders four representative weapons with ${character}`,await page.evaluate(()=>Game.player.weapons.length===4&&Game.projectiles.length>=2));
     }
     for(const [width,height] of [[1280,720],[390,844],[844,390]]){
       await page.setViewportSize({width,height});await page.waitForTimeout(250);
-      const path=`output/playwright/v110/scene-${width}x${height}.png`;await page.screenshot({path});screenshots.push(path);
+      const path=`output/playwright/v120/scene-${width}x${height}.png`;await page.screenshot({path});screenshots.push(path);
       check(`Scene viewport ${width}x${height} remains finite`,await page.evaluate(()=>Number.isFinite(Game.camera.x)&&Number.isFinite(Game.camera.y)));
     }
     check('Scene renderer has no browser errors',errors.length===0,errors);

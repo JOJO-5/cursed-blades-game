@@ -75,7 +75,8 @@
     },
     loadAndContinue(){old.loadAndContinue.call(this);if(this.levelData.challenge){this.runHistory=[];this.runHistoryComplete=true;this.runStartKills=0;this.runStartChests=0;}},
     drawContinuousGround(ctx,theme,w,h){
-      const image=Assets.get('tiles/ground_'+theme+(theme==='village'?'_v110':'_v100'));
+      const suffix=theme==='village'?'_v110':theme==='frost'&&this.mapLayoutVersion===3?'_v120':'_v100';
+      const image=Assets.get('tiles/ground_'+theme+suffix);
       if(!image?.complete)return old.drawContinuousGround.call(this,ctx,theme,w,h);
       ctx.save();ctx.globalAlpha=1;const tile=document.createElement('canvas');tile.width=tile.height=512;const t=tile.getContext('2d');t.imageSmoothingEnabled=false;
       for(let y=0;y<2;y++)for(let x=0;x<2;x++){t.save();t.translate(x?512:0,y?512:0);t.scale(x?-1:1,y?-1:1);t.drawImage(image,0,0,256,256);t.restore();}

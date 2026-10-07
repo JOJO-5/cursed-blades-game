@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const campaign = process.argv.includes('--campaign');
 const summaryOnly = process.argv.includes('--summary');
-const output = path.join(root, 'output/playwright/v110');
+const output = path.join(root, 'output/playwright/v120');
 const natural = process.argv.includes('--natural');
 const profile=process.argv.find(a=>a.startsWith('--profile='))?.split('=')[1];
 const expedition=process.argv.find(a=>a.startsWith('--expedition='))?.split('=')[1];
@@ -62,7 +62,7 @@ try {
   const resultMatch = response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);
   if (!resultMatch) throw new Error('Missing browser test result');
   const result = JSON.parse(resultMatch[1]);
-  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js','tests/expansion-browser.js','tests/scene-browser.js']) {
+  for(const file of natural || campaign || summaryOnly ? [] : ['tests/build-browser.js','tests/build-campaign.js','tests/world-browser.js','tests/run-browser.js','tests/expansion-browser.js','tests/scene-browser.js','tests/biome-browser.js']) {
     if(!result.passed)break;
     const response = await run(['run-code','--filename',file]);
     const match=response.match(/### Result\s*\n([\s\S]*?)\n### Ran/);

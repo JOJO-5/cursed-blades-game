@@ -8,7 +8,7 @@
   for(const name of ['loadLevel','migrateSave','initLevelEncounters','serializeEncounters','restoreLevelEncounters','generateThemeMapFeatures','isPointNearThemeFeature','generateMap','drawMapFeature','renderEncounterSites','renderObjectiveHUD','updateThemeHazards','spawnEnemyGroupAtMapFeatures'])old[name]=Game[name];
   Object.assign(Game,{
     mapLayoutVersion:2,
-    loadLevel(...args){this.mapLayoutVersion=args[0]==='village'?2:1;return old.loadLevel.apply(this,args);},
+    loadLevel(...args){this.mapLayoutVersion=args[0]==='village'?2:3;return old.loadLevel.apply(this,args);},
     migrateSave(data){const version=data?.mapLayoutVersion;data=old.migrateSave.call(this,data);if(data&&typeof data==='object')data.mapLayoutVersion=[1,2].includes(version)?version:0;return data;},
     getLevelEncounterDefinitions(){return (this.levelData.encounters||[]).filter(d=>!d.minLayout||this.mapLayoutVersion>=d.minLayout);},
     initLevelEncounters(){
@@ -193,6 +193,95 @@
       const ctx=this.ctx,p=this.getObjectiveLayout();let name=this.levelData.challenge?this.levelData.name:this.levelData.theme==='mine'?'晶矿运输线':this.levelData.theme==='hell'?'深渊前沿':'荒村十字路';
       for(const region of this.mapData?.regions||[])if(dist(this.player.x,this.player.y,region.x,region.y)<270)name=region.name;
       ctx.save();ctx.font='11px Courier New';ctx.textAlign='left';ctx.fillStyle='#bbae8f';ctx.fillText(`区域 · ${name}`,p.x+4,p.y-8);ctx.restore();
+    }
+  });
+})();
+
+// v0.12: composed biome scenes. Historic layouts still take the original path.
+(() => {
+  const themes=['mine','hell','frost','marsh'];
+  const old={};for(const k of ['loadLevel','migrateSave','getLevelVisualProfile','generateThemeMapFeatures','isPointNearThemeFeature','generateMap','drawMapFeature'])old[k]=Game[k];
+  const layouts={
+    mine:[['head','旧矿口','mine_entrance_v120','NW'],['ore','采矿工坊','wooden_workbench','NE'],['stores','废弃仓储','wooden_shelf_rack','SW'],['shaft','岩脊岔口','stone_arch_broken','SE']],
+    hell:[['gate','封印门庭','hell_ai_demon_gate','NW'],['forge','废弃熔炉','forge_v120','NE'],['chains','锁链庭院','hell_ai_obsidian_obelisk','SW'],['crag','黑曜岩脊','hell_ai_lava_rock','SE']],
+    frost:[['memorial','守卫纪念碑','frost_obelisk_v100','NW'],['graves','覆雪墓列','frost_obelisk_v100','NE'],['shelter','避风营地','wind_brazier_v120','SW'],['pines','雪松林地','frost_pine_v100','SE']],
+    marsh:[['arch','残拱入口','moss_arch_v100','NW'],['court','净潮庭院','tide_monument_v120','NE'],['shore','枯木岸边','marsh_tree_v100','SW'],['ruins','淹没遗址','moss_arch_v100','SE']]
+  };
+  const specs={
+    mine_entrance_v120:[184,154,65,20,'stonework'],wooden_workbench:[100,102,27,17,'stonework'],wooden_shelf_rack:[128,110,40,16,'stonework'],stone_arch_broken:[148,132,48,16,'stonework'],
+    hell_ai_demon_gate:[164,174,53,18,'stonework'],forge_v120:[142,120,46,19,'stonework'],hell_ai_obsidian_obelisk:[76,124,23,16,'stonework'],hell_ai_lava_rock:[112,96,34,19,'rocks'],hell_ai_chain_pile:[72,46,25,12,'stonework'],
+    frost_obelisk_v100:[76,108,24,15,'stonework'],wind_brazier_v120:[124,102,40,17,'stonework'],frost_pine_v100:[96,154,15,11,'trees'],frost_rock_v100:[52,34,18,9,'rocks'],grave_v110:[42,56,14,9,'tombstones'],frost_grave_v120:[42,56,14,9,'tombstones'],frost_rock_v120:[52,34,18,9,'rocks'],reeds_urn_v120:[46,56,14,9,'stonework'],
+    moss_arch_v100:[134,130,43,17,'stonework'],tide_monument_v120:[94,120,26,17,'stonework'],marsh_tree_v100:[118,144,23,15,'trees'],reeds_urn_v100:[46,56,14,9,'stonework'],barrels_v110:[62,54,22,14,'stonework'],torch_v110:[34,72,8,8,'stonework'],wall_v110:[92,44,35,11,'stonework']
+  };
+  const secondary={mine:['wooden_workbench','barrels_v110','torch_v110','stone_arch_broken'],hell:['hell_ai_chain_pile','hell_ai_lava_rock','hell_ai_obsidian_obelisk','torch_v110'],frost:['frost_grave_v120','frost_pine_v100','frost_rock_v120','frost_grave_v120'],marsh:['reeds_urn_v120','marsh_tree_v100','reeds_urn_v120','moss_arch_v100']};
+  Object.assign(Game,{
+    migrateSave(data){const version=data?.mapLayoutVersion;const result=old.migrateSave.call(this,data);if(result&&version===3)result.mapLayoutVersion=3;return result;},
+    getLevelVisualProfile(theme){const p=old.getLevelVisualProfile.call(this,theme);return this.mapLayoutVersion===3&&themes.includes(theme)?{...p,interiorWallSegments:0,decorationCount:0}:p;},
+    paintBiomeBoundary(){
+      const c=this.groundTileCache.getContext('2d'),w=this.levelData.mapW*48,h=this.levelData.mapH*48,theme=this.levelData.theme;
+      const palette={mine:['#283036','#43484b','#626763'],hell:['#292321','#433a36','#655249'],frost:['#3c535e','#5d7580','#a8bbc0'],marsh:['#24332c','#43594a','#7b8c67']}[theme],rng=makeRNG(this.runSeed^0x72696467);
+      c.save();c.globalAlpha=1;c.fillStyle=palette[0];c.fillRect(0,0,w,104);c.fillRect(0,h-104,w,104);c.fillRect(0,0,104,h);c.fillRect(w-104,0,104,h);
+      const borderAsset={mine:'props/rocks_small_pile',hell:'props/hell_ai_lava_rock',frost:'props/frost_rock_v120',marsh:'props/wall_v110'}[theme],image=Assets.get(borderAsset);
+      const rock=(x,y)=>{
+        if(image?.complete){const scale=Math.min((62+rng()*10)/image.width,54/image.height),dw=image.width*scale,dh=image.height*scale;c.imageSmoothingEnabled=false;c.drawImage(image,Math.round(x-dw/2+(rng()-.5)*12),Math.round(y+25-dh+(rng()-.5)*10),dw,dh);return;}
+        const left=20+Math.floor(rng()*5),right=20+Math.floor(rng()*5),top=18+Math.floor(rng()*5),bottom=19+Math.floor(rng()*4);
+        c.fillStyle=palette[1];c.beginPath();c.moveTo(x-left+6,y-top);c.lineTo(x+right-8,y-top-3);c.lineTo(x+right,y-top+7);c.lineTo(x+right-2,y+bottom-6);c.lineTo(x+right-9,y+bottom);c.lineTo(x-left+5,y+bottom-2);c.lineTo(x-left,y+bottom-11);c.lineTo(x-left+2,y-top+8);c.closePath();c.fill();
+        c.fillStyle=palette[2];c.globalAlpha=.38;c.fillRect(x-left+8,y-top+2,12,3);c.fillRect(x-left+5,y-top+6,3,9);c.globalAlpha=1;c.fillStyle=palette[0];c.fillRect(x+5,y+bottom-5,12,3);};
+      // Overlapping visual fragments hide regular tiling; physical border rows stay unchanged.
+      for(let x=16;x<w;x+=32)for(const y of [20,52,84,h-84,h-52,h-20])rock(x,y);
+      for(let y=112;y<h-96;y+=32)for(const x of [20,52,84,w-84,w-52,w-20])rock(x,y);c.restore();
+    },
+    getBiomeRegions(){
+      const cx=this.levelData.mapW*24,cy=this.levelData.mapH*24;
+      return (layouts[this.levelData.theme]||[]).map(([id,name,asset,q])=>({id,name,asset,type:'biomeRegion',x:cx+(q.endsWith('W')?-340:340),y:cy+(q.startsWith('N')?-265:265),radius:88}));
+    },
+    generateThemeMapFeatures(...args){
+      const features=old.generateThemeMapFeatures.apply(this,args);if(this.mapLayoutVersion!==3||!themes.includes(this.levelData.theme))return features;
+      const cx=this.levelData.mapW*24,cy=this.levelData.mapH*24,regions=this.getBiomeRegions();
+      for(const site of [...regions,...this.levelEncounters]){
+        const points=[{x:cx,y:cy},{x:cx+(site.x-cx)*.5,y:cy+(site.y-cy)*.38},{x:site.x,y:site.y}];
+        features.push({type:'scenePath',regionId:site.id,width:96,points});
+      }
+      return features.concat(regions);
+    },
+    isPointNearThemeFeature(x,y,radius,features){
+      if(old.isPointNearThemeFeature.call(this,x,y,radius,features))return true;
+      for(const f of features||[])if(f.type==='scenePath')for(let i=1;i<f.points.length;i++){
+        const a=f.points[i-1],b=f.points[i],dx=b.x-a.x,dy=b.y-a.y,t=clamp(((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1),0,1);
+        if(dist(x,y,a.x+dx*t,a.y+dy*t)<f.width/2+radius)return true;
+      }
+      return false;
+    },
+    drawMapFeature(ctx,f){
+      if(f.type!=='scenePath'&&f.type!=='biomeRegion')return old.drawMapFeature.call(this,ctx,f);
+      if(f.type==='biomeRegion')return;
+      const palette={mine:['#584d3c','#998665'],hell:['#51413a','#766054'],frost:['#5c7883','#8aa0a8'],marsh:['#57614c','#889074']}[this.levelData.theme];
+      ctx.save();ctx.lineJoin=ctx.lineCap='round';
+      for(const [extra,alpha] of [[24,.09],[12,.18],[0,.37]]){ctx.globalAlpha=alpha;ctx.strokeStyle=palette[0];ctx.lineWidth=f.width+extra;ctx.beginPath();f.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}
+      // Small worn stones mark the route without a continuous grid or border.
+      ctx.globalAlpha=.22;ctx.fillStyle=palette[1];for(let i=1;i<f.points.length;i++){const a=f.points[i-1],b=f.points[i],length=dist(a.x,a.y,b.x,b.y);for(let d=24;d<length;d+=38){const t=d/length;ctx.fillRect(Math.round(a.x+(b.x-a.x)*t),Math.round(a.y+(b.y-a.y)*t),5,2);}}
+      ctx.restore();
+    },
+    generateMap(){
+      old.generateMap.call(this);if(this.mapLayoutVersion!==3||!themes.includes(this.levelData.theme))return;
+      const theme=this.levelData.theme,cx=this.levelData.mapW*24,cy=this.levelData.mapH*24,w=cx*2,h=cy*2,regions=this.getBiomeRegions(),rng=makeRNG(this.runSeed^0x76313230),props=[];
+      const walls=this.collisionProps.filter(p=>p.category==='wall');
+      const candidates=[[0,-112,true],[-112,-94,false],[112,-94,false],[-144,104,false],[130,114,false],[12,160,false],[-210,-20,false]];
+      for(const region of regions)for(const [index,[dx,dy,landmark]] of candidates.entries()){
+        const id=landmark?region.asset:secondary[theme][(index-1)%4],spec=specs[id],sx=region.x<cx?1:-1,sy=region.y<cy?1:-1,jitter=landmark?0:Math.round((rng()-.5)*12);let placed;
+        for(const [ox,offset] of [[0,0],[0,32],[0,-32],[0,64],[0,-64],[64,0],[-64,0],[112,64],[-112,-64],[176,0],[-176,0],[0,176],[0,-176],[176,176],[-176,-176]]){
+          const [drawW,drawH,halfW,halfH,category]=spec,x=region.x+(dx+jitter+ox)*sx,y=region.y+(dy+offset)*sy;
+          const p={type:'props/'+id,x,y,category,scene:true,drawW,drawH,halfW,halfH,radius:Math.max(halfW,halfH),collisionOffsetY:-halfH,collisionX:x,collisionY:y-halfH,regionId:region.id,landmark};
+          if(x<110||x>w-110||y<110||y>h-110||this.footprintOverlapsCircle(x,y,p,cx,cy,120)||this.levelEncounters.some(s=>this.footprintOverlapsCircle(x,y,p,s.x,s.y,125))||this.isPointNearThemeFeature(x,y,Math.max(halfW,halfH)+8,this.mapData.features.filter(f=>f.type!=='biomeRegion'))||props.some(q=>this.footprintOverlapsCircle(q.x,q.y,q,p.collisionX,p.collisionY,p.radius+10)))continue;
+          props.push(p);placed=p;break;
+        }
+        if(!placed&&landmark)throw Error('No safe biome landmark: '+theme+'/'+region.id);
+      }
+      for(const p of props.filter(p=>['props/mine_entrance_v120','props/hell_ai_demon_gate','props/moss_arch_v100','props/stone_arch_broken'].includes(p.type))){
+        p.compound=true;p.occludes=true;
+        for(const side of [-1,1]){const x=p.x+side*p.halfW*.72,y=p.collisionY,halfW=p.halfW*.28,halfH=p.halfH;walls.push({type:'scene-pier',category:'wall',x,y,collisionX:x,collisionY:y,halfW,halfH,radius:Math.max(halfW,halfH)});}
+      }
+      this.mapData.regions=regions;this.mapData.props=props.sort((a,b)=>a.y-b.y);this.collisionProps=walls.concat(props.filter(p=>!p.compound));this.paintBiomeBoundary();
     }
   });
 })();

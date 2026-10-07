@@ -6,7 +6,7 @@ async page => {
   await page.evaluate(prepare);
   const sites=await page.evaluate(()=>[{id:'spawn',x:Game.player.x,y:Game.player.y},...Game.getVillageRegions()]);
   for(const s of sites){await page.evaluate(s=>{Game.player.x=s.x;Game.player.y=s.y;Game.camera.x=s.x-480;Game.camera.y=s.y-270;Game.render();},s);
-    const path=`output/playwright/v110/${mode}-${s.id}.png`;await page.screenshot({path});screenshots.push(path);}
+    const path=`output/playwright/v120/${mode}-${s.id}.png`;await page.screenshot({path});screenshots.push(path);}
   const performance=await page.evaluate(async()=>{
     const update=Game.update,render=Game.render,random=Math.random,rows=[];Game.update=Game.render=()=>{};
     const summary=a=>{const sorted=[...a].sort((a,b)=>a-b);return{samples:a.length,mean:a.reduce((a,b)=>a+b,0)/a.length,p95:sorted[Math.floor(sorted.length*.95)],max:sorted.at(-1),over50ms:a.filter(x=>x>50).length};};

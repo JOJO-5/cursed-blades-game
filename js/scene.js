@@ -41,7 +41,7 @@
       const image=Assets.get(prop.type);if(!image)return;
       const foot=this.getScenePropFoot(prop),scale=prop.scene?Math.min(prop.drawW/image.width,prop.drawH/image.height):.8;
       const w=image.width*scale,h=image.height*scale,p=this.player;
-      const obscures=p&&((prop.category==='houses')||(prop.category==='trees'))&&Math.abs(p.x-prop.x)<w*.4&&p.y<foot&&p.y>foot-h;
+      const obscures=p&&((prop.category==='houses')||(prop.category==='trees')||prop.occludes||(prop.scene&&h>90))&&Math.abs(p.x-prop.x)<w*.4&&p.y<foot&&p.y>foot-h;
       ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=obscures ? .48 : 1;
       ctx.drawImage(image,Math.round(prop.x-w/2),Math.round(foot-h),w,h);ctx.restore();
     },
@@ -62,11 +62,11 @@
       for(const s of this.levelEncounters||[])if(!['cart','rift'].includes(s.id))this.bakeSceneContact(c,s.x,s.y,70,this.runSeed^0x73697465);
     },
     drawSceneObjective(ctx,site){
-      const torch=this.levelData.theme==='frost'||site.id==='camp',key=torch?'props/torch_v110':'props/altar_v110';
-      this.drawSceneProp(ctx,{type:key,x:site.x,y:site.y,scene:true,drawW:torch?38:72,drawH:torch?80:92});
+      const torch=this.levelData.theme==='frost'||site.id==='camp',modern=this.mapLayoutVersion===3,key=modern&&this.levelData.theme==='frost'?'props/wind_brazier_v120':modern&&this.levelData.theme==='marsh'?'props/tide_monument_v120':torch?'props/torch_v110':'props/altar_v110';
+      this.drawSceneProp(ctx,{type:key,x:site.x,y:site.y,scene:true,drawW:modern?96:torch?38:72,drawH:modern?106:torch?80:92});
       if(site.status==='waiting')return;
       // A short warm light highlights the upright fixture, never its trigger radius.
-      const y=site.y-(torch?66:55),g=ctx.createRadialGradient(site.x,y,1,site.x,y,32);
+      const y=site.y-(modern?(this.levelData.theme==='frost'?38:66):torch?66:55),g=ctx.createRadialGradient(site.x,y,1,site.x,y,32);
       g.addColorStop(0,'rgba(255,190,75,.17)');g.addColorStop(1,'rgba(255,190,75,0)');
       ctx.fillStyle=g;ctx.fillRect(site.x-32,y-32,64,64);
     }

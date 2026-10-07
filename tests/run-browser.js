@@ -4,7 +4,7 @@ async page => {
   const wait=s=>page.waitForFunction(s=>Game.state===s,s,{timeout:s==='menu'?65000:30000});
   const story=async()=>{for(let i=0;i<40;i++){if(await page.evaluate(()=>Game.state!=='story'))return;await page.waitForFunction(()=>Game.storyTimer>.31);await page.keyboard.press('Space');await page.waitForTimeout(70);}};
   const click=async(r,touch=false)=>{const b=await page.locator('canvas').boundingBox(),x=b.x+(r.x+r.w/2)/960*b.width,y=b.y+(r.y+r.h/2)/540*b.height;if(touch)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await page.waitForTimeout(60);};
-  const capture=async name=>{const path=`output/playwright/v110/${name}.png`;await page.screenshot({path});screenshots.push(path);};
+  const capture=async name=>{const path=`output/playwright/v120/${name}.png`;await page.screenshot({path});screenshots.push(path);};
   page.on('pageerror',e=>errors.push(String(e)));
   try {
     await page.goto(url);await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().start));await story();await wait('playing');

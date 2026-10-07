@@ -3,15 +3,15 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 321,
+    "totalAssets": 329,
     "categories": {
-      "props": 60,
+      "props": 67,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
       "player": 54,
       "bosses": 3,
-      "tiles": 27,
+      "tiles": 28,
       "effects": 15,
       "items": 5,
       "weapons": 54
@@ -4333,6 +4333,110 @@
         "y": 0.5
       },
       "source": "assets/source_sheets/v110_ground_village.png"
+    },
+    "props/mine_entrance_v120": {
+      "id": "props/mine_entrance_v120",
+      "name": "mine_entrance_v120",
+      "category": "props",
+      "path": "assets/props/mine_entrance_v120.png",
+      "w": 184,
+      "h": 137,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_landmarks_clean.png"
+    },
+    "props/forge_v120": {
+      "id": "props/forge_v120",
+      "name": "forge_v120",
+      "category": "props",
+      "path": "assets/props/forge_v120.png",
+      "w": 142,
+      "h": 111,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_landmarks_clean.png"
+    },
+    "props/wind_brazier_v120": {
+      "id": "props/wind_brazier_v120",
+      "name": "wind_brazier_v120",
+      "category": "props",
+      "path": "assets/props/wind_brazier_v120.png",
+      "w": 124,
+      "h": 81,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_landmarks_clean.png"
+    },
+    "props/tide_monument_v120": {
+      "id": "props/tide_monument_v120",
+      "name": "tide_monument_v120",
+      "category": "props",
+      "path": "assets/props/tide_monument_v120.png",
+      "w": 94,
+      "h": 71,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_landmarks_clean.png"
+    },
+    "props/frost_grave_v120": {
+      "id": "props/frost_grave_v120",
+      "name": "frost_grave_v120",
+      "category": "props",
+      "path": "assets/props/frost_grave_v120.png",
+      "w": 38,
+      "h": 56,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v120_frost_grave.png"
+    },
+    "props/frost_rock_v120": {
+      "id": "props/frost_rock_v120",
+      "name": "frost_rock_v120",
+      "category": "props",
+      "path": "assets/props/frost_rock_v120.png",
+      "w": 28,
+      "h": 18,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/props/frost_rock_v100.png"
+    },
+    "props/reeds_urn_v120": {
+      "id": "props/reeds_urn_v120",
+      "name": "reeds_urn_v120",
+      "category": "props",
+      "path": "assets/props/reeds_urn_v120.png",
+      "w": 46,
+      "h": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/props/reeds_urn_v100.png"
+    },
+    "tiles/ground_frost_v120": {
+      "id": "tiles/ground_frost_v120",
+      "name": "ground_frost_v120",
+      "category": "tiles",
+      "path": "assets/tiles/ground_frost_v120.png",
+      "w": 256,
+      "h": 256,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "source": "assets/source_sheets/v120_ground_frost.png"
     }
   }
 }

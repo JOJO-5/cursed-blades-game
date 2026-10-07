@@ -13,7 +13,7 @@ async page => {
       if(phase==='boss'){const boss=new Enemy('boss',x+145,y-20);boss.phase=2;boss.doHazard(Game.player);Game.enemies.push(boss);Game.bossActive=Game.bossSpawned=true;}
       Game.pickups=Array.from({length:12},(_,i)=>new Pickup(x-90+i*18,y+85,'xp','xp_gem_small',1));Game.render();
     },{phase,time,count});
-    const path=`output/playwright/v110/scene-${phase}.png`;await page.screenshot({path});screenshots.push(path);
+    const path=`output/playwright/v120/scene-${phase}.png`;await page.screenshot({path});screenshots.push(path);
     checks.push({name:`Visual combat fixture: ${phase}`,passed:true,mode:'controlled visual fixture, not natural progression'});
   }
   for(const theme of ['frost','marsh'])for(const weather of ['warning','active']){
@@ -22,7 +22,7 @@ async page => {
       Game.levelTime=theme==='frost'?(weather==='warning'?29:33):(weather==='warning'?21:25);
       const s=Game.levelEncounters.find(s=>s.id==='beacon');s.status='complete';Game.player.x=s.x;Game.player.y=s.y+65;Game.camera.x=s.x-480;Game.camera.y=s.y-230;Game.render();
     },{theme,weather});
-    const path=`output/playwright/v110/scene-${theme}-${weather}.png`;await page.screenshot({path});screenshots.push(path);
+    const path=`output/playwright/v120/scene-${theme}-${weather}.png`;await page.screenshot({path});screenshots.push(path);
     const actual=await page.evaluate(()=>Game.getTrialWeather());
     checks.push({name:`Shared objective and weather visual: ${theme}/${weather}`,passed:!!actual[weather],mode:'controlled completed beacon fixture',evidence:actual});
   }

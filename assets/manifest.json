@@ -1282,5 +1282,37 @@
   "tiles/ground_village_v110": {
     "w": 256,
     "h": 256
+  },
+  "props/mine_entrance_v120": {
+    "w": 184,
+    "h": 137
+  },
+  "props/forge_v120": {
+    "w": 142,
+    "h": 111
+  },
+  "props/wind_brazier_v120": {
+    "w": 124,
+    "h": 81
+  },
+  "props/tide_monument_v120": {
+    "w": 94,
+    "h": 71
+  },
+  "props/frost_grave_v120": {
+    "w": 38,
+    "h": 56
+  },
+  "props/frost_rock_v120": {
+    "w": 28,
+    "h": 18
+  },
+  "props/reeds_urn_v120": {
+    "w": 46,
+    "h": 48
+  },
+  "tiles/ground_frost_v120": {
+    "w": 256,
+    "h": 256
   }
 }

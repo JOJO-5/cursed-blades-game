@@ -31,10 +31,10 @@ jobs:
         if: always()
         with:
           name: browser-regression
-          path: output/playwright/v110/
+          path: output/playwright/v120/
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: validate
     runs-on: ubuntu-latest
     permissions:

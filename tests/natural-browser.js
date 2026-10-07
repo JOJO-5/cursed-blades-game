@@ -41,7 +41,7 @@ async page => {
         if(state.state==='story') {await p.keyboard.press('Space');await p.waitForTimeout(350);continue;}
         if(state.time>=60) {
           if(held)await p.keyboard.up(held);
-          await p.screenshot({path:`output/playwright/v110/natural-seed-${seed}.png`});
+          await p.screenshot({path:`output/playwright/v120/natural-seed-${seed}.png`});
           if(state.camp!=='complete')throw new Error(`Seed ${seed}: camp incomplete after first minute`);
           if(errors.length)throw new Error(errors.join('\n'));
           results.push({character,seed,runSeed:state.runSeed,seconds:state.time,hp:state.hp,level:state.level,kills:state.kills,camp:state.camp});
@@ -56,7 +56,7 @@ async page => {
       }
       if(results.length!==checks.length||!results.some(r=>r.seed===seed))throw new Error(`Seed ${seed}: first minute timed out`);
     } catch(error) {
-      await p.screenshot({path:`output/playwright/v110/natural-seed-${seed}-failure.png`}).catch(()=>{});
+      await p.screenshot({path:`output/playwright/v120/natural-seed-${seed}-failure.png`}).catch(()=>{});
       return {passed:false,checks,results,failure:String(error)};
     } finally {await context.close();}
   }
