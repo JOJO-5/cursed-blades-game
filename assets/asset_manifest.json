@@ -3,15 +3,15 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 311,
+    "totalAssets": 321,
     "categories": {
-      "props": 51,
+      "props": 60,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
       "player": 54,
       "bosses": 3,
-      "tiles": 26,
+      "tiles": 27,
       "effects": 15,
       "items": 5,
       "weapons": 54
@@ -4203,6 +4203,136 @@
         "y": 0.9583
       },
       "source": "assets/source_sheets/v100_water.png"
+    },
+    "props/cottage_v110": {
+      "id": "props/cottage_v110",
+      "name": "cottage_v110",
+      "category": "props",
+      "path": "assets/props/cottage_v110.png",
+      "w": 173,
+      "h": 164,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/stall_v110": {
+      "id": "props/stall_v110",
+      "name": "stall_v110",
+      "category": "props",
+      "path": "assets/props/stall_v110.png",
+      "w": 131,
+      "h": 118,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/wall_v110": {
+      "id": "props/wall_v110",
+      "name": "wall_v110",
+      "category": "props",
+      "path": "assets/props/wall_v110.png",
+      "w": 101,
+      "h": 55,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/log_v110": {
+      "id": "props/log_v110",
+      "name": "log_v110",
+      "category": "props",
+      "path": "assets/props/log_v110.png",
+      "w": 91,
+      "h": 50,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/altar_v110": {
+      "id": "props/altar_v110",
+      "name": "altar_v110",
+      "category": "props",
+      "path": "assets/props/altar_v110.png",
+      "w": 90,
+      "h": 96,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/torch_v110": {
+      "id": "props/torch_v110",
+      "name": "torch_v110",
+      "category": "props",
+      "path": "assets/props/torch_v110.png",
+      "w": 38,
+      "h": 76,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/grave_v110": {
+      "id": "props/grave_v110",
+      "name": "grave_v110",
+      "category": "props",
+      "path": "assets/props/grave_v110.png",
+      "w": 46,
+      "h": 62,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/barrels_v110": {
+      "id": "props/barrels_v110",
+      "name": "barrels_v110",
+      "category": "props",
+      "path": "assets/props/barrels_v110.png",
+      "w": 76,
+      "h": 53,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "props/oak_v110": {
+      "id": "props/oak_v110",
+      "name": "oak_v110",
+      "category": "props",
+      "path": "assets/props/oak_v110.png",
+      "w": 140,
+      "h": 152,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "source": "assets/source_sheets/v110_props_clean.png"
+    },
+    "tiles/ground_village_v110": {
+      "id": "tiles/ground_village_v110",
+      "name": "ground_village_v110",
+      "category": "tiles",
+      "path": "assets/tiles/ground_village_v110.png",
+      "w": 256,
+      "h": 256,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "source": "assets/source_sheets/v110_ground_village.png"
     }
   }
 }

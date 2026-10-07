@@ -161,11 +161,10 @@ Object.assign(Game, {
       if(site.status==='expired'||!this.isOnScreen(site.x,site.y,180))continue;
       const def=this.levelData.encounters.find(d=>d.id===site.id);
       const color=site.status==='complete' ? '#73ba87' : site.status==='active' ? '#ef8057' : '#d7b46d';
-      ctx.save();ctx.fillStyle='rgba(17,13,8,0.76)';ctx.beginPath();ctx.ellipse(site.x,site.y,60,34,0,0,TAU);ctx.fill();
-      ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(site.x,site.y,60,34,0,0,TAU);ctx.stroke();
-      Assets.drawCentered(ctx,def.sprite,site.x,site.y-12,.8,0,site.status==='waiting' ? .5 : 1);
+      ctx.save();
+      this.drawSceneObjective(ctx,site);
       ctx.textAlign='center';ctx.font='bold 12px Courier New';ctx.fillStyle=color;
-      ctx.fillText(`${def.name}${site.status==='complete'?' · 已净化':''}`,site.x,site.y+54);
+      ctx.fillText(`${def.name}${site.status==='complete'?' · 已净化':''}`,site.x,site.y+25);
       ctx.restore();
     }
   },

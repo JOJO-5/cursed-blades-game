@@ -7,9 +7,9 @@
   const old={};
   for(const name of ['loadLevel','migrateSave','initLevelEncounters','serializeEncounters','restoreLevelEncounters','generateThemeMapFeatures','isPointNearThemeFeature','generateMap','drawMapFeature','renderEncounterSites','renderObjectiveHUD','updateThemeHazards','spawnEnemyGroupAtMapFeatures'])old[name]=Game[name];
   Object.assign(Game,{
-    mapLayoutVersion:1,
-    loadLevel(...args){this.mapLayoutVersion=1;return old.loadLevel.apply(this,args);},
-    migrateSave(data){const version=data?.mapLayoutVersion;data=old.migrateSave.call(this,data);if(data&&typeof data==='object')data.mapLayoutVersion=version===1?1:0;return data;},
+    mapLayoutVersion:2,
+    loadLevel(...args){this.mapLayoutVersion=args[0]==='village'?2:1;return old.loadLevel.apply(this,args);},
+    migrateSave(data){const version=data?.mapLayoutVersion;data=old.migrateSave.call(this,data);if(data&&typeof data==='object')data.mapLayoutVersion=[1,2].includes(version)?version:0;return data;},
     getLevelEncounterDefinitions(){return (this.levelData.encounters||[]).filter(d=>!d.minLayout||this.mapLayoutVersion>=d.minLayout);},
     initLevelEncounters(){
       old.initLevelEncounters.call(this);
@@ -61,10 +61,12 @@
     },
     generateThemeMapFeatures(...args) {
       const features=old.generateThemeMapFeatures.apply(this,args);
-      if(this.mapLayoutVersion!==1)return features;
+      if(this.mapLayoutVersion<1)return features;
       const theme=this.levelData.theme,cx=this.levelData.mapW*CONFIG.TILE_SIZE/2,cy=this.levelData.mapH*CONFIG.TILE_SIZE/2;
+      if(theme==='village'&&this.mapLayoutVersion===2)for(let i=features.length-1;i>=0;i--)if(features[i].type==='villageCrossroads')features.splice(i,1);
       if(theme==='village')for(const region of this.getVillageRegions()) {
-        features.push(region,{type:'regionPath',x1:cx,y1:region.y,x2:region.x,y2:region.y,width:62});
+        const points=this.mapLayoutVersion===2?[{x:cx,y:cy},{x:cx+(region.x-cx)*.36,y:cy+(region.y-cy)*.52},{x:cx+(region.x-cx)*.7,y:cy+(region.y-cy)*.68},{x:region.x,y:region.y}]:null;
+        features.push(region,{type:'regionPath',x1:cx,y1:points?cy:region.y,x2:region.x,y2:region.y,width:this.mapLayoutVersion===2?88:62,points});
       }
       if(theme==='mine')features.push({type:'railLine',x1:cx-370,y1:cy,x2:cx+370,y2:cy,horizontal:true,width:100,sleeperGap:30,railColor:'#786b53',sleeperColor:'#362b22',objectiveRoute:true});
       if(theme==='hell') {
@@ -77,6 +79,7 @@
       if(old.isPointNearThemeFeature.call(this,x,y,radius,features))return true;
       for(const f of features||[]) {
         if(f.type==='regionSite'&&dist(x,y,f.x,f.y)<f.radius+radius)return true;
+        if(f.type==='regionPath'&&f.points){for(let i=1;i<f.points.length;i++){const a=f.points[i-1],b=f.points[i],dx=b.x-a.x,dy=b.y-a.y,t=clamp(((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1),0,1);if(dist(x,y,a.x+dx*t,a.y+dy*t)<f.width/2+radius)return true;}continue;}
         if(f.type==='regionPath'&&x>=Math.min(f.x1,f.x2)-radius&&x<=Math.max(f.x1,f.x2)+radius&&Math.abs(y-f.y1)<f.width/2+radius)return true;
       }
       return false;
@@ -92,11 +95,11 @@
     generateMap() {
       old.generateMap.call(this);
       this.mapData.regions=[];
-      if(this.mapLayoutVersion!==1)return;
+      if(this.mapLayoutVersion<1)return;
       if(this.levelData.theme==='village') {
         const regions=this.getVillageRegions(),rng=makeRNG((this.runSeed^0x72656769)>>>0);
         this.mapData.regions=regions;
-        for(const region of regions)for(const prop of this.mapData.props.filter(p=>region.categories.includes(p.category))) {
+        if(this.mapLayoutVersion===1)for(const region of regions)for(const prop of this.mapData.props.filter(p=>region.categories.includes(p.category))) {
           const others=this.collisionProps.filter(p=>p!==prop);
           for(let attempt=0;attempt<60;attempt++) {
             const angle=rng()*TAU,ring=145+rng()*120,x=region.x+Math.cos(angle)*ring,y=region.y+Math.sin(angle)*ring;
@@ -105,8 +108,10 @@
             prop.x=x;prop.y=y;prop.collisionX=x+(prop.collisionOffsetX||0);prop.collisionY=y+(prop.collisionOffsetY||0);prop.regionId=region.id;break;
           }
         }
+        if(this.mapLayoutVersion===2)this.composeVillageScene(regions,rng);
         const ctx=this.groundTileCache.getContext('2d');
         for(const f of this.mapData.features.filter(f=>f.type==='regionPath')) {
+          if(f.points){ctx.save();ctx.lineCap=ctx.lineJoin='round';for(const [extra,alpha] of [[28,.08],[14,.18],[0,.65]]){ctx.globalAlpha=alpha;ctx.strokeStyle=this.villageRoadPattern||'#605033';ctx.lineWidth=f.width+extra;ctx.beginPath();f.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}ctx.restore();continue;}
           ctx.save();ctx.strokeStyle=this.villageRoadPattern||'#423724';ctx.lineWidth=f.width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(f.x1,f.y1);ctx.lineTo(f.x2,f.y2);ctx.stroke();ctx.restore();
         }
         this.mapData.props.sort((a,b)=>a.y-b.y);
@@ -115,6 +120,35 @@
         const feature=this.mapData.features.find(f=>f.objectiveRift);
         if(feature)feature.sealed=site.status==='complete';
       }
+    },
+    composeVillageScene(regions,rng) {
+      const templates={
+        homestead:[['cottage',-80,-108,true],['wall',110,-112],['wall',-174,102],['barrels',85,108],['torch',-16,-110],['cottage',176,154]],
+        graveyard:[['altar',0,-112,true],['grave',-104,-112],['grave',104,-112],['grave',-104,100],['grave',0,100],['grave',104,100],['wall',-188,0],['wall',188,0],['torch',-62,-92],['torch',62,-92]],
+        market:[['stall',-104,-106,true],['stall',114,110],['barrels',140,-106],['barrels',-150,106],['wall',-215,-100],['torch',24,-96]],
+        grove:[['oak',-114,-102,true],['oak',120,-106],['oak',-166,130],['oak',178,116],['log',0,112],['log',170,-90],['grave',-224,-102]]
+      };
+      const sizes={cottage:[194,164,81,32],stall:[174,118,50,15],wall:[118,55,48,12],barrels:[76,65,25,16],torch:[38,80,9,9],altar:[90,115,27,19],grave:[46,62,16,9],oak:[140,190,17,12],log:[136,50,53,10]};
+      const w=this.levelData.mapW*48,h=this.levelData.mapH*48,cx=w/2,cy=h/2,props=[],bodies=this.collisionProps.filter(p=>p.category==='wall');
+      const canPlace=(p)=>p.x>80&&p.x<w-80&&p.y>90&&p.y<h-90&&!this.footprintOverlapsCircle(p.x,p.y,p,cx,cy,110)&&
+        !this.levelEncounters.some(s=>this.footprintOverlapsCircle(p.x,p.y,p,s.x,s.y,110))&&
+        !this.isPointNearThemeFeature(p.collisionX,p.collisionY,p.radius+4,this.mapData.features.filter(f=>f.type==='regionPath'))&&
+        !props.some(q=>this.footprintOverlapsCircle(q.x,q.y,q,p.collisionX,p.collisionY,p.radius+8));
+      for(const region of regions)for(const [id,dx,dy,landmark] of templates[region.id]){
+        const [drawW,drawH,halfW,halfH]=sizes[id],jitter=landmark?0:Math.round((rng()-.5)*8);let placed;
+        // Reflect the compound with its quadrant: the landmark stays outside
+        // the incoming road instead of crossing it when seed rotation changes.
+        const sx=region.x<cx?1:-1,sy=region.y<cy?1:-1;
+        for(const offset of [0,28,-28,56,-56,100,-100,160,-160]){
+          const x=region.x+dx*sx+jitter,y=region.y+(dy+offset)*sy,p={type:`props/${id}_v110`,category:id==='oak'?'trees':id==='cottage'?'houses':'stonework',x,y,scene:true,drawW,drawH,regionId:region.id,landmark:!!landmark,radius:Math.max(halfW,halfH),halfW,halfH,collisionOffsetY:-halfH,collisionX:x,collisionY:y-halfH};
+          if(!canPlace(p))continue;props.push(p);placed=p;break;
+        }
+        if(!placed&&landmark)throw new Error('No safe landmark placement: '+region.id);
+      }
+      for(const p of props.filter(p=>p.type==='props/cottage_v110')){p.compound=true;p.doorOffsetX=40;
+        // The generated cottage door is on the right of its front wall.
+        for(const [dx,dy,halfW,halfH] of [[-26,-22,34,24],[69,-22,12,24],[8,-55,73,9]])bodies.push({type:'scene-wall',category:'wall',x:p.x+dx,y:p.y+dy,collisionX:p.x+dx,collisionY:p.y+dy,radius:Math.max(halfW,halfH),halfW,halfH});}
+      this.mapData.props=props;this.collisionProps=bodies.concat(props.filter(p=>p.radius>0&&!p.compound));
     },
     updateThemeHazards(dt) {
       // The objective rift has an intentional dangerous core while unsealed.
@@ -155,7 +189,7 @@
     },
     renderObjectiveHUD() {
       old.renderObjectiveHUD.call(this);
-      if(this.mapLayoutVersion!==1)return;
+      if(this.mapLayoutVersion<1)return;
       const ctx=this.ctx,p=this.getObjectiveLayout();let name=this.levelData.challenge?this.levelData.name:this.levelData.theme==='mine'?'晶矿运输线':this.levelData.theme==='hell'?'深渊前沿':'荒村十字路';
       for(const region of this.mapData?.regions||[])if(dist(this.player.x,this.player.y,region.x,region.y)<270)name=region.name;
       ctx.save();ctx.font='11px Courier New';ctx.textAlign='left';ctx.fillStyle='#bbae8f';ctx.fillText(`区域 · ${name}`,p.x+4,p.y-8);ctx.restore();

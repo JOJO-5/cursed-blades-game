@@ -3,6 +3,7 @@ async page => {
   // No health, stats, enemies, timers, rewards or transition callbacks are changed.
   const results=[],screenshots=[],errors=[],checks=[],url=page.url();
   const selected=new URL(url).searchParams.get('naturalProfile');
+  const villageOnly=new URL(url).searchParams.get('stopAfter')==='village';
   const profiles=[{id:'orbit',seed:77},{id:'projectile',seed:123},{id:'summon',seed:909}].filter(p=>!selected||p.id===selected);
   for(const profile of profiles) {
     const context=await page.context().browser().newContext({viewport:{width:1280,height:720}});
@@ -67,6 +68,7 @@ async page => {
         lastSeen=s;
         if(errors.length){outcome=s;throw new Error('Game runtime error: '+errors.at(-1));}
         if(s.state==='victory'||s.state==='gameover'||s.alive===false){outcome=s;break;}
+        if(villageOnly&&s.summary?.levels.some(r=>r.theme==='village'&&r.completed)&&s.theme==='mine'){outcome={...s,villageCompleted:true};break;}
         if(s.state==='story'){await release();if(s.storyReady)await p.keyboard.press('Space');await p.waitForTimeout(80);continue;}
         if(['levelup','chestReward'].includes(s.state)) {
           await release();choices.push({theme:s.theme,time:s.time,id:s.choiceId,offered:s.offered});
@@ -76,18 +78,19 @@ async page => {
         }
         if(s.state!=='playing'){await release();await p.waitForTimeout(100);continue;}
         const sampleKey=s.theme+'-'+Math.floor(s.time/60);
-        if(sampleKey!==lastSample){samples.push(s);lastSample=sampleKey;const path=`output/playwright/v100/natural-${profile.id}-${sampleKey}-hp${Math.round(s.hp)}-lv${s.level}.png`;await p.screenshot({path});screenshots.push(path);}
+        if(sampleKey!==lastSample){samples.push(s);lastSample=sampleKey;const path=`output/playwright/v110/natural-${profile.id}-${sampleKey}-hp${Math.round(s.hp)}-lv${s.level}.png`;await p.screenshot({path});screenshots.push(path);}
         for(const k of held)if(!s.keys.includes(k))await p.keyboard.up(k);
         for(const k of s.keys)if(!held.includes(k))await p.keyboard.down(k);held=s.keys;
         if(s.action)await p.keyboard.press('KeyE');if(s.dash)await p.keyboard.press('Space');
         await p.waitForTimeout(100);
       }
       await release();
-      if(!outcome){outcome=lastSeen;const path=`output/playwright/v100/natural-${profile.id}-timeout.png`;await p.screenshot({path});screenshots.push(path);}
+      if(!outcome){outcome=lastSeen;const path=`output/playwright/v110/natural-${profile.id}-timeout.png`;await p.screenshot({path});screenshots.push(path);}
       results.push({profile,...outcome,samples,choices,wallSeconds:(Date.now()-started)/1000});
-      checks.push({name:`Natural full campaign: ${profile.id}`,passed:outcome?.state==='victory',mode:'real-time seeded random + keyboard, unchanged stats/timers'});
-      if(outcome?.state!=='victory')return {passed:false,checks,results,screenshots,errors,failure:`${profile.id}: ${outcome?.state||'timeout'} in ${outcome?.theme} at ${outcome?.time}s`};
-    }catch(error){const path=`output/playwright/v100/natural-${profile.id}-failure.png`;await p.screenshot({path}).catch(()=>{});screenshots.push(path);results.push({profile,...lastSeen,samples,choices,wallSeconds:(Date.now()-started)/1000});checks.push({name:`Natural full campaign: ${profile.id}`,passed:false});return {passed:false,checks,results,screenshots,errors,failure:String(error.stack||error)};}
+      const passed=villageOnly?outcome?.villageCompleted===true:outcome?.state==='victory';
+      checks.push({name:`Natural ${villageOnly?'full village':'full campaign'}: ${profile.id}`,passed,mode:'real-time seeded random + keyboard, unchanged stats/timers'});
+      if(!passed)return {passed:false,checks,results,screenshots,errors,failure:`${profile.id}: ${outcome?.state||'timeout'} in ${outcome?.theme} at ${outcome?.time}s`};
+    }catch(error){const path=`output/playwright/v110/natural-${profile.id}-failure.png`;await p.screenshot({path}).catch(()=>{});screenshots.push(path);results.push({profile,...lastSeen,samples,choices,wallSeconds:(Date.now()-started)/1000});checks.push({name:`Natural full campaign: ${profile.id}`,passed:false});return {passed:false,checks,results,screenshots,errors,failure:String(error.stack||error)};}
     finally{await release().catch(()=>{});await context.close();}
   }
   return {passed:errors.length===0,checks,results,screenshots,errors,limits:['Automated decisions do not establish human balance or physical-device acceptance. Build profiles are upgrade preferences, not injected starting weapons.']};

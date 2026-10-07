@@ -3,7 +3,7 @@ async page => {
   const check=(name,ok)=>{checks.push({name,passed:!!ok,mode:'actual menu/keyboard/touch + accelerated weather and boss scenarios'});if(!ok)throw new Error(name);};
   const click=async(p,r,touch=false)=>{const pos=await p.evaluate(r=>{const b=Game.canvas.getBoundingClientRect();return{x:b.x+(r.x+r.w/2)/960*b.width,y:b.y+(r.y+r.h/2)/540*b.height};},r);if(touch)await p.touchscreen.tap(pos.x,pos.y);else await p.mouse.click(pos.x,pos.y);await p.waitForTimeout(60);};
   const story=async p=>{for(let i=0;i<20;i++){if(await p.evaluate(()=>Game.state!=='story'))return;await p.waitForFunction(()=>Game.storyTimer>.31);await p.keyboard.press('Space');await p.waitForTimeout(90);}};
-  const shot=async(p,name)=>{const path=`output/playwright/v100/${name}.png`;await p.screenshot({path});screenshots.push(path);};
+  const shot=async(p,name)=>{const path=`output/playwright/v110/${name}.png`;await p.screenshot({path});screenshots.push(path);};
   for(const hero of ['warden','ranger','arcanist']){
     const context=await page.context().browser().newContext({viewport:{width:1280,height:720}}),p=await context.newPage();p.on('pageerror',e=>errors.push(e.stack||String(e)));
     try{

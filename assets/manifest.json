@@ -1242,5 +1242,45 @@
   "tiles/water_marsh_v100": {
     "w": 128,
     "h": 128
+  },
+  "props/cottage_v110": {
+    "w": 173,
+    "h": 164
+  },
+  "props/stall_v110": {
+    "w": 131,
+    "h": 118
+  },
+  "props/wall_v110": {
+    "w": 101,
+    "h": 55
+  },
+  "props/log_v110": {
+    "w": 91,
+    "h": 50
+  },
+  "props/altar_v110": {
+    "w": 90,
+    "h": 96
+  },
+  "props/torch_v110": {
+    "w": 38,
+    "h": 76
+  },
+  "props/grave_v110": {
+    "w": 46,
+    "h": 62
+  },
+  "props/barrels_v110": {
+    "w": 76,
+    "h": 53
+  },
+  "props/oak_v110": {
+    "w": 140,
+    "h": 152
+  },
+  "tiles/ground_village_v110": {
+    "w": 256,
+    "h": 256
   }
 }

@@ -410,29 +410,20 @@ class Weapon {
               const hitY = wy;
 
               // 粒子数量上限守卫，防止性能爆炸
-              if (Game.particles.length < 800) {
-                Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, this.def.color, 0.8, sz * 0.6));
-                Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, '#ffffff', 0.6, sz * 0.3));
+              if (Game.particles.length < 480) {
+                Game.particles.push(Game.particlePool.obtain(hitX, hitY, 0, 0, '#fff1c1', 0.12, Math.min(5,sz * .15)));
 
-                const sparkCount = isCrit ? 12 : 6;
+                const sparkCount = isCrit ? 6 : 3;
                 for (let s = 0; s < sparkCount; s++) {
                   const sa = Math.random() * TAU;
                   const ss = rand(80, 200);
                   const sc = isCrit ? '#ffd040' : this.def.color;
                   Game.particles.push(Game.particlePool.obtain(
                     hitX, hitY, Math.cos(sa) * ss, Math.sin(sa) * ss,
-                    sc, rand(0.4, 0.8), rand(2, 5)
+                    sc, rand(0.15, 0.3), rand(1, 3)
                   ));
                 }
 
-                for (let r = 0; r < 8; r++) {
-                  const ra = (r / 8) * TAU;
-                  const rs = 120;
-                  Game.particles.push(Game.particlePool.obtain(
-                    hitX, hitY, Math.cos(ra) * rs, Math.sin(ra) * rs,
-                    this.def.color + '80', 0.3, 4
-                  ));
-                }
               }
 
               if (isCrit || damage > 30) {
@@ -666,8 +657,9 @@ class Weapon {
       ctx.translate(wx, wy);
       ctx.rotate(this.angle + offset + Math.PI / 4);
 
-      // glow effect
-      const glowSize = sz * 1.25;
+      // A restrained glow belongs to enchanted weapons; steel keeps its outline.
+      if(!['sword','shield'].includes(this.id)){
+      const glowSize = sz * .85;
       const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
       glowGradient.addColorStop(0, this.def.color + '2e');
       glowGradient.addColorStop(0.45, this.def.color + '12');
@@ -676,18 +668,14 @@ class Weapon {
       ctx.beginPath();
       ctx.arc(0, 0, glowSize, 0, TAU);
       ctx.fill();
-
-      // secondary glow ring
-      ctx.strokeStyle = this.def.color + '22';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, sz * 0.8, 0, TAU);
-      ctx.stroke();
+      }
 
       // Preserve crisp pixel edges on weapon sprites.
       ctx.imageSmoothingEnabled = false;
       const img = Assets.get(this.def.icon);
-      if (img && img.complete && img.naturalWidth > 0) {
+      if(Game.drawRepresentativeWeapon?.(ctx,this.id,sz)){
+        // The same orbit center and hit radius are retained.
+      } else if (img && img.complete && img.naturalWidth > 0) {
         const drawn = Game.drawCroppedAsset && Game.drawCroppedAsset(ctx, this.def.icon, 0, 0, sz, sz, {
           imageSmoothingEnabled: false,
         });
@@ -2106,15 +2094,15 @@ class Enemy {
     for (const h of this.hazards) {
       const alpha = clamp(h.life / h.maxLife, 0, 1);
       const grad = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r);
-      grad.addColorStop(0, 'rgba(192,64,192,' + (0.4 * alpha) + ')');
-      grad.addColorStop(0.7, 'rgba(160,32,160,' + (0.5 * alpha) + ')');
+      grad.addColorStop(0, 'rgba(144,48,112,' + (0.18 * alpha) + ')');
+      grad.addColorStop(0.7, 'rgba(144,48,112,' + (0.24 * alpha) + ')');
       grad.addColorStop(1, 'rgba(120,16,120,0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(h.x, h.y, h.r, 0, TAU);
       ctx.fill();
       // flickering edge
-      ctx.strokeStyle = 'rgba(220,80,220,' + (0.6 * alpha) + ')';
+      ctx.strokeStyle = 'rgba(255,136,98,' + (0.9 * alpha) + ')';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(h.x, h.y, h.r, 0, TAU);
@@ -2709,8 +2697,8 @@ class Pickup {
     ctx.imageSmoothingEnabled = false;
 
     if (this.type === 'xp') {
-      // glow
-      ctx.fillStyle = 'rgba(120,255,120,0.15)';
+      // A cool gem remains distinct from warm treasure and enemy warnings.
+      ctx.fillStyle = 'rgba(113,218,233,0.12)';
       ctx.beginPath();
       ctx.arc(this.x, this.y + bobY, 12, 0, TAU);
       ctx.fill();
@@ -2724,6 +2712,7 @@ class Pickup {
         }
       }
       Assets.drawCentered(ctx, 'items/' + this.sprite, this.x, this.y + bobY, 1, 0, 1);
+      ctx.fillStyle='#e0fff0';ctx.fillRect(this.x-1,this.y+bobY-6,2,2);
     } else if (this.type === 'heart') {
       Assets.drawCentered(ctx, 'items/heart', this.x, this.y + bobY, 1.2, 0, 1);
     } else if (this.type === 'magnet') {

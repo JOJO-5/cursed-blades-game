@@ -2,7 +2,7 @@ async page => {
   const results=[],checks=[],baseURL=page.url();
   // Real-time first-minute runs. Only the random seed is fixed. Never alter
   // timers, health, enemy stats, drops, damage or encounter progress.
-  for(const seed of [77,123,909]) {
+  for(const [character,seed] of [['warden',77],['ranger',123],['arcanist',909]]) {
     const context=await page.context().browser().newContext({viewport:{width:1280,height:720}});
     const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(String(e)));
     await p.addInitScript(seed=>{
@@ -10,6 +10,8 @@ async page => {
     },seed);
     try {
       await p.goto(baseURL);await p.waitForFunction(()=>Game.state==='menu',null,{timeout:65000});
+      const hero=await p.evaluate(id=>Game.getMenuLayout().characters.find(r=>r.id===id),character),bounds=await p.locator('canvas').boundingBox();
+      await p.mouse.click(bounds.x+(hero.x+hero.w/2)/960*bounds.width,bounds.y+(hero.y+hero.h/2)/540*bounds.height);await p.waitForTimeout(80);
       const rect=await p.evaluate(()=>Game.getMenuLayout().start),b=await p.locator('canvas').boundingBox();
       await p.mouse.click(b.x+(rect.x+rect.w/2)/960*b.width,b.y+(rect.y+rect.h/2)/540*b.height);
       await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));
@@ -39,11 +41,11 @@ async page => {
         if(state.state==='story') {await p.keyboard.press('Space');await p.waitForTimeout(350);continue;}
         if(state.time>=60) {
           if(held)await p.keyboard.up(held);
-          await p.screenshot({path:`output/playwright/v100/natural-seed-${seed}.png`});
+          await p.screenshot({path:`output/playwright/v110/natural-seed-${seed}.png`});
           if(state.camp!=='complete')throw new Error(`Seed ${seed}: camp incomplete after first minute`);
           if(errors.length)throw new Error(errors.join('\n'));
-          results.push({seed,runSeed:state.runSeed,seconds:state.time,hp:state.hp,level:state.level,kills:state.kills,camp:state.camp});
-          checks.push({name:`Natural first minute and camp clear: seed ${seed}`,passed:true,mode:'real-time seeded random + keyboard'});
+          results.push({character,seed,runSeed:state.runSeed,seconds:state.time,hp:state.hp,level:state.level,kills:state.kills,camp:state.camp});
+          checks.push({name:`Natural first minute and camp clear: ${character}, seed ${seed}`,passed:true,mode:'real-time seeded random + keyboard'});
           break;
         }
         const dx=state.target.x-state.x,dy=state.target.y-state.y;
@@ -54,7 +56,7 @@ async page => {
       }
       if(results.length!==checks.length||!results.some(r=>r.seed===seed))throw new Error(`Seed ${seed}: first minute timed out`);
     } catch(error) {
-      await p.screenshot({path:`output/playwright/v100/natural-seed-${seed}-failure.png`}).catch(()=>{});
+      await p.screenshot({path:`output/playwright/v110/natural-seed-${seed}-failure.png`}).catch(()=>{});
       return {passed:false,checks,results,failure:String(error)};
     } finally {await context.close();}
   }

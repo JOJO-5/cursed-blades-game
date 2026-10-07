@@ -3311,23 +3311,21 @@ const Game = {
     this.renderEncounterSites(ctx);
     for (const p of this.pickups) p.draw(ctx);
 
-    if (this.mapData) {
-      for (const prop of this.mapData.props) {
-        if (prop.x < viewL || prop.x > viewR || prop.y < viewT || prop.y > viewB) continue;
-        Assets.drawCentered(ctx, prop.type, prop.x, prop.y, 0.8, 0, 1);
-      }
-    }
-
     // Draw player weapon effects before the hero body so bright/tall weapon
     // sprites do not cover the character in dense late-game builds.
     if (this.player) this.player.drawWeapons(ctx, 'underHero');
 
     const actorDrawables = [];
+    for (const prop of this.mapData?.props || []) {
+      const foot=this.getScenePropFoot(prop),extent=prop.drawH||180;
+      if(prop.x<viewL-extent/2||prop.x>viewR+extent/2||foot<viewT||foot-extent>viewB)continue;
+      actorDrawables.push({y:foot,draw:()=>this.drawSceneProp(ctx,prop)});
+    }
     for (const e of this.enemies) {
-      if (this.isOnScreen(e.x, e.y, 80)) actorDrawables.push({ y: e.y, draw: () => e.draw(ctx) });
+      if (this.isOnScreen(e.x, e.y, 80)) actorDrawables.push({ y: e.y+e.radius*.7, draw: () => e.draw(ctx) });
     }
 
-    if (this.player) actorDrawables.push({ y: this.player.y, draw: () => this.player.draw(ctx) });
+    if (this.player) actorDrawables.push({ y: this.player.y+14, draw: () => this.player.draw(ctx) });
 
     actorDrawables.sort((a, b) => a.y - b.y);
     for (const item of actorDrawables) item.draw();
