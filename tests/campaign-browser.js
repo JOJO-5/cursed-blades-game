@@ -10,7 +10,7 @@ async page => {
     await wait('menu');
     for(const middle of ['mine','frost'])for(const end of ['hell','marsh']){
       await page.evaluate(()=>{Game.state='menu';Game.selectedExpedition='campaign';});
-      await click(await page.evaluate(()=>Game.getMenuLayout().start));await page.waitForTimeout(150);await settle();await wait('playing');
+      await click(await page.evaluate(()=>Game.getMenuLayout().start));await page.waitForFunction(()=>Game.state!=='menu'&&Game.levelData.theme==='village');await settle();await wait('playing');
       await complete();await wait('routeChoice');
       if(middle==='mine'&&end==='hell'){const file='output/playwright/v120/campaign-routes-desktop.png';await page.screenshot({path:file});screenshots.push(file);}
       check(`${middle}/${end}: no stage timer advances while choosing`,await page.evaluate(async()=>{const t=Game.levelTime;await new Promise(r=>setTimeout(r,150));return Game.levelTime===t;}));
@@ -26,8 +26,9 @@ async page => {
       await page.reload();await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));await wait('victory');
       check(`${middle}/${end}: final result restores`,await page.evaluate(()=>Game.campaignFinished));
     }
-    await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{Game.state='menu';Game.selectedExpedition='campaign';});
-    await click(await page.evaluate(()=>Game.getMenuLayout().start));await page.waitForTimeout(150);await settle();await complete();await wait('routeChoice');
+    await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{Game.resizeCanvas();Game.state='menu';Game.selectedExpedition='campaign';});
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await click(await page.evaluate(()=>Game.getMenuLayout().start));await page.waitForFunction(()=>Game.state!=='menu'&&Game.levelData.theme==='village');await settle();await wait('playing');await complete();await wait('routeChoice');
     check('Portrait cards and exit stay inside visible canvas',await page.evaluate(()=>{const l=Game.getCampaignRouteLayout(),v=l.visible;return [...l.cards,l.menu].every(r=>r.x>=v.x&&r.x+r.w<=v.x+v.w&&r.y>=v.y&&r.y+r.h<=v.y+v.h);}));
     const file='output/playwright/v120/campaign-routes-portrait.png';await page.screenshot({path:file});screenshots.push(file);
     await click(await page.evaluate(()=>Game.getCampaignRouteLayout().cards[1]));await settle();await wait('playing');
