@@ -1,6 +1,6 @@
 # v0.12.0-preview：四地图场景精修
 
-状态：开发中。基线：v0.11 / 476c90a。独立分支 `development/v0.12`，开发阶段线上保留 v0.11。
+状态：已发布 v0.12.0-preview.2，线上验证见 [V120_RELEASE.md](V120_RELEASE.md)。基线：v0.11 / 476c90a。独立分支 `development/v0.12`，开发阶段线上保留 v0.11。
 
 ## 交付顺序
 

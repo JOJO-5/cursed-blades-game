@@ -1,5 +1,8 @@
 # v0.12.0-preview：四地图场景精修验收
 
+2026-10-07 已发布 v0.12.0-preview.2，构建提交 `591b9fa`；发布与公开页面核验见 [V120_RELEASE.md](V120_RELEASE.md)。
+
+以下保留此前开发阶段的验收记录。
 2026-10-07。范围见 [V120_PLAN.md](V120_PLAN.md)。开发分支 `development/v0.12`，本轮线上保留 v0.11 供用户体验；v0.12 发布前仍需公开网页核验。机器可读报告与截图保存在 `output/playwright/v120/`，CI 浏览器产物由 `browser-regression` 保存。
 
 ## 实现
