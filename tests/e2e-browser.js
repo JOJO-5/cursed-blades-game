@@ -19,26 +19,56 @@ async page => {
   };
   const clickMenu = async (p, key, touch=false) => clickRect(p, await p.evaluate(k=>Game.getMenuLayout()[k],key),touch);
   const walkTo = async (p,target,tolerance=35) => {
-    for(let i=0;i<80;i++) {
-      const position=await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state}));
-      if(position.state==='levelup') {await p.keyboard.press('Digit1');continue;}
-      if(position.state==='chestReward') return;
-      const dx=target.x-position.x,dy=target.y-position.y;
-      if(Math.hypot(dx,dy)<=tolerance)return;
-      const key=Math.abs(dx)>Math.abs(dy) ? (dx>0?'KeyD':'KeyA') : (dy>0?'KeyS':'KeyW');
-      await p.keyboard.down(key);await p.waitForTimeout(Math.min(220,Math.max(35,Math.hypot(dx,dy)*4)));
-      await p.keyboard.up(key);
+    // Follow a collision-safe route with real keys; a greedy straight line can
+    // stop at a cottage even though the objective is reachable around it.
+    const arrival=Math.max(18,Math.min(tolerance,48));
+    const route=await p.evaluate(({target,arrival})=>{
+      const start={x:Game.player.x,y:Game.player.y},step=24,r=Game.player.radius;
+      const queue=[{ix:0,iy:0,parent:null}],seen=new Set(['0,0']);let goal;
+      for(let i=0;i<queue.length;i++){
+        const n=queue[i],x=start.x+n.ix*step,y=start.y+n.iy*step;
+        if(dist(x,y,target.x,target.y)<=arrival){goal=i;break;}
+        for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const ix=n.ix+dx,iy=n.iy+dy,k=ix+','+iy,nx=start.x+ix*step,ny=start.y+iy*step;
+          if(seen.has(k)||nx<48||ny<48||nx>Game.levelData.mapW*48-48||ny>Game.levelData.mapH*48-48||Game.isCircleBlocked(nx,ny,r)||Game.isCircleBlocked(nx-dx*step/2,ny-dy*step/2,r))continue;
+          seen.add(k);queue.push({ix,iy,parent:i});
+        }
+      }
+      if(goal===undefined)throw Error('No collision-safe path to '+target.id);
+      const points=[];for(let i=goal;queue[i].parent!==null;i=queue[i].parent)points.push({x:start.x+queue[i].ix*step,y:start.y+queue[i].iy*step});points.reverse();
+      return points.filter((v,i)=>{if(i===points.length-1)return true;const prev=i?points[i-1]:start,next=points[i+1];return v.x-prev.x!==next.x-v.x||v.y-prev.y!==next.y-v.y;});
+    },{target,arrival});
+    if(tolerance<18)route.push({x:target.x,y:target.y});
+    const deadline=Date.now()+45000;
+    for(const waypoint of route){
+      while(Date.now()<deadline){
+        const position=await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state}));
+        if(position.state==='chestReward')return;
+        if(position.state==='levelup'){
+          const index=await p.evaluate(()=>Math.max(0,Game.upgradeChoices.findIndex(c=>c.apply&&!c.weaponId)));
+          await p.keyboard.press(`Digit${index+1}`);await p.waitForTimeout(80);continue;
+        }
+        if(position.state==='story'){await finishStories(p);continue;}
+        if(position.state!=='playing')throw Error('Walking interrupted by '+position.state);
+        const dx=waypoint.x-position.x,dy=waypoint.y-position.y;
+        if(Math.hypot(dx,dy)<=6)break;
+        const key=Math.abs(dx)>Math.abs(dy)?(dx>0?'KeyD':'KeyA'):(dy>0?'KeyS':'KeyW');
+        await p.keyboard.down(key);await p.waitForTimeout(Math.min(180,Math.max(25,Math.hypot(dx,dy)*4)));await p.keyboard.up(key);
+      }
     }
-    throw new Error('Keyboard could not reach objective: '+JSON.stringify(await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state})))+' target '+JSON.stringify(target));
+    const position=await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state}));
+    if(Math.hypot(target.x-position.x,target.y-position.y)>tolerance)throw new Error('Keyboard could not reach objective: '+JSON.stringify(position)+' target '+JSON.stringify(target));
   };
   const clearEncounter = async (p,id) => {
-    await p.evaluate(id=>{
-      const w=Game.player.weapons[0];
-      for(const e of Game.enemies.filter(e=>e.encounterId===id)) {
-        e.hp=1;e.x=Game.player.x+Math.cos(w.angle)*w.getRange();e.y=Game.player.y+Math.sin(w.angle)*w.getRange();
-      }
-    },id);
     for(let i=0;i<80;i++) {
+      // Keep the accelerated targets at the live orbit center until real
+      // weapon damage lands; fast guards can dodge a single placement.
+      await p.evaluate(id=>{
+        const w=Game.player.weapons[0];
+        for(const e of Game.enemies.filter(e=>e.alive&&e.encounterId===id)){
+          e.hp=1;e.x=Game.player.x+Math.cos(w.angle)*w.getRange();e.y=Game.player.y+Math.sin(w.angle)*w.getRange();
+        }
+      },id);
       const state=await p.evaluate(id=>({state:Game.state,done:Game.levelEncounters.find(s=>s.id===id).status==='complete'}),id);
       if(state.done)return;
       if(state.state==='levelup'||state.state==='chestReward')await p.keyboard.press('Digit1');
