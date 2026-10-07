@@ -51,9 +51,10 @@ async page => {
         if(position.state==='story'){await finishStories(p);continue;}
         if(position.state!=='playing')throw Error('Walking interrupted by '+position.state);
         const dx=waypoint.x-position.x,dy=waypoint.y-position.y;
-        if(Math.hypot(dx,dy)<=6)break;
+        if(Math.hypot(dx,dy)<=12)break;
         const key=Math.abs(dx)>Math.abs(dy)?(dx>0?'KeyD':'KeyA'):(dy>0?'KeyS':'KeyW');
-        await p.keyboard.down(key);await p.waitForTimeout(Math.min(180,Math.max(25,Math.hypot(dx,dy)*4)));await p.keyboard.up(key);
+        await p.keyboard.down(key);
+        try {await p.waitForFunction(({key,waypoint})=>{const p=Game.player;if(Game.state!=='playing')return true;return key==='KeyD'?p.x>=waypoint.x-8:key==='KeyA'?p.x<=waypoint.x+8:key==='KeyS'?p.y>=waypoint.y-8:p.y<=waypoint.y+8;},{key,waypoint},{timeout:2500,polling:'raf'});} catch(e){throw Error('Waypoint '+JSON.stringify({key,waypoint,position:await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state,keys:Input.keys}))}));} finally {await p.keyboard.up(key);}
       }
     }
     const position=await p.evaluate(()=>({x:Game.player.x,y:Game.player.y,state:Game.state}));
@@ -357,3 +358,4 @@ async page => {
     return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};
   }
 }
+
