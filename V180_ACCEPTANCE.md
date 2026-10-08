@@ -25,7 +25,13 @@
 - 既有战役与挑战浏览器回归更新为四关；挑战覆盖三角色与包含新地图的四条路线，以真实武器伤害击杀缩血首领。
 - 完整回归中发现旧测试导航末端允许 12 像素误差，却未给最终到达判定预留误差。仅修正测试路径目标半径，保留实际键盘行走和碰撞检查。
 
-最终命令结果与发布状态在本次验收结束时补充。
+本地结果：`npm test` 通过；完整浏览器回归 **697 项通过、0 个运行时错误**，含 90 秒敌潮压力检查；三角色自然首分钟 **3 局通过**；新地图专项 **21 项通过**。分别记录于 `output/playwright/v120/v180-local-regression.json`、`natural-results.json` 和 `v180-biomes-final.json`。完整回归含三种构筑四关通关，以及三角色 × 四条代表路线的加速实战；12 条路线组合另有单元流程覆盖。
+
+发布提交：`548943bcd998d80fdb282d0a8c03a5e88a5f6819`。[GitHub 发布任务 37805101287](https://github.com/JOJO-5/cursed-blades-game/actions/runs/37805101287) 的单元测试、697 项浏览器回归、3 局自然开局和 Pages 部署全部成功。
+
+公开地址新地图专项 **21 项通过、0 个错误**。线上 `build-info.json` 的版本与提交正确，20 个资源版本参数正确，7 个关键 JS 文件与发布提交逐一一致，9 张新运行 PNG 与本地文件字节一致；375 个运行素材已打包发布。证据：`v180-ci-log.txt`、`v180-public-metadata.json`、`v180-public-assets.json`、`v180-biomes-public.json`，位于 `output/playwright/v120/`。
+
+[体验 v0.18](https://jojo-5.github.io/cursed-blades-game/?v=0.18.0-preview.1)。开始新战役可体验四关与新分支，已有三关存档仍按原路线完成。
 
 ## 尚未验证
 
