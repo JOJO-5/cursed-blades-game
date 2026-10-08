@@ -21,8 +21,8 @@ async page => {
       check(`${middle}/${end}: stage two loads and retains history`,await page.evaluate(id=>Game.levelData.theme===id&&Game.getRunSummary().levels.length===2,middle));
       await complete();await wait('routeChoice');await page.keyboard.press(end==='hell'?'Digit1':'Digit2');await page.waitForTimeout(100);await settle();await wait('playing');
       check(`${middle}/${end}: stage three keyboard choice`,await page.evaluate(id=>Game.levelData.theme===id&&Game.campaignRoute.length===3,end));
-      await complete();await wait('victory');
-      check(`${middle}/${end}: three completed stages counted`,await page.evaluate(()=>Game.getRunSummary().levels.length===3&&Game.getRunSummary().levels.every(r=>r.completed)));
+      await complete();await wait('routeChoice');await page.keyboard.press('Digit1');await settle();await wait('playing');await complete();await wait('victory');
+      check(`${middle}/${end}: four completed stages counted`,await page.evaluate(()=>Game.getRunSummary().levels.length===4&&Game.getRunSummary().levels.every(r=>r.completed)));
       await page.reload();await wait('menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));await wait('victory');
       check(`${middle}/${end}: final result restores`,await page.evaluate(()=>Game.campaignFinished));
     }

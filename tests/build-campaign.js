@@ -31,7 +31,7 @@ async page => {
         for(const id of profile.upgrades){const u=CONFIG.UPGRADES.find(u=>u.id===id);u.apply(Game.player);Game.player.upgradeLevels[id]=1;}
         Game.player.invuln=999;
       },profile);
-      for(const theme of ['village','mine','hell']) {
+      for(const theme of ['village','mine','hell','clock']) {
         check(`${profile.id}/${theme}: normal transition reached biome`,await p.evaluate(t=>Game.levelData.theme===t,theme));
         await p.evaluate(()=>{Game.levelTime=Game.levelData.bossSpawnTime-.1;Game.player.invuln=999;Game.pickups=[];Game.enemies=[];});
         for(let i=0;i<140;i++) {
@@ -61,12 +61,12 @@ async page => {
           if(s==='story'||s==='victory')break;
           if(s==='levelup'||s==='chestReward')await rewards();await p.waitForTimeout(80);
         }
-        await story();if(theme!=='hell')await story();
+        await story();if(theme!=='clock')await story();
       }
       await p.waitForFunction(()=>Game.state==='victory');
-      check(`${profile.id}: full accelerated campaign reaches victory`,await p.evaluate(()=>['village','mine','hell'].every(t=>Game.meta.levelsCompleted[t])));
-      check(`${profile.id}: final time includes all three biomes and pickup grace`,await p.evaluate(()=>Game.getRunSummary().seconds>=['village','mine','hell'].reduce((s,id)=>s+CONFIG.LEVELS[id].bossSpawnTime,0)&&Game.meta.bestSurvivalTime>=Game.getRunSummary().seconds-.1));
-      check(`${profile.id}: final ending names the actual dragon`,await p.evaluate(()=>Game.getEndingText().includes(CONFIG.ENEMIES[CONFIG.LEVELS.hell.bossId].name)));
+      check(`${profile.id}: full accelerated campaign reaches victory`,await p.evaluate(()=>['village','mine','hell','clock'].every(t=>Game.meta.levelsCompleted[t])));
+      check(`${profile.id}: final time includes all four biomes and pickup grace`,await p.evaluate(()=>Game.getRunSummary().seconds>=['village','mine','hell','clock'].reduce((s,id)=>s+CONFIG.LEVELS[id].bossSpawnTime,0)&&Game.meta.bestSurvivalTime>=Game.getRunSummary().seconds-.1));
+      check(`${profile.id}: final ending names the actual final guardian`,await p.evaluate(()=>Game.getEndingText().includes(CONFIG.ENEMIES[CONFIG.LEVELS.clock.bossId].name)));
     } catch(error){await p.screenshot({path:`output/playwright/v120/campaign-${profile.id}-failure.png`}).catch(()=>{});return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};}
     finally {await context.close();}
   }

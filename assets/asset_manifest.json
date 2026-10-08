@@ -3,15 +3,15 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 366,
+    "totalAssets": 375,
     "categories": {
-      "props": 69,
+      "props": 72,
       "ui": 41,
       "backgrounds": 30,
       "enemies": 32,
       "player": 84,
-      "bosses": 8,
-      "tiles": 28,
+      "bosses": 11,
+      "tiles": 31,
       "effects": 15,
       "items": 5,
       "weapons": 54
@@ -4919,6 +4919,123 @@
       "source": "assets/source_sheets/V150_GENERATION.md",
       "w": 1122,
       "h": 1402,
+      "animation": null
+    },
+    "props/oath_tree_v180": {
+      "id": "props/oath_tree_v180",
+      "name": "oath_tree_v180",
+      "category": "props",
+      "path": "assets/props/oath_tree_v180.png",
+      "w": 320,
+      "h": 292,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "props/oath_clock_v180": {
+      "id": "props/oath_clock_v180",
+      "name": "oath_clock_v180",
+      "category": "props",
+      "path": "assets/props/oath_clock_v180.png",
+      "w": 320,
+      "h": 292,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "props/oath_throne_v180": {
+      "id": "props/oath_throne_v180",
+      "name": "oath_throne_v180",
+      "category": "props",
+      "path": "assets/props/oath_throne_v180.png",
+      "w": 320,
+      "h": 292,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "bosses/thornHeart_v180": {
+      "id": "bosses/thornHeart_v180",
+      "name": "thornHeart",
+      "category": "bosses",
+      "path": "assets/bosses/thornHeart_v180.png",
+      "w": 280,
+      "h": 320,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "bosses/bellEngine_v180": {
+      "id": "bosses/bellEngine_v180",
+      "name": "bellEngine",
+      "category": "bosses",
+      "path": "assets/bosses/bellEngine_v180.png",
+      "w": 275,
+      "h": 320,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "bosses/hollowCrown_v180": {
+      "id": "bosses/hollowCrown_v180",
+      "name": "hollowCrown",
+      "category": "bosses",
+      "path": "assets/bosses/hollowCrown_v180.png",
+      "w": 213,
+      "h": 320,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      },
+      "animation": null
+    },
+    "tiles/ground_forest_v180": {
+      "id": "tiles/ground_forest_v180",
+      "name": "forest",
+      "category": "tiles",
+      "path": "assets/tiles/ground_forest_v180.png",
+      "w": 256,
+      "h": 256,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "tiles/ground_clock_v180": {
+      "id": "tiles/ground_clock_v180",
+      "name": "clock",
+      "category": "tiles",
+      "path": "assets/tiles/ground_clock_v180.png",
+      "w": 256,
+      "h": 256,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null
+    },
+    "tiles/ground_court_v180": {
+      "id": "tiles/ground_court_v180",
+      "name": "court",
+      "category": "tiles",
+      "path": "assets/tiles/ground_court_v180.png",
+      "w": 256,
+      "h": 256,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "animation": null
     }
   }

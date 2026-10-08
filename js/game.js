@@ -2911,6 +2911,7 @@ const Game = {
     const data = {
       schemaVersion: this.saveSchemaVersion,
       campaignMode: !!this.campaignMode,
+      campaignVersion: this.campaignVersion || 1,
       campaignRoute: this.campaignRoute,
       campaignFinished: !!this.campaignFinished,
       runCoins: this.runCoins || 0,

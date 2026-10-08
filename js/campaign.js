@@ -11,10 +11,11 @@
     campaignMode:false,campaignRoute:[],campaignFinished:false,_victoryPending:false,
     startNewGame(...args){
       if(this.state==='gameover'&&this.player)this.selectedExpedition=this.campaignMode?'campaign':this.levelData.challenge?this.levelData.theme:'campaign';
+      this.campaignVersion=CONFIG.CAMPAIGN_TIERS?2:1;
       this.campaignMode=this.selectedExpedition==='campaign';this.campaignRoute=this.campaignMode?['village']:[];this.campaignFinished=false;this._victoryPending=false;
       return old.startNewGame.apply(this,args);
     },
-    getCampaignRouteOptions(){return this.levelData?.theme==='village'?['mine','frost']:['mine','frost'].includes(this.levelData?.theme)?['hell','marsh']:[];},
+    getCampaignRouteOptions(){const tiers=this.campaignVersion===2?CONFIG.CAMPAIGN_TIERS:null;if(tiers){const i=tiers.findIndex(t=>t.includes(this.levelData?.theme));return i>=0?tiers[i+1]||[]:[];}return this.levelData?.theme==='village'?['mine','frost']:['mine','frost'].includes(this.levelData?.theme)?['hell','marsh']:[];},
     finishCampaignStage(){
       if(this.getCampaignRouteOptions().length){this.state='routeChoice';this.saveProgress();}
       else {this.campaignFinished=true;this.state='victory';this.updateMeta();Audio2.playMusic('victory');this.saveProgress();}
@@ -25,12 +26,12 @@
       const theme=this.levelData.theme;
       setTimeout(()=>{
         if(!this.campaignMode||this.levelData.theme!==theme||!this.bossDefeated)return;
-        this.startStory([{speaker:'旅者',text:this.getCampaignRouteOptions().length?'首领已经倒下。收好战利品，在岔路选择下一段旅程。':'三段旅程终于走到尽头。诅咒散去，这条路线的故事由你完成。'}],()=>this.finishCampaignStage(),'routeVictory');
+        this.startStory([{speaker:'旅者',text:this.getCampaignRouteOptions().length?'首领已经倒下。收好战利品，在岔路选择下一段旅程。':'最后的誓印终于复明。诅咒散去，这条路线的故事由你完成。'}],()=>this.finishCampaignStage(),'routeVictory');
       },1000);
     },
     chooseCampaignRoute(id){
       if(this.state!=='routeChoice'||!this.campaignMode||!this.getCampaignRouteOptions().includes(id))return false;
-      this.campaignRoute.push(id);routes[id].apply(this.player);this._victoryPending=false;
+      this.campaignRoute.push(id);(routes[id]||CONFIG.OATH_ROUTES[id]).apply(this.player);this._victoryPending=false;
       this.loadLevel(id);this.saveProgress();return true;
     },
     loadAndContinue(){
@@ -42,7 +43,7 @@
       }
     },
     getCampaignRouteLayout(){
-      const v=this.getVisibleCanvasRect(),w=Math.min(600,v.w-32),h=Math.min(140,(v.h-170)/2),x=v.x+(v.w-w)/2;
+      const v=this.getVisibleCanvasRect(),w=Math.min(600,v.w-32),count=this.getCampaignRouteOptions().length,h=Math.min(140,(v.h-170)/Math.max(2,count)-10),x=v.x+(v.w-w)/2;
       return {visible:v,cards:this.getCampaignRouteOptions().map((id,i)=>({id,x,y:v.y+110+i*(h+14),w,h})),menu:{x,y:v.y+v.h-40,w,h:28}};
     },
     update(dt){
@@ -57,7 +58,7 @@
       c.save();c.fillStyle='rgba(8,15,13,.95)';c.fillRect(0,0,960,540);c.textAlign='center';c.fillStyle='#e5cf99';c.font='bold 24px Courier New';c.fillText('选择下一段旅程',v.x+v.w/2,v.y+48);
       c.font='12px Courier New';c.fillStyle='#a7b7ab';c.fillText(this.campaignRoute.map(id=>CONFIG.LEVELS[id].name).join(' → '),v.x+v.w/2,v.y+78);
       for(const [i,r] of l.cards.entries()){
-        const d=routes[r.id];c.fillStyle='#1a2823';c.fillRect(r.x,r.y,r.w,r.h);c.strokeStyle=d.color;c.lineWidth=2;c.strokeRect(r.x,r.y,r.w,r.h);
+        const d=routes[r.id]||CONFIG.OATH_ROUTES[r.id];c.fillStyle='#1a2823';c.fillRect(r.x,r.y,r.w,r.h);c.strokeStyle=d.color;c.lineWidth=2;c.strokeRect(r.x,r.y,r.w,r.h);
         c.fillStyle=d.color;c.font='bold 18px Courier New';c.fillText(`${i+1} · ${d.title}`,r.x+r.w/2,r.y+29);
         c.font='12px Courier New';c.fillStyle='#b6c0b7';c.fillText(d.desc,r.x+r.w/2,r.y+53);
         c.fillStyle='#e0cd9a';c.fillText(d.reward,r.x+r.w/2,r.y+77);

@@ -57,7 +57,7 @@
       }
       const hero=CONFIG.CHARACTERS[this.selectedCharacter];text(`${hero.perk} · ${CONFIG.WEAPONS[hero.weapon].name}`,240,compact?10:13,hero.color);
       for(const r of l.expeditions)this.drawButton(r.x,r.y,r.w,r.h,r.id==='campaign'?'分支战役':CONFIG.LEVELS[r.id].name,r.id===this.selectedExpedition?'#dfbf72':'#82968d');
-      text(this.selectedExpedition==='campaign'?'五张地图 · 三段旅程 · 首领后选择路线':this.selectedExpedition==='frost'?'4 分钟首领 · 暴风雪 / 火炬避风':'4.5 分钟首领 · 潮汐 / 净潮石碑',328,compact?10:12,'#a0b1aa');
+      text(this.selectedExpedition==='campaign'?(CONFIG.CAMPAIGN_TIERS?'八张地图 · 四段旅程 · 十二条路线':'五张地图 · 三段旅程 · 首领后选择路线'):this.selectedExpedition==='frost'?'4 分钟首领 · 暴风雪 / 火炬避风':'4.5 分钟首领 · 潮汐 / 净潮石碑',328,compact?10:12,'#a0b1aa');
       this.drawButton(l.start.x,l.start.y,l.start.w,l.start.h,'开始远征','#dfbf72');
       if(this.hasSave()){const r=l.continue;this.drawButton(r.x,r.y,r.w,r.h,'继续存档中的旅途','#8fc7ae');const b=l.reset;this.drawButton(b.x,b.y,b.w,b.h,this.resetConfirmTimer>0?'再次点击确认清除':'重置存档','#aa8060');}
       const s=l.settings;this.drawButton(s.x,s.y,s.w,s.h,'设置','#b0a8c4');text(this.usesTouchControls()?'摇杆移动 · 右侧闪避':'WASD 移动 · 空格闪避 · ESC 暂停',531,9,'#87988d');c.restore();
@@ -118,7 +118,7 @@
       if(weather.frost&&weather.active){ctx.fillStyle='#c4e3eb';for(let i=0;i<30;i++){const x=this.camera.x+(i*79+this.levelTime*95)%960,y=this.camera.y+(i*131+this.levelTime*40)%540;ctx.fillRect(x,y,3,2);}}
       ctx.restore();
     },
-    renderObjectiveHUD(){old.renderObjectiveHUD.call(this);if(!this.levelData.challenge)return;const v=this.getVisibleCanvasRect(),c=this.ctx,w=this.getTrialWeather();c.save();c.textAlign='right';c.font='11px Courier New';c.fillStyle=w.active?'#efbc78':'#a1c8c8';
+    renderObjectiveHUD(){old.renderObjectiveHUD.call(this);if(!['frost','marsh'].includes(this.levelData.theme))return;const v=this.getVisibleCanvasRect(),c=this.ctx,w=this.getTrialWeather();c.save();c.textAlign='right';c.font='11px Courier New';c.fillStyle=w.active?'#efbc78':'#a1c8c8';
       c.fillText(this.isTrialSheltered()?(w.frost?'火炬暖光 · 环境庇护':'石碑暖光 · 环境庇护'):w.active?(w.frost?'暴风雪 · 寻找暖光':'涨潮 · 离开水洼'):w.warning?'环境预警 · 4 秒内来袭':`环境来袭 · ${Math.max(0,w.next)} 秒`,v.x+v.w-12,v.y+130);c.restore();}
   });
 })();

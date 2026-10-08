@@ -13,10 +13,11 @@
     getCurrentStageRecord(){return {theme:this.levelData.theme,seconds:nonnegative(this.levelTime),kills:Math.max(0,(this.player?.kills||0)-this.runStartKills),chests:Math.max(0,(this.chestsOpened||0)-this.runStartChests),completed:!!this.bossDefeated};},
     getRunSummary(){const levels=[...this.runHistory,this.getCurrentStageRecord()];return {levels,seconds:levels.reduce((sum,r)=>sum+r.seconds,0),complete:this.runHistoryComplete};},
     restoreRunHistory(data){
-      const tiers=[['village'],['mine','frost'],['hell','marsh']];
+      this.campaignVersion=data.campaignVersion===2&&CONFIG.CAMPAIGN_TIERS?2:1;
+      const tiers=this.campaignVersion===2?CONFIG.CAMPAIGN_TIERS:[['village'],['mine','frost'],['hell','marsh']];
       const route=Array.isArray(data.campaignRoute)?data.campaignRoute:[];
-      const valid=data.campaignMode===true&&route.length>=1&&route.length<=3&&route.every((id,i)=>tiers[i].includes(id))&&route.at(-1)===data.levelId;
-      this.campaignMode=valid;this.campaignRoute=valid?[...route]:[];this.campaignFinished=valid&&route.length===3&&data.campaignFinished===true;
+      const valid=data.campaignMode===true&&route.length>=1&&route.length<=tiers.length&&route.every((id,i)=>tiers[i].includes(id))&&route.at(-1)===data.levelId;
+      this.campaignMode=valid;this.campaignRoute=valid?[...route]:[];this.campaignFinished=valid&&route.length===tiers.length&&data.campaignFinished===true;
       if(valid){
         const history=Array.isArray(data.runHistory)?data.runHistory:[];
         this.runHistory=route.slice(0,-1).flatMap(theme=>{const r=history.find(r=>r?.theme===theme&&Number.isFinite(r.seconds)&&r.seconds>=0);return r?[{theme,seconds:r.seconds,kills:Math.floor(nonnegative(r.kills)),chests:Math.floor(nonnegative(r.chests)),completed:!!r.completed}]:[];});
@@ -47,7 +48,7 @@
       line(`等级 ${this.player.level} · 击杀 ${this.player.kills}`,157);
       line(this.formatRunTime(),182,'#efdcad');
       line(`精英 ${this.eliteKills} · 首领 ${this.bossKills} · 宝箱 ${this.chestsOpened}`,207,'#bbae8f');
-      summary.levels.slice(-3).forEach((r,i)=>line(`${CONFIG.LEVELS[r.theme].name} · ${Math.floor(r.seconds/60)}:${String(Math.floor(r.seconds%60)).padStart(2,'0')}`,237+i*20,'#8fa991',compact?11:13));
+      summary.levels.slice(-4).forEach((r,i)=>line(`${CONFIG.LEVELS[r.theme].name} · ${Math.floor(r.seconds/60)}:${String(Math.floor(r.seconds%60)).padStart(2,'0')}`,237+i*20,'#8fa991',compact?11:13));
       c.font='11px Courier New';c.textAlign='center';c.fillStyle='#a8bdd1';
       this.drawTextBlock(c,this.player.weapons.map(w=>`${w.def.name} Lv.${w.level}`).join(' · '),l.cx,v.y+315,Math.min(l.w,600),16,3);
       if(victory)line('旅者继续踏上新的旅途。',402,'#8a7a5a',11);

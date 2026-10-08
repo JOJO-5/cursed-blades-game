@@ -6,14 +6,14 @@ async page => {
  await page.setViewportSize({width:1280,height:720});await page.goto(url);await page.waitForFunction(()=>typeof Game!=='undefined'&&Game.state==='menu');
  await page.evaluate(()=>{Game.meta.campaignClears=0;Game.meta.achievements=[];Game.saveMeta();});await click(await page.evaluate(()=>Game.getMenuLayout().challenge));await click(await page.evaluate(()=>Game.getChallengeLayout().cards[1]));check('Locked challenge cannot start',await page.evaluate(()=>Game._challengeMenu&&Game.selectedRunProfile==='normal'));await click(await page.evaluate(()=>Game.getChallengeLayout().back));
  const matrix=[];
- for(const hero of ['warden','ranger','arcanist'])for(const route of [['mine','hell'],['mine','marsh'],['frost','hell'],['frost','marsh']]){
+ for(const hero of ['warden','ranger','arcanist'])for(const route of [['mine','hell','clock'],['mine','marsh','court'],['forest','hell','court'],['frost','marsh','clock']]){
   await page.evaluate(hero=>{Game.state='menu';Game.selectedCharacter=hero;Game.selectedExpedition='campaign';Game.selectedRunProfile='normal';Game.startNewGame();},hero);await settle();
-  for(let stage=0;stage<3;stage++){
+  for(let stage=0;stage<4;stage++){
    await page.evaluate(()=>{Game.state='playing';Game.player.invuln=999;Game.spawnTimer=999;Game.enemies=[];Game.pickups=[];Game.levelTime=Game.levelData.bossSpawnTime;Game.bossSpawned=false;Game.spawnBoss();const b=Game.enemies.find(e=>e.isBoss);b.hp=1;b.x=Game.player.x+80;b.y=Game.player.y;Game.player.weapons[0].level=(CONFIG.WEAPON_MAX_LEVEL||6);Game.activateHeroSkill();});await settle();await page.evaluate(()=>Game.activateHeroSkill());
    for(let i=0;i<120;i++){await page.evaluate(()=>{const b=Game.enemies.find(e=>e.alive&&e.isBoss),w=Game.player.weapons[0];if(b){const shot=Game.projectiles.find(p=>p.alive);if(shot){b.x=shot.x+shot.vx*.02;b.y=shot.y+shot.vy*.02;}else {const r=w.def.type==='orbit'?w.getRange():65;b.x=Game.player.x+Math.cos(w.angle)*r;b.y=Game.player.y+Math.sin(w.angle)*r;}}});if(await page.evaluate(()=>Game.bossDefeated))break;await page.waitForTimeout(50);}
    check(`${hero}/${route.join('-')}/stage ${stage+1}: actual weapon/skill defeats boss`,await page.evaluate(()=>Game.bossDefeated));
    await page.evaluate(()=>{Game.bossDefeatedGraceTimer=0;Game._victoryPending=false;Game.finishCampaignStage();});
-   if(stage<2){await page.waitForFunction(()=>Game.state==='routeChoice');await click(await page.evaluate(id=>Game.getCampaignRouteLayout().cards.find(r=>r.id===id),route[stage]));await settle();}
+   if(stage<3){await page.waitForFunction(()=>Game.state==='routeChoice');await click(await page.evaluate(id=>Game.getCampaignRouteLayout().cards.find(r=>r.id===id),route[stage]));await settle();}
   }
   check(`${hero}/${route.join('-')}: final campaign and achievements`,await page.evaluate(()=>Game.state==='victory'&&Game.meta.achievements.includes(Game.player.characterId)));
   await page.evaluate(()=>Game.saveProgress());await page.reload();await page.waitForFunction(()=>Game.state==='menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));check(`${hero}/${route.join('-')}: final save survives refresh`,await page.evaluate(()=>Game.state==='victory'));matrix.push({hero,route,state:'victory',mode:'accelerated actual combat'});

@@ -1462,5 +1462,41 @@
   "props/traveler_v150": {
     "w": 1122,
     "h": 1402
+  },
+  "props/oath_tree_v180": {
+    "w": 320,
+    "h": 292
+  },
+  "props/oath_clock_v180": {
+    "w": 320,
+    "h": 292
+  },
+  "props/oath_throne_v180": {
+    "w": 320,
+    "h": 292
+  },
+  "bosses/thornHeart_v180": {
+    "w": 280,
+    "h": 320
+  },
+  "bosses/bellEngine_v180": {
+    "w": 275,
+    "h": 320
+  },
+  "bosses/hollowCrown_v180": {
+    "w": 213,
+    "h": 320
+  },
+  "tiles/ground_forest_v180": {
+    "w": 256,
+    "h": 256
+  },
+  "tiles/ground_clock_v180": {
+    "w": 256,
+    "h": 256
+  },
+  "tiles/ground_court_v180": {
+    "w": 256,
+    "h": 256
   }
 }

@@ -21,7 +21,8 @@ async page => {
   const walkTo = async (p,target,tolerance=35) => {
     // Follow a collision-safe route with real keys; a greedy straight line can
     // stop at a cottage even though the objective is reachable around it.
-    const arrival=Math.max(18,Math.min(tolerance,48));
+    // Reserve the 12-unit waypoint tracking tolerance inside the final radius.
+    const arrival=Math.max(18,Math.min(tolerance>35?tolerance-12:tolerance,48));
     const route=await p.evaluate(({target,arrival})=>{
       const start={x:Game.player.x,y:Game.player.y},step=24,r=Game.player.radius;
       const queue=[{ix:0,iy:0,parent:null}],seen=new Set(['0,0']);let goal;
@@ -214,7 +215,7 @@ async page => {
 
     // Accelerated boss fixtures: advance timer, then use the normal spawn/death/grace/story transitions.
     // This is state-flow coverage, not natural 24-minute balance acceptance.
-    for (const theme of ['village','mine','hell']) {
+    for (const theme of ['village','mine','hell','clock']) {
       check(`${theme}: expected level reached`,await page.evaluate(t=>Game.levelData.theme===t,theme),'accelerated-flow');
       await page.evaluate(()=>{Game.player.invuln=999;Game.levelTime=Game.levelData.bossSpawnTime-.15;Game.messages=[];});
       for(let i=0;i<120;i++) {
@@ -241,7 +242,7 @@ async page => {
         await page.waitForTimeout(100);
       }
       await finishStories(page);
-      if(theme!=='hell') await finishStories(page); // next biome intro
+      if(theme!=='clock') await finishStories(page); // next biome intro
     }
     await waitState(page,'victory'); await capture(page,'final-victory');
     check('All three completion flags persist',await page.evaluate(()=>['village','mine','hell'].every(t=>Game.meta.levelsCompleted[t])),'accelerated-flow');

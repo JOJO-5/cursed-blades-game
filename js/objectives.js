@@ -114,7 +114,7 @@ Object.assign(Game, {
   getCurrentObjective() {
     if (!this.player) return null;
     if (this.bossDefeated) return {title:'收集战利品',detail:`${Math.ceil(this.bossDefeatedGraceTimer)}秒后继续旅程`,next:'Boss 已击败'};
-    if (this.bossSpawned) return {title:`击败${CONFIG.ENEMIES[this.levelData.bossId || 'boss'].name}`,detail:'躲开红色预警，寻找输出窗口',next:'击败 Boss 后进入下一关'};
+    if (this.bossSpawned) {const final=this.campaignMode?this.getCampaignRouteOptions?.().length===0:this.levelData.challenge||this.levelData.theme==='hell';return {title:`击败${CONFIG.ENEMIES[this.levelData.bossId || 'boss'].name}`,detail:'躲开招式预警，寻找输出窗口',next:final?'击败首领，完成这段旅程':'击败首领后选择下一段旅程'};}
     const active=this.levelEncounters.find(s=>s.status==='active');
     const target=active || this.levelEncounters.find(s=>s.status==='ready') || this.levelEncounters.find(s=>s.status==='waiting');
     const nextPhase=(this.levelData.phases||[]).find(p=>p.time>this.levelTime);
