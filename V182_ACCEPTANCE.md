@@ -15,11 +15,21 @@
 - `npm test`: passed, including the new treasure regression, all existing map reachability and exact save-geometry checks.
 - `tests/treasure-magnet-browser.js`: 15 checks passed, no browser errors. Real movement collected the item; remote quest/rare chests arrived; actual keyboard choices completed both rewards; real reload retained attraction and quest metadata.
 - Inspected screenshots of all eight scenes. Revised mine/marsh after the first visual pass to remove the remaining central X impression.
+- Base browser flow passed locally, including four-stage boss transitions, emulated touch and resource recovery.
+- Independent-expedition browser checks: 51 passed. Three four-stage build campaigns: 36 passed. No runtime errors.
 - Screenshots: `output/playwright/v120/v182-*-roads.png` (generated, ignored artifacts).
+
+### Existing test assumptions corrected
+
+Treasure attraction can open a remote mimic chest during the boss pickup grace period. The old base, build-campaign and expedition fixtures stopped processing input at the first story, mistaking the mimic introduction for the final stage story. CI exposed this in the base flow and then the expedition flow; the expedition failure was reproduced locally. All three fixtures now process stories and rewards until the actual route/ending transition, including replacement dialogs. The corrected local fixtures passed. Reward rarity and normal mimic probability remain unchanged.
 
 ## Release gates
 
-Full browser regression, natural opening checks and public Pages verification are pending at the implementation commit; final results will be recorded after deployment.
+- [CI run 37873862757](https://github.com/JOJO-5/cursed-blades-game/actions/runs/37873862757): all jobs passed and GitHub Pages deployment succeeded.
+- Full browser regression: **712 checks passed**. Natural opening scenarios: **3 passed**.
+- Published version: `0.18.0-preview.2`, runtime commit `fd10e2ef4a07c4244db51b679c389408a11a4e46`.
+- Public `build-info.json` matches this version and commit. All 20 versioned resource URLs carry this release/hash; all six changed runtime JavaScript files exactly match the deployed commit.
+- Public-browser focused verification: **15 checks passed**, no runtime errors, including movement pickup, sequential rewards, real refresh and all eight scene loads.
 
 ## Acceptance limits
 
