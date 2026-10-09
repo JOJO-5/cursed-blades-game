@@ -26,7 +26,9 @@
 
 首次 CI 在旧四关构筑测试中失败：测试停在新增首领誓印选择页，尚未进入矿洞便检查地图。已补上键盘放弃操作，并等待选择消费完毕，检查每关只记录一次。原有跨关断言保留；本地三构筑四关流程 48 项通过，运行时错误为零，证据为 `output/playwright/v120/v230-build-fixed-results.json`。
 
-待修复后的 CI、自然开局、Pages 部署与公开核验完成后补充。
+- 修复提交 `fd167c44315ab0a5564b1c56e68be43143866830` 的 CI `37957384024` 成功：全量单元测试、879 项浏览器检查、三角色自然开局与 Pages 部署通过。日志 `output/v230-ci-log.txt`。
+- 公开 `build-info.json` 确认为 `0.23.0-preview.1` 与同一提交；30 个带版本资源统一绑定构建哈希。刃式、誓印、输入和实体关键源码与提交逐字一致，证据 `output/playwright/v120/v230-public-metadata.json`。
+- 公开网页重跑刃式 10 项与誓印 20 项，均通过且零运行时错误，证据 `output/playwright/v120/v230-public-results.json`。
 
 ## 验收边界
 
