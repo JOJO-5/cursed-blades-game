@@ -7,6 +7,7 @@ async page => {
     const story=async()=>{
       for(let i=0;i<30;i++) {
         const state=await p.evaluate(()=>Game.state);
+        if(state==='bossOathChoice'){const theme=await p.evaluate(()=>Game.levelData.theme);await p.keyboard.press('Digit2');await p.waitForFunction(()=>Game.state!=='bossOathChoice'&&!Game.bossOath.pending);check(`${profile.id}/${theme}: oath choice is consumed once before route`,await p.evaluate(theme=>Game.bossOath.decisions.filter(d=>d.theme===theme&&d.choice==='decline').length===1&&!Game.bossOath.pending,theme));await p.waitForTimeout(1100);continue;}
         if(state==='routeChoice'){await p.keyboard.press('Digit1');await p.waitForTimeout(100);continue;}
         if(state!=='story')return;
         await p.waitForFunction(()=>Game.storyTimer>.31);await p.keyboard.press('Space');await p.waitForTimeout(70);
@@ -59,7 +60,7 @@ async page => {
         for(let i=0;i<375;i++) {
           const {s,currentTheme}=await p.evaluate(()=>({s:Game.state,currentTheme:Game.levelData.theme}));
           if(currentTheme!==theme||s==='routeChoice'||s==='victory')break;
-          if(s==='story')await story();
+          if(s==='story'||s==='bossOathChoice')await story();
           if(s==='levelup'||s==='chestReward')await rewards();await p.waitForTimeout(80);
         }
         await story();if(theme!=='clock')await story();
@@ -68,7 +69,7 @@ async page => {
       check(`${profile.id}: full accelerated campaign reaches victory`,await p.evaluate(()=>['village','mine','hell','clock'].every(t=>Game.meta.levelsCompleted[t])));
       check(`${profile.id}: final time includes all four biomes and pickup grace`,await p.evaluate(()=>Game.getRunSummary().seconds>=['village','mine','hell','clock'].reduce((s,id)=>s+CONFIG.LEVELS[id].bossSpawnTime,0)&&Game.meta.bestSurvivalTime>=Game.getRunSummary().seconds-.1));
       check(`${profile.id}: final ending names the actual final guardian`,await p.evaluate(()=>Game.getEndingText().includes(CONFIG.ENEMIES[CONFIG.LEVELS.clock.bossId].name)));
-    } catch(error){await p.screenshot({path:`output/playwright/v120/campaign-${profile.id}-failure.png`}).catch(()=>{});return {passed:false,checks,screenshots,errors,failure:String(error.stack||error)};}
+    } catch(error){await p.screenshot({path:`output/playwright/v120/campaign-${profile.id}-failure.png`}).catch(()=>{});return {passed:false,checks,screenshots,errors,snapshot:await p.evaluate(()=>({state:Game.state,theme:Game.levelData.theme,pendingOath:Game.bossOath?.pending})),failure:String(error.stack||error)};}
     finally {await context.close();}
   }
   check('Three build campaigns have no JavaScript errors',errors.length===0);
