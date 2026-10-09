@@ -20,7 +20,11 @@
 
 ## 发布
 
-待 CI、自然开局、Pages 部署及公开地址核验完成后补充。
+- 已发布到 [GitHub Pages](https://jojo-5.github.io/cursed-blades-game/)，运行提交 `252a47b4bae7d2b4c40ca9fb6010f866b272c902`。
+- [CI 37949698872](https://github.com/JOJO-5/cursed-blades-game/actions/runs/37949698872) 成功：全量单元测试、837 项浏览器检查、3 个自然开局场景及 Pages 部署。
+- 公开构建版本与提交匹配，28 个资源版本标记一致；两份新增模块源码与发布提交完全一致。
+- 公开地址重跑专项：24 项通过，运行时错误为零，含刷新续玩、挑战码、八首领流程与原生模拟触摸。
+- 发布证据：`output/v220-ci-log.txt`、`output/playwright/v120/v220-public-metadata.json`、同目录 `v220-public-results.json`。
 
 ## 验收边界
 
