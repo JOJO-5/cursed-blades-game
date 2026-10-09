@@ -56,9 +56,10 @@ async page => {
         await p.waitForFunction(()=>Game.bossDefeated,null,{timeout:18000});
         check(`${profile.id}/${theme}: build deals boss finishing damage`,await p.evaluate(()=>Game.bossDefeated&&Game.bossDefeatedGraceTimer>0));
         const path=`output/playwright/v120/campaign-${profile.id}-${theme}.png`;await p.screenshot({path});screenshots.push(path);
-        for(let i=0;i<180;i++) {
-          const s=await p.evaluate(()=>Game.state);
-          if(s==='story'||s==='victory')break;
+        for(let i=0;i<375;i++) {
+          const {s,currentTheme}=await p.evaluate(()=>({s:Game.state,currentTheme:Game.levelData.theme}));
+          if(currentTheme!==theme||s==='routeChoice'||s==='victory')break;
+          if(s==='story')await story();
           if(s==='levelup'||s==='chestReward')await rewards();await p.waitForTimeout(80);
         }
         await story();if(theme!=='clock')await story();

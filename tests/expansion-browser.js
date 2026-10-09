@@ -41,7 +41,17 @@ async page => {
       await p.evaluate(()=>{Game.levelTime=Game.levelData.bossSpawnTime+.1;Game.player.invuln=999;Game.enemies=[];Game.updatePhase(.1);});await story(p);
       await p.evaluate(()=>{const b=Game.enemies.find(e=>e.isBoss);b.hp=1;const w=Game.player.weapons[0];b.x=Game.player.x+Math.cos(w.angle)*w.getRange();b.y=Game.player.y+Math.sin(w.angle)*w.getRange();});
       await p.waitForFunction(()=>Game.bossDefeated,null,{timeout:15000});
-      for(let i=0;i<180;i++){const s=await p.evaluate(()=>Game.state);if(s==='story'||s==='victory')break;if(['levelup','chestReward'].includes(s))await p.keyboard.press('Digit1');await p.waitForTimeout(80);}await story(p);await p.waitForFunction(()=>Game.state==='victory');
+      // A retrieved chest may introduce a mimic before the actual ending story.
+      for(let i=0;i<375;i++){
+        const s=await p.evaluate(()=>Game.state);if(s==='victory')break;
+        if(s==='story')await story(p);
+        if(['levelup','chestReward'].includes(s)){
+          const key=await p.evaluate(()=>Game._weaponReplacement?'Escape':'Digit'+(Math.max(0,(Game.state==='levelup'?Game.upgradeChoices:Game.chestRewardChoices).findIndex(c=>!c.weaponId&&c.type!=='evolution'))+1));
+          await p.keyboard.press(key);
+        }
+        await p.waitForTimeout(80);
+      }
+      await p.waitForFunction(()=>Game.state==='victory');
       check(`${theme}: boss combat finishes expedition without campaign transition`,await p.evaluate(t=>Game.levelData.theme===t&&Game.getRunSummary().levels.length===1&&Game.getRunSummary().levels[0].completed,theme));await shot(p,`victory-${theme}`);
     }catch(e){await shot(p,`expansion-${theme}-failure`).catch(()=>{});return{passed:false,checks,errors,screenshots,failure:String(e.stack||e)};}finally{await context.close();}
   }
