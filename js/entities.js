@@ -119,15 +119,17 @@ class Player {
     }
     // armor: flat reduction after percentage reduction
     amount = Math.max(1, Math.floor(amount * (1 - reduction)) - this.stats.armor);
+    const absorbed=Math.min(this.branchGuard||0,amount);
+    this.branchGuard=Math.max(0,(this.branchGuard||0)-absorbed);amount-=absorbed;
     this.hp -= amount;
     this.invuln = 0.8;
     this.hitFlash = 0.2;
     this.hitShakeX = rand(-4, 4);
     this.hitShakeY = rand(-4, 4);
-    Audio2.hurt();
-    Game.spawnDamageNumber(this.x, this.y - 20, amount, '#ff4040');
-    Game.shakeScreen(6, 0.2);
-    Game.damageVignette = 0.6;
+    if(amount>0)Audio2.hurt();else Audio2.play('sine',320,.07,.03);
+    Game.spawnDamageNumber(this.x, this.y - 20, amount>0?amount:'护盾', amount>0?'#ff4040':'#9bd4ce');
+    Game.shakeScreen(amount>0?6:2, 0.2);
+    Game.damageVignette = amount>0?0.6:0;
     if (this.stats.guardRetaliateChance > 0 &&
         Math.random() < this.stats.guardRetaliateChance &&
         Game.guardRetaliation) {

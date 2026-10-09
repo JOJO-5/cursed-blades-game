@@ -2936,7 +2936,10 @@ const Game = {
       xp: this.player.xp,
       hp: this.player.hp,
       kills: this.player.kills,
-      weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level })),
+      weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level, branch:w.branch })),
+      buildControl:this.buildControl,
+      branchGuard:this.player.branchGuard||0,branchGuardTime:this.player.branchGuardTime||0,
+      rewardSession:['levelup','chestReward'].includes(this.state)&&this.serializeChoice?{source:this.state,choices:(this.state==='levelup'?this.upgradeChoices:this.chestRewardChoices).map(c=>this.serializeChoice(c)),pending:this.pendingLevelUps||0}:null,
       weaponCapacity: this.player.weaponCapacity,
       summonPactGranted: this.player.summonPactGranted,
       stats: this.player.stats,
@@ -3102,7 +3105,7 @@ const Game = {
         for (const w of data.weapons) {
           this.player.addWeapon(w.id);
           const wobj = this.player.weapons.find(x => x.id === w.id);
-          if (wobj) wobj.level = w.level;
+          if (wobj) {wobj.level = w.level;this.restoreWeaponBranch?.(wobj,w.branch);}
         }
       }
       if (this.player.weapons.length === 0) this.player.addWeapon('sword');
