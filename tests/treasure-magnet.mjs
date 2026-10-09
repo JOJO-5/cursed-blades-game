@@ -28,4 +28,12 @@ run(`Game.state='playing';Game.chestMagnetDropped=false;Game.pickups=[];ENEMY_DE
 assert.equal(run('Game.pickups[0].type'),'chestMagnet','First elite guarantees a find');
 run('Game.saveProgress();Game.loadAndContinue()');
 assert.equal(run('Game.chestMagnetDropped'),true);
+assert.equal(run('Game.pickups[0].type'),'chestMagnet','Uncollected new item survives save/continue');
+assert.equal(run('Game.pickups[0].life'),90);
+run(`Game.loadLevel('mine');Game.state='playing';Game.pickups=[];Game.player.kills=(Game.runStartKills||0)+50;ENEMY_DEATH_BEHAVIOR.maybeDropChestMagnet({x:200,y:200});`);
+assert.equal(run('Game.pickups[0].type'),'chestMagnet','Stage transition resets first-drop guarantee; fifty kills suffice');
+run(`Game.pickups=[];ENEMY_DEATH_BEHAVIOR.maybeDropChestMagnet({x:200,y:200,isBoss:true});`);
+assert.equal(run('Game.pickups[0].type'),'chestMagnet','Boss guarantees treasure retrieval');
+run(`Game.pickups=[];ENEMY_DEATH_BEHAVIOR.maybeDropChestMagnet({x:200,y:200,isBoss:true,isMimic:true});`);
+assert.equal(run('Game.pickups.length'),0,'Mimics cannot create a magnet chain');
 console.log('Global treasure retrieval, sequential rewards, exact saves, rarity/objective guarantees and drop availability passed.');

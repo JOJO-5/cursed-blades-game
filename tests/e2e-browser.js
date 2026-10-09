@@ -234,11 +234,12 @@ async page => {
       });
       await page.waitForFunction(()=>Game.bossDefeated,{},{timeout:10000});
       check(`${theme}: boss drops allow pickup grace`,await page.evaluate(()=>Game.bossDefeatedGraceTimer>0),'accelerated-flow');
-      // Consume any genuine reward interrupts while waiting for the grace period.
-      for(let i=0;i<120;i++) {
-        const state=await page.evaluate(()=>Game.state);
-        if(state==='levelup'||state==='chestReward') await page.keyboard.press('Digit1');
-        if(state==='story'||state==='victory') break;
+      // Treasure retrieval can also trigger a mimic introduction during the grace
+      // period. Only a route/ending transition proves that the stage has ended.
+      for(let i=0;i<300;i++) {
+        const {state,currentTheme}=await page.evaluate(()=>({state:Game.state,currentTheme:Game.levelData.theme}));
+        if(currentTheme!==theme||state==='routeChoice'||state==='victory')break;
+        if(['levelup','chestReward','story'].includes(state))await finishStories(page);
         await page.waitForTimeout(100);
       }
       await finishStories(page);
