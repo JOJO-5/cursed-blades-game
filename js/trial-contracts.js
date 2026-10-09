@@ -1,0 +1,59 @@
+// Optional contracts and bounded, readable elite behaviors.
+const TrialContracts={
+ relentless:{name:'无歇首领',desc:'首领待机恢复速度 +33%；招式前摇与危险范围保持可读。'},
+ pursuit:{name:'追猎誓约',desc:'每 50 秒招来一名追猎者，同时最多两名；首领出现后停止增援。'},
+ deadline:{name:'急行誓约',desc:'可选地图目标开始后最多 35 秒；失败不会终止主线。'},
+ scarcity:{name:'清贫誓约',desc:'每处商人或营地只能购买一件商品；购买前自行选择。'}
+};
+const EliteAffixes={guardian:{name:'护卫者',desc:'光环内普通敌人受到伤害降低 35%；先击败护卫者。首领不受保护。',color:'#9acbc0'},hunter:{name:'猎手',desc:'0.65 秒方向预警后冲向锁定位置；改变走位可以躲开。',color:'#e7b586'},thief:{name:'盗火者',desc:'接近进行中的地图目标偷取进度，最多 12 点；击败后归还。',color:'#c4a6df'},mirror:{name:'镜刃者',desc:'模仿你的一件武器，环刃或箭袭独立触发，有攻击间隔。',color:'#d9cd91'}};
+(() => {
+ const old={};for(const k of ['loadMeta','startNewGame','loadLevel','loadAndContinue','saveProgress','updatePlaying','startExplorationSite','chooseVaultRisk','updateExploration','buyJourneyOffer','journeyOfferAvailable','resetSave','getCurrentObjective','render'])old[k]=Game[k];
+ const number=(v,max,fallback=0)=>Number.isFinite(v)?clamp(v,0,max):fallback;
+ Object.assign(Game,{
+  selectedContracts:[],runContracts:[],
+  selectTrialContract(id){if(this.state!=='menu'||!TrialContracts[id]||!(this.meta.campaignClears>0))return false;this.selectedContracts=this.selectedContracts.includes(id)?this.selectedContracts.filter(x=>x!==id):[...this.selectedContracts,id];this.meta.selectedContracts=[...this.selectedContracts];this.saveMeta();return true;},
+  loadMeta(){old.loadMeta.call(this);let d;try{d=JSON.parse(localStorage.getItem(this.metaKey)||'null');}catch{}this.selectedContracts=this.meta.campaignClears>0&&Array.isArray(d?.selectedContracts)?[...new Set(d.selectedContracts.filter(id=>TrialContracts[id]))]:[];},
+  resetSave(){old.resetSave.call(this);this.selectedContracts=[];this.runContracts=[];this.trialContracts=null;},
+  resetTrialContracts(data){this.trialContracts={hunterTimer:number(data?.hunterTimer,50,50),eliteOrdinal:Math.floor(number(data?.eliteOrdinal,100000))};},
+  startNewGame(...a){this.runContracts=this.meta.campaignClears>0?[...this.selectedContracts]:[];this.resetTrialContracts();return old.startNewGame.apply(this,a);},
+  loadLevel(...a){if(this.trialContracts)this.trialContracts.eliteOrdinal=0;return old.loadLevel.apply(this,a);},
+  assignEliteAffix(e,id){if(!e?.alive||!e.isElite||e.isBoss||e.affix)return false;if(!EliteAffixes[id]){if(!(this.meta.campaignClears>0||this.runContracts.length))return false;this.trialContracts=this.trialContracts||{hunterTimer:50,eliteOrdinal:0};const rng=makeRNG(this.runSeed^Math.imul(++this.trialContracts.eliteOrdinal,0x45d9f3b)^Array.from(this.levelData.theme).reduce((n,c)=>n*31+c.charCodeAt(0),22));id=Object.keys(EliteAffixes)[Math.floor(rng()*4)];}
+   e.affix={id,timer:2.5,warn:0,charge:0,angle:0,attack:0,stolen:0,siteId:null,weaponId:this.player.weapons[0]?.id||'sword'};return true;
+  },
+  serializeTrialContracts(){for(const e of this.enemies)this.assignEliteAffix(e);return {...this.trialContracts,owned:[...this.runContracts],enemies:this.enemies.filter(e=>e.alive&&(e.affix||e.contractHunter)).slice(0,12).map(e=>({type:e.type,x:e.x,y:e.y,hp:e.hp,affix:e.affix?{...e.affix}:null,contractHunter:!!e.contractHunter,encounterId:e.encounterId,explorationId:e.explorationId}))};},
+  saveProgress(){old.saveProgress.call(this);if(!this.player?.alive||!this.trialContracts)return;try{const d=JSON.parse(localStorage.getItem(this.saveKey)||'null');if(d){d.trialContracts=this.serializeTrialContracts();localStorage.setItem(this.saveKey,JSON.stringify(d));}}catch{}},
+  loadAndContinue(){let d;try{d=JSON.parse(localStorage.getItem(this.saveKey)||'null');}catch{}this.runContracts=Array.isArray(d?.trialContracts?.owned)?[...new Set(d.trialContracts.owned.filter(id=>TrialContracts[id]))]:[];this.resetTrialContracts(d?.trialContracts);old.loadAndContinue.call(this);this.trialContracts.eliteOrdinal=Math.floor(number(d?.trialContracts?.eliteOrdinal,100000));
+   const restored=new Set();for(const s of (Array.isArray(d?.trialContracts?.enemies)?d.trialContracts.enemies:[]).slice(0,12)){if(!CONFIG.ENEMIES[s.type]||!Number.isFinite(s.x+s.y+s.hp)||s.hp<=0)continue;let e=this.enemies.find(e=>!restored.has(e)&&e.alive&&e.type===s.type&&dist(e.x,e.y,s.x,s.y)<2);if(!e){if(this.isCircleBlocked(s.x,s.y,CONFIG.ENEMIES[s.type].radius))continue;e=new Enemy(s.type,s.x,s.y);this.applyRunProfile(e);e.hp=Math.min(e.maxHp,s.hp);e.encounterId=s.encounterId;e.explorationId=s.explorationId;this.enemies.push(e);}restored.add(e);e.contractHunter=!!s.contractHunter;
+    if(EliteAffixes[s.affix?.id]){this.assignEliteAffix(e,s.affix.id);e.affix={...e.affix,id:s.affix.id,timer:number(s.affix.timer,3),warn:number(s.affix.warn,.65),charge:number(s.affix.charge,.5),angle:Number.isFinite(s.affix.angle)?s.affix.angle:0,attack:number(s.affix.attack,1.5),stolen:number(s.affix.stolen,12),siteId:typeof s.affix.siteId==='string'?s.affix.siteId:null,weaponId:CONFIG.WEAPONS[s.affix.weaponId]?s.affix.weaponId:'sword'};}
+   }
+  },
+  spawnContractHunter(){if(this.enemies.filter(e=>e.alive&&e.contractHunter).length>=2)return false;const p=this.player;for(let i=0;i<20;i++){const a=i*TAU/20,x=p.x+Math.cos(a)*260,y=p.y+Math.sin(a)*260;if(x<40||y<40||x>this.levelData.mapW*48-40||y>this.levelData.mapH*48-40||this.isCircleBlocked(x,y,24)||this.enemies.some(e=>e.alive&&dist(e.x,e.y,x,y)<50))continue;const e=new Enemy('corrupted_knight',x,y);this.applyRunProfile(e);e.contractHunter=true;this.assignEliteAffix(e,'hunter');this.enemies.push(e);this.addMessage('契约追猎者逼近','#e7b586');return true;}return false;},
+  updateTrialContracts(dt){if(this.state!=='playing'||!this.player?.alive||!this.trialContracts)return;if(this.runContracts.includes('pursuit')&&!this.bossSpawned){this.trialContracts.hunterTimer-=dt;if(this.trialContracts.hunterTimer<=0){this.trialContracts.hunterTimer=50;this.spawnContractHunter();}}},
+  updatePlaying(dt){old.updatePlaying.call(this,dt);this.updateTrialContracts(dt);},
+  startExplorationSite(s){const was=s?.status,ok=old.startExplorationSite.call(this,s);if(ok&&was==='ready'&&s.status==='active'&&this.runContracts.includes('deadline')){s.deadline=Math.min(s.deadline||Infinity,this.levelTime+35);this.saveProgress();}return ok;},
+  chooseVaultRisk(risk){const s=this._explorationChoice,ok=old.chooseVaultRisk.call(this,risk);if(ok&&risk&&s.status==='active'&&this.runContracts.includes('deadline')){s.deadline=Math.min(s.deadline,this.levelTime+35);this.saveProgress();}return ok;},
+  updateExploration(dt){if(this.state==='playing'&&this.runContracts.includes('deadline'))for(const s of this.exploration?.sites||[])if(s.status==='active'&&Number.isFinite(s.deadline)&&this.levelTime>s.deadline){s.status='expired';s.carrying=false;this.addMessage('急行契约超时 · 旅程继续','#d3ab83');this.saveProgress();}return old.updateExploration.call(this,dt);},
+  getCurrentObjective(){const objective=old.getCurrentObjective.call(this),s=objective?.site;if(this.runContracts.includes('deadline')&&s?.status==='active'&&Number.isFinite(s.deadline))objective.detail=`契约剩 ${Math.max(0,Math.ceil(s.deadline-this.levelTime))} 秒 · `+objective.detail;return objective;},
+  journeyOfferAvailable(o){if(this.runContracts.includes('scarcity')&&this.journeyStore?.offers.some(x=>x.sold))return false;return old.journeyOfferAvailable.call(this,o);},
+  buyJourneyOffer(index){if(this.runContracts.includes('scarcity')&&this.journeyStore?.offers.some(x=>x.sold))return false;return old.buyJourneyOffer.call(this,index);},
+  updateEliteAffix(e,dt){const a=e.affix,p=this.player;if(!a||!e.alive||!p?.alive)return false;a.attack=Math.max(0,a.attack-dt);
+   if(a.id==='hunter'){
+    if(a.warn>0){a.warn=Math.max(0,a.warn-dt);if(!a.warn)a.charge=.5;return true;}
+    if(a.charge>0){a.charge=Math.max(0,a.charge-dt);e.x+=Math.cos(a.angle)*220*dt;e.y+=Math.sin(a.angle)*220*dt;this.resolvePropCollision(e);if(dist(e.x,e.y,p.x,p.y)<e.radius+p.radius&&a.attack<=0){a.attack=1.2;p.takeDamage(e.damage*1.2);}return true;}
+    a.timer-=dt;if(a.timer<=0){a.timer=3;a.warn=.65;const moving=p.isMoving?70:0;a.angle=angleTo(e.x,e.y,p.x+Math.cos(p.moveAngle||0)*moving,p.y+Math.sin(p.moveAngle||0)*moving);return true;}
+   }
+   if(a.id==='thief'){
+    const s=this.exploration?.sites.find(s=>s.status==='active'&&dist(e.x,e.y,s.carrying?p.x:s.x,s.carrying?p.y:s.y)<140);
+    if(s&&a.stolen<12&&(!a.siteId||a.siteId===s.id)){const kind=this.exploration.kind,available=kind==='anchor'?s.progress:kind==='carry'?s.guard:Math.max(0,s.deadline-this.levelTime-1),amount=Math.min(12-a.stolen,available,dt*(kind==='carry'?3:.6));if(amount>0){a.siteId=s.id;a.stolen+=amount;if(kind==='anchor')s.progress-=amount;else if(kind==='carry')s.guard-=amount;else s.deadline-=amount;}}
+   }
+   if(a.id==='mirror'){const w=CONFIG.WEAPONS[a.weaponId];a.angle+=dt*2;if(w?.type==='orbit'){const x=e.x+Math.cos(a.angle)*75,y=e.y+Math.sin(a.angle)*75;if(dist(x,y,p.x,p.y)<p.radius+15&&a.attack<=0){a.attack=1.2;p.takeDamage(e.damage*.8);}}else if(a.attack<=0&&dist(e.x,e.y,p.x,p.y)<400){a.attack=1.5;const angle=angleTo(e.x,e.y,p.x,p.y);this.enemyProjectiles.push(this.enemyProjectilePool.obtain(e.x,e.y,Math.cos(angle)*180,Math.sin(angle)*180,e.damage*.6,'#d9cd91',450,'weapons/arrow'));}}
+   return false;
+  },
+  returnEliteTheft(e){const a=e.affix,s=this.exploration?.sites.find(s=>s.id===a?.siteId&&s.status==='active');if(!s||!(a.stolen>0))return;const kind=this.exploration.kind;if(kind==='anchor')s.progress=Math.min(6,s.progress+a.stolen);else if(kind==='carry')s.guard=Math.min(20,s.guard+a.stolen);else s.deadline+=a.stolen;a.stolen=0;this.addMessage('夺回被盗的目标进度','#b8cfa8');},
+  render(){old.render.call(this);if(this.state==='journeyShop'&&this.runContracts.includes('scarcity')){const c=this.ctx,v=this.getVisibleCanvasRect();c.save();c.font='10px Courier New';c.textAlign='center';c.fillStyle='#dfb78a';c.fillText('清贫契约 · 本站限购一件 · 已购 '+(this.journeyStore.offers.some(o=>o.sold)?'1/1':'0/1'),v.x+v.w/2,v.y+96);c.restore();}}
+ });
+ const take=Enemy.prototype.takeDamage;Enemy.prototype.takeDamage=function(amount,...a){if(!this.isElite&&!this.isBoss&&Game.enemies.some(e=>e.alive&&e.affix?.id==='guardian'&&dist(e.x,e.y,this.x,this.y)<110))amount*=.65;return take.call(this,amount,...a);};
+ const update=Enemy.prototype.update;Enemy.prototype.update=function(dt,...a){Game.assignEliteAffix(this);if(Game.runContracts.includes('relentless')&&this.isBoss&&this.bossState==='idle')this.abilityTimer-=dt/3;const previous=Game._heroEnemySource;Game._heroEnemySource=this;try{const affix=this.affix;if(affix?.id==='hunter'&&(affix.warn>0||affix.charge>0||affix.timer<=dt)){Game.applyRunProfile(this);this.hitFlash=Math.max(0,this.hitFlash-dt);this.updateStatusEffects(dt);if(!this.alive)return;}if(Game.updateEliteAffix(this,dt)){this.clampToLevelBounds();return;}return update.call(this,dt,...a);}finally{Game._heroEnemySource=previous;}};
+ const die=Enemy.prototype.die;Enemy.prototype.die=function(...a){if(this.alive)Game.returnEliteTheft(this);return die.apply(this,a);};
+ const draw=Enemy.prototype.draw;Enemy.prototype.draw=function(c){draw.call(this,c);const a=this.affix;if(!a||!this.alive)return;const d=EliteAffixes[a.id];c.save();c.strokeStyle=d.color;c.fillStyle=d.color;c.lineWidth=2;c.globalAlpha=.7;if(a.id==='guardian'){c.beginPath();c.arc(this.x,this.y,110,0,TAU);c.stroke();}if(a.id==='hunter'&&a.warn>0){c.beginPath();c.moveTo(this.x,this.y);c.lineTo(this.x+Math.cos(a.angle)*110,this.y+Math.sin(a.angle)*110);c.stroke();}if(a.id==='mirror'&&CONFIG.WEAPONS[a.weaponId]?.type==='orbit'){const x=this.x+Math.cos(a.angle)*75,y=this.y+Math.sin(a.angle)*75;c.save();c.translate(x,y);c.rotate(a.angle+Math.PI/2);c.beginPath();c.moveTo(0,-20);c.lineTo(5,12);c.lineTo(-5,12);c.closePath();c.fill();c.restore();}c.globalAlpha=1;c.font='10px Courier New';c.textAlign='center';c.fillText(d.name+(a.stolen>0?' · 盗取 '+Math.ceil(a.stolen):''),this.x,this.y-this.radius-22);c.restore();};
+})();
