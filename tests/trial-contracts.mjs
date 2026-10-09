@@ -28,4 +28,8 @@ run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.enemies
 run('Game.state="paused";const clock=Game.trialContracts.hunterTimer;Game.updateTrialContracts(10)');assert.equal(run('Game.trialContracts.hunterTimer'),run('clock'));
 run('Game.loadLevel("hell");Game.runContracts=["deadline"];Game.state="playing";Game.levelTime=65;const vaultSite=Game.exploration.sites[0];vaultSite.status="ready";Game.player.x=vaultSite.x;Game.player.y=vaultSite.y;Game.startExplorationSite(vaultSite);Game.chooseVaultRisk(true)');assert.equal(run('vaultSite.deadline'),100,'Vault risk choice honors same contract deadline');
 run('Game.state="playing";const burningHunter=new Enemy("corrupted_knight",Game.player.x+100,Game.player.y);Game.assignEliteAffix(burningHunter,"hunter");burningHunter.affix.warn=.6;burningHunter.applyStatusEffect("burn",2,20);const burningHp=burningHunter.hp;Game.enemies=[burningHunter];burningHunter.update(.3)');assert.ok(run('burningHunter.hp<burningHp'),'Hunter warning does not grant immunity to periodic status damage');
+run('Game.runSeed=12;Game.loadLevel("village");Game.state="playing";Game.enemies=[];Game.spawnContractHunter();Game.spawnContractHunter();');
+assert.equal(run('Game.enemies.filter(e=>e.contractHunter).length'),2);
+assert.ok(run('Game.enemies.filter(e=>e.contractHunter).every(e=>!Game.isCircleBlocked(e.x,e.y,e.radius))'),'Seed 12 hunters must fit their actual 28-unit body radius');
+run('Game.saveProgress();Game.loadAndContinue();');assert.equal(run('Game.enemies.filter(e=>e.contractHunter).length'),2,'Boundary hunters survive exact geometry reload');
 console.log('Composable contracts, actual elite attacks, theft return, purchase limits and persisted hunters passed.');

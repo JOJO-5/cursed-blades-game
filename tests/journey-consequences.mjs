@@ -22,4 +22,8 @@ run('Game.state="menu";Game.startNewGame();');assert.equal(run('Game.journeyCons
 run('Game.campaignVersion=1;Game.state="playing";for(const s of Game.exploration.sites){s.status="active";Game.completeExploration(s);}');assert.equal(run('Game.journeyConsequences.shortcutUnlocked'),false,'Legacy three-stage campaign does not gain a four-stage shortcut');assert.deepEqual(Array.from(run('Game.getCampaignRouteOptions()')),['mine','frost']);
 run('Game.state="routeChoice";Game.chooseCampaignRoute("mine");Game.saveProgress();Game.loadAndContinue();');assert.equal(run('Game.campaignVersion'),1);assert.equal(run('Game.campaignMode'),true);assert.deepEqual(Array.from(run('Game.getCampaignRouteOptions()')),['hell','marsh'],'Legacy route options persist after refresh');
 run('Game.state="routeChoice";Game.chooseCampaignRoute("hell");Game.finishCampaignStage();');assert.equal(run('Game.campaignRoute.length'),3);assert.equal(run('Game.state'),'victory','Legacy campaign still finishes after three stages');
+run('Game.runSeed=12;Game.loadLevel("village");Game.state="playing";Game.enemies=[];Game.spawnConsequenceHunter();Game.spawnConsequenceHunter();');
+assert.equal(run('Game.enemies.filter(e=>e.consequenceHunter).length'),2);
+assert.ok(run('Game.enemies.filter(e=>e.consequenceHunter).every(e=>!Game.isCircleBlocked(e.x,e.y,e.radius))'),'Corruption hunters use their actual collision radius at prop edges');
+run('Game.saveProgress();Game.loadAndContinue();');assert.equal(run('Game.enemies.filter(e=>e.consequenceHunter).length'),2,'Both boundary corruption hunters restore');
 assert.ok(storage.size>0);console.log('Rescue discounts, real pursuit, corruption choices, anchor shortcut, four-stage flow and persistence passed.');
