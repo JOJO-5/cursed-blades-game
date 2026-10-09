@@ -20,6 +20,7 @@ const CONFIG = {
   },
 
   DROPS: {
+    chestMagnet: {normalChance:0.004,eliteChance:0.2,bossChance:1,firstGuaranteeKills:50},
     globalXpMagnet: {
       normalChance: 0.006,
       eliteChance: 0.08,

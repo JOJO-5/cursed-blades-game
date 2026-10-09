@@ -261,11 +261,42 @@
     drawMapFeature(ctx,f){
       if(f.type!=='scenePath'&&f.type!=='biomeRegion')return old.drawMapFeature.call(this,ctx,f);
       if(f.type==='biomeRegion')return;
-      const palette={mine:['#584d3c','#998665'],hell:['#51413a','#766054'],frost:['#5c7883','#8aa0a8'],marsh:['#57614c','#889074']}[this.levelData.theme];
-      ctx.save();ctx.lineJoin=ctx.lineCap='round';
-      for(const [extra,alpha] of [[24,.09],[12,.18],[0,.37]]){ctx.globalAlpha=alpha;ctx.strokeStyle=palette[0];ctx.lineWidth=f.width+extra;ctx.beginPath();f.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}
-      // Small worn stones mark the route without a continuous grid or border.
-      ctx.globalAlpha=.22;ctx.fillStyle=palette[1];for(let i=1;i<f.points.length;i++){const a=f.points[i-1],b=f.points[i],length=dist(a.x,a.y,b.x,b.y);for(let d=24;d<length;d+=38){const t=d/length;ctx.fillRect(Math.round(a.x+(b.x-a.x)*t),Math.round(a.y+(b.y-a.y)*t),5,2);}}
+      this.drawBiomeTravelMarks(ctx,this.levelData.theme,f.points,this.runSeed^Math.round(f.points.at(-1).x*31+f.points.at(-1).y));
+    },
+    drawBiomeTravelMarks(ctx,theme,points,seed){
+      const rng=makeRNG(seed);ctx.save();ctx.lineCap='round';
+      for(let segment=1;segment<points.length;segment++){
+        const a=points[segment-1],b=points[segment],length=dist(a.x,a.y,b.x,b.y),angle=angleTo(a.x,a.y,b.x,b.y);
+        for(let d=18;d<length;d+=theme==='frost'?25:theme==='forest'?20:38){
+          const t=d/length,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
+          // Leave the spawn clearing open instead of converging every route into a stamp.
+          if(['mine','hell','frost','marsh'].includes(theme)&&dist(x,y,this.levelData.mapW*24,this.levelData.mapH*24)<150)continue;
+          if(['mine','marsh'].includes(theme)&&rng()<.3)continue;
+          ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+          if(theme==='mine'){
+            ctx.globalAlpha=.25;ctx.strokeStyle='#80786b';ctx.lineWidth=1.5;ctx.beginPath();
+            for(const y of [-9,9]){ctx.moveTo(-8,y);ctx.lineTo(6+rng()*9,y+(rng()-.5)*3);}ctx.stroke();
+            ctx.fillStyle='#73624b';ctx.fillRect(-4,17+rng()*12,3+rng()*5,2);
+          }else if(theme==='hell'){
+            ctx.globalAlpha=.3;ctx.strokeStyle='#211d20';ctx.lineWidth=2+rng()*2;ctx.beginPath();ctx.moveTo(-16,-10+rng()*20);ctx.lineTo(0,5);ctx.lineTo(12,-5);ctx.stroke();
+            ctx.fillStyle='#786052';ctx.fillRect(6,18+rng()*15,3+rng()*5,2);
+          }else if(theme==='frost'){
+            ctx.globalAlpha=.27;ctx.fillStyle='#53717b';ctx.rotate(.2);ctx.beginPath();ctx.ellipse(0,d%50<25?-7:7,5,2.5,0,0,TAU);ctx.fill();
+          }else if(theme==='marsh'){
+            ctx.globalAlpha=.3;ctx.fillStyle=rng()<.5?'#6c7056':'#74745e';ctx.translate(0,(rng()-.5)*26);ctx.rotate((rng()-.5)*.8);
+            ctx.beginPath();ctx.moveTo(-10,-5);ctx.lineTo(2,-9);ctx.lineTo(12,-3);ctx.lineTo(8,6);ctx.lineTo(-7,7);ctx.closePath();ctx.fill();
+          }else if(theme==='forest'){
+            ctx.globalAlpha=.25;ctx.strokeStyle='#91815a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,-4);ctx.quadraticCurveTo(0,9,15,3);ctx.stroke();
+            ctx.fillStyle='#aaa16b';for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse((rng()-.5)*28,(rng()-.5)*42,3,1.5,rng()*3,0,TAU);ctx.fill();}
+          }else if(theme==='clock'){
+            ctx.globalAlpha=.28;ctx.fillStyle='#b09a6b';ctx.fillRect(-12,-21,24,2);ctx.fillRect(-12,19,24,2);for(const y of [-24,24]){ctx.beginPath();ctx.arc(0,y,1.8,0,TAU);ctx.fill();}
+          }else if(theme==='court'){
+            ctx.globalAlpha=.24;ctx.fillStyle=rng()<.5?'#928798':'#756e83';ctx.rotate((rng()-.5)*.07);ctx.fillRect(-14,-32,27,28);ctx.fillRect(-12,3,25,27);
+            ctx.strokeStyle='#292630';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-10,-18);ctx.lineTo(0,-9);ctx.lineTo(2,-3);ctx.stroke();
+          }
+          ctx.restore();
+        }
+      }
       ctx.restore();
     },
     generateMap(){

@@ -71,7 +71,7 @@
         this.player.characterId=CONFIG.CHARACTERS[this.selectedCharacter]?this.selectedCharacter:'warden';this.player.stats={...this.player.stats,...character.stats};
         this.player.weapons=[];this.player.addWeapon(character.weapon);id=CONFIG.LEVELS[this.selectedExpedition]?.challenge?this.selectedExpedition:'village';
       }
-      this.trialTickTimer=0;return old.loadLevel.call(this,id);
+      this.chestMagnetDropped=false;this.trialTickTimer=0;return old.loadLevel.call(this,id);
     },
     loadAndContinue(){old.loadAndContinue.call(this);if(this.levelData.challenge&&!this.campaignMode){this.runHistory=[];this.runHistoryComplete=true;this.runStartKills=0;this.runStartChests=0;}},
     drawContinuousGround(ctx,theme,w,h){

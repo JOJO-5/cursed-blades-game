@@ -19,16 +19,17 @@
   Object.assign(Game,{
     drawContinuousGround(c,theme,w,h){
       const p=profiles[theme];if(!p)return old.drawContinuousGround.call(this,c,theme,w,h);
-      const rng=makeRNG(this.runSeed^0x1800);c.fillStyle=p.base;c.fillRect(0,0,w,h);
+      c.fillStyle=p.base;c.fillRect(0,0,w,h);
       const image=Assets.get('tiles/ground_'+theme+'_v180');
       if(image?.complete){const tile=document.createElement('canvas');tile.width=tile.height=512;const t=tile.getContext('2d');t.imageSmoothingEnabled=false;for(let y=0;y<2;y++)for(let x=0;x<2;x++){t.save();t.translate(x?512:0,y?512:0);t.scale(x?-1:1,y?-1:1);t.drawImage(image,0,0,256,256);t.restore();}c.fillStyle=c.createPattern(tile,'repeat');c.fillRect(0,0,w,h);}
       c.save();c.globalAlpha=.26;c.fillStyle=p.base;c.fillRect(0,0,w,h);c.restore();
-      // Original low-contrast material, baked once; no tile grid or noisy overlays.
-      c.save();c.lineCap='round';c.strokeStyle=p.path;
-      const cx=w/2,cy=h/2;for(const [dx,dy] of [[-330,-260],[330,-260],[-330,260],[330,260]]){
-        for(const [width,alpha] of [[110,.05],[88,.08],[62,.1]]){c.globalAlpha=alpha;c.lineWidth=width;c.beginPath();c.moveTo(cx,cy);c.quadraticCurveTo(cx+dx*.25,cy+dy*.75,cx+dx,cy+dy);c.stroke();}
-        for(let i=0;i<32;i++){const t=i/32,x=cx+2*(1-t)*t*dx*.25+t*t*dx,y=cy+2*(1-t)*t*dy*.75+t*t*dy;c.globalAlpha=.18+rng()*.13;c.fillStyle=theme==='forest'?'#8b8056':p.accent;const offset=(rng()-.5)*62;c.fillRect(Math.round(x+offset),Math.round(y+(rng()-.5)*40),theme==='forest'?3:10+rng()*14,theme==='forest'?2:4+rng()*7);}
-      }c.restore();
+      // Each biome has its own travel language, baked once without a shared brush stamp.
+      const cx=w/2,cy=h/2,paths=theme==='forest'
+        ?[[[-380,-240],[-210,-80],[-80,90],[90,150],[340,270]],[[-300,250],[-180,130],[-80,90],[120,-90],[340,-260]]]
+        :theme==='clock'
+        ?[[[-340,-180],[340,-180]],[[-340,180],[340,180]],[[-180,-300],[-180,300]],[[180,-300],[180,300]]]
+        :[[[0,-390],[0,390]],[[-350,-260],[0,-260],[350,-260]],[[-350,260],[0,260],[350,260]]];
+      paths.forEach((path,i)=>this.drawBiomeTravelMarks(c,theme,path.map(([x,y])=>({x:cx+x,y:cy+y})),this.runSeed^(0x1810+i)));
     },
     generateMap(){
       old.generateMap.call(this);const p=profiles[this.levelData.theme];this.oathHazardTick=0;if(!p)return;

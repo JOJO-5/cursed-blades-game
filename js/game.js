@@ -1117,6 +1117,13 @@ const Game = {
     return totalXp;
   },
 
+  collectAllChestPickups() {
+    let count=0;
+    for(const p of this.pickups)if(p.alive&&p.type==='chest'&&p.value!==2){p.magnetized=true;p.life=Math.max(p.life,60);count++;}
+    this.addMessage(count?`寻宝磁石 · ${count} 个宝箱正在靠近`:'当前地图没有可吸引的宝箱','#f4ce78');
+    return count;
+  },
+
   // ---- Level up ----
   onLevelUp(levelsGained = 1) {
     this._choiceDetails = null;
@@ -2943,6 +2950,7 @@ const Game = {
       bossSpawned: this.bossSpawned,
       bossDefeated: this.bossDefeated,
       globalXpMagnetDropped: this.globalXpMagnetDropped,
+      chestMagnetDropped: !!this.chestMagnetDropped,
       bossDefeatedGraceTimer: this.bossDefeatedGraceTimer,
       currentPhase: this.currentPhase,
       triggeredPhases: this.triggeredPhases,
@@ -3079,6 +3087,7 @@ const Game = {
       this.eliteTimer = data.eliteTimer ?? 0;
       this.bossDefeated = !!data.bossDefeated;
       this.globalXpMagnetDropped = !!data.globalXpMagnetDropped;
+      this.chestMagnetDropped = !!data.chestMagnetDropped;
       this.bossDefeatedGraceTimer = data.bossDefeatedGraceTimer ?? 0;
       this.currentPhase = data.currentPhase ?? -1;
       this.triggeredPhases = data.triggeredPhases || this.inferTriggeredPhases(this.levelTime, !!data.bossSpawned || !!data.bossDefeated);

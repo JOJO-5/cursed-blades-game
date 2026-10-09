@@ -1286,6 +1286,7 @@ class DeathBehavior {
     }
 
     this.maybeDropGlobalXpMagnet(enemy);
+    this.maybeDropChestMagnet(enemy);
 
     // death particles (boss bursts more)
     const pCount = enemy.isBoss ? 30 : 8;
@@ -1319,6 +1320,16 @@ class DeathBehavior {
     Game.globalXpMagnetDropped = true;
     Game.pickups.push(Game.pickupPool.obtain(enemy.x, enemy.y, 'magnet', drop.sprite || 'xp_gem_large', 0));
     Game.addMessage('全图经验磁石出现了！', '#80ffff');
+  }
+
+  maybeDropChestMagnet(enemy) {
+    const drop=CONFIG.DROPS.chestMagnet;if(!drop||enemy.isMimic)return;
+    const first=!Game.chestMagnetDropped&&(enemy.isElite||(Game.player.kills-(Game.runStartKills||0))>=drop.firstGuaranteeKills);
+    const chance=enemy.isBoss?drop.bossChance:enemy.isElite?drop.eliteChance:drop.normalChance;
+    if(!first&&Math.random()>=chance)return;
+    Game.chestMagnetDropped=true;
+    Game.pickups.push(Game.pickupPool.obtain(enemy.x,enemy.y,'chestMagnet','chest',0));
+    Game.addMessage('寻宝磁石出现！拾取后吸引全图宝箱','#f4ce78');
   }
 }
 
@@ -2624,7 +2635,7 @@ class Pickup {
     this.value = value || 0;
     this.alive = true;
     this.bob = Math.random() * TAU;
-    this.life = type === 'xp' ? 60 : (type === 'magnet' ? 45 : 30);
+    this.life = type === 'chestMagnet' ? 90 : type === 'xp' ? 60 : (type === 'magnet' ? 45 : 30);
     this.magnetized = false;
     // initial scatter
     const ang = Math.random() * TAU;
@@ -2634,6 +2645,9 @@ class Pickup {
   }
 
   update(dt) {
+    if(!this.alive)return;
+    // Real treasure stays available for the entire stage, including old saves.
+    if(this.type==='chest'&&this.value!==2)this.life=Math.max(this.life,dt+60);
     this.life -= dt;
     if (this.life <= 0) { this.alive = false; return; }
     this.bob += dt * 4;
@@ -2645,13 +2659,13 @@ class Pickup {
     const player = Game.player;
     const d = dist(this.x, this.y, player.x, player.y);
 
-    // magnet (chests are not magnetized)
-    if (this.type !== 'chest' && (d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized)) {
+    // Treasure attraction is explicitly activated; walking nearby does not pull chests.
+    if ((this.type==='chest'?this.magnetized:(d < CONFIG.PLAYER.pickupRadius + player.stats.pickupRangeBonus || this.magnetized))) {
       this.magnetized = true;
       const ang = angleTo(this.x, this.y, player.x, player.y);
       // pickupRangeBonus can magnetize gems outside the base radius; never let
       // that turn the attraction velocity negative.
-      const speed = Math.max(80, 200 + (CONFIG.PLAYER.pickupRadius - d) * 4);
+      const speed = this.type==='chest'?Math.min(600,Math.max(300,d*2),d/Math.max(dt,.001)):Math.max(80, 200 + (CONFIG.PLAYER.pickupRadius - d) * 4);
       this.vx = Math.cos(ang) * speed;
       this.vy = Math.sin(ang) * speed;
     }
@@ -2671,6 +2685,7 @@ class Pickup {
   }
 
   collect() {
+    if(!this.alive||Game.state!=='playing')return;
     this.alive = false;
     if (this.type === 'xp') {
       const levelsGained = Game.player.gainXp(this.value);
@@ -2691,6 +2706,8 @@ class Pickup {
     } else if (this.type === 'magnet') {
       Audio2.pickup();
       if (Game.collectAllXpPickups) Game.collectAllXpPickups(this.x, this.y);
+    } else if (this.type === 'chestMagnet') {
+      Audio2.pickup();Game.collectAllChestPickups();
     } else if (this.type === 'chest') {
       Game.openChest(this.x, this.y, this.value, !!this.objectiveId);
     }
@@ -2720,6 +2737,9 @@ class Pickup {
       ctx.fillStyle='#e0fff0';ctx.fillRect(this.x-1,this.y+bobY-6,2,2);
     } else if (this.type === 'heart') {
       Assets.drawCentered(ctx, 'items/heart', this.x, this.y + bobY, 1.2, 0, 1);
+    } else if (this.type === 'chestMagnet') {
+      // A gold horseshoe and small chest silhouette distinguish treasure from EXP.
+      ctx.translate(this.x,this.y+bobY);ctx.strokeStyle='#f3cb71';ctx.lineWidth=6;ctx.beginPath();ctx.arc(0,-3,13,0,Math.PI);ctx.lineTo(-13,-12);ctx.moveTo(13,-3);ctx.lineTo(13,-12);ctx.stroke();ctx.fillStyle='#e5c17d';ctx.fillRect(-7,-6,14,10);ctx.fillStyle='#5a4029';ctx.fillRect(-7,-3,14,2);ctx.fillStyle='#fff0b4';ctx.fillRect(-1,-2,3,4);ctx.font='bold 10px Courier New';ctx.textAlign='center';ctx.fillStyle='#f7d893';ctx.fillText('宝箱',0,27);
     } else if (this.type === 'magnet') {
       const pulse = 1 + Math.sin(this.bob * 1.6) * 0.12;
       ctx.fillStyle = 'rgba(80,220,255,0.28)';
