@@ -11,7 +11,7 @@
   generateJourneyOffers(store,previous=[]){
    const rng=makeRNG(this.runSeed^Array.from(store.key).reduce((n,c)=>n*31+c.charCodeAt(0),20)^(store.revision||0)),ids=Object.keys(OathRelics).filter(id=>this.canAcquireOathRelic(id)&&!previous.some(o=>o.relicId===id));
    const id=ids[Math.floor(rng()*ids.length)],w=[...this.player.weapons].filter(w=>w.level<CONFIG.WEAPON_MAX_LEVEL).sort((a,b)=>Number(!!b.branch)-Number(!!a.branch)||a.level-b.level)[0];
-   const supply=this.oathRun.burden>0?{kind:'cleanse',name:'净咒盐',desc:'清除全部腐化负担，恢复被负担削减的移动速度。',price:6}:this.runProfile==='iron'?{kind:'ward',name:'封护符',desc:'获得 12 点消耗式护盾，持续 6 秒；不属于治疗。',price:6}:{kind:'heal',name:'旅途药剂',desc:'恢复 30 点生命。生命已满时不能购买。',price:6};
+   const supply=this.oathRun.burden>0?{kind:'cleanse',name:'净咒盐',desc:'清除全部腐化负担，恢复被负担削减的移动速度。',price:6}:(this.runProfile==='iron'||store.source==='camp')?{kind:'ward',name:'封护符',desc:'获得 12 点消耗式护盾，持续 6 秒；不属于治疗。',price:6}:{kind:'heal',name:'旅途药剂',desc:'恢复 30 点生命。生命已满时不能购买。',price:6};
    const offers=[id?{kind:'relic',relicId:id,name:OathRelics[id].name,desc:OathRelics[id].desc,price:18}:{kind:'ward',name:'封护符',desc:'获得 12 点护盾，持续 6 秒。',price:6},w?{kind:'forge',weaponId:w.id,name:'定式锻片 · '+CONFIG.WEAPONS[w.id].name,desc:'此武器等级 +1，保留已选分支；优先锻造变异武器。',price:10}:{kind:'ward',name:'封护符',desc:'武器均已满级，改售 12 点限时护盾。',price:6},supply];
    return offers.map((o,i)=>previous[i]?.sold?previous[i]:{...o,sold:false});
   },
