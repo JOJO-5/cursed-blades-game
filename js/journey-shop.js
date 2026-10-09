@@ -40,7 +40,7 @@
   serializeJourneySession(){return this.state==='journeyShop'&&this.journeyStore?{key:this.journeyStore.key}:null;},
   loadAndContinue(){let data;try{data=JSON.parse(localStorage.getItem(this.saveKey)||'null');}catch{}this.journeyStores={};this.journeyStore=null;old.loadAndContinue.call(this);
    if(data?.journeyStores&&typeof data.journeyStores==='object')for(const [key,s] of Object.entries(data.journeyStores).slice(0,16)){if(!s||s.key!==key||!['camp','merchant'].includes(s.source)||!Array.isArray(s.offers))continue;
-    const offers=s.offers.slice(0,3).filter(o=>o&&offeredKinds.has(o.kind)&&[6,10,18].includes(o.price)&&typeof o.name==='string'&&typeof o.desc==='string'&&(o.kind!=='relic'||OathRelics[o.relicId])&&(o.kind!=='forge'||CONFIG.WEAPONS[o.weaponId])).map(o=>({...o,sold:!!o.sold}));if(offers.length!==3)continue;
+    const offers=s.offers.slice(0,3).filter(o=>o&&offeredKinds.has(o.kind)&&([6,10,18].includes(o.price)||(o.rescueDiscount&&[6,10,18].includes(o.basePrice)&&o.price===Math.ceil(o.basePrice*.8)))&&typeof o.name==='string'&&typeof o.desc==='string'&&(o.kind!=='relic'||OathRelics[o.relicId])&&(o.kind!=='forge'||CONFIG.WEAPONS[o.weaponId])).map(o=>({...o,sold:!!o.sold}));if(offers.length!==3)continue;
     this.journeyStores[key]={...s,offers,rerolls:s.rerolls===1?1:0,revision:s.revision===1?1:0};
    }
    const store=this.journeyStores[data?.journeySession?.key];if(!store||!store.key.startsWith(this.levelData.theme+':'))return;

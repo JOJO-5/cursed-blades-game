@@ -12,11 +12,12 @@
     },
     getCurrentStageRecord(){return {theme:this.levelData.theme,seconds:nonnegative(this.levelTime),kills:Math.max(0,(this.player?.kills||0)-this.runStartKills),chests:Math.max(0,(this.chestsOpened||0)-this.runStartChests),completed:!!this.bossDefeated};},
     getRunSummary(){const levels=[...this.runHistory,this.getCurrentStageRecord()];return {levels,seconds:levels.reduce((sum,r)=>sum+r.seconds,0),complete:this.runHistoryComplete};},
+    isValidCampaignRoute(route,tiers,data){return route.every((id,i)=>tiers[i].includes(id));},
     restoreRunHistory(data){
       this.campaignVersion=data.campaignVersion===2&&CONFIG.CAMPAIGN_TIERS?2:1;
       const tiers=this.campaignVersion===2?CONFIG.CAMPAIGN_TIERS:[['village'],['mine','frost'],['hell','marsh']];
       const route=Array.isArray(data.campaignRoute)?data.campaignRoute:[];
-      const valid=data.campaignMode===true&&route.length>=1&&route.length<=tiers.length&&route.every((id,i)=>tiers[i].includes(id))&&route.at(-1)===data.levelId;
+      const valid=data.campaignMode===true&&route.length>=1&&route.length<=tiers.length&&this.isValidCampaignRoute(route,tiers,data)&&route.at(-1)===data.levelId;
       this.campaignMode=valid;this.campaignRoute=valid?[...route]:[];this.campaignFinished=valid&&route.length===tiers.length&&data.campaignFinished===true;
       if(valid){
         const history=Array.isArray(data.runHistory)?data.runHistory:[];
