@@ -23,7 +23,7 @@
  const load=Game.loadLevel;Game.loadLevel=function(...a){this.branchEffects=[];return load.apply(this,a);};
  const continuation=Game.loadAndContinue;Game.loadAndContinue=function(...a){this.branchEffects=[];return continuation.apply(this,a);};
  Game.renderWorld=function(){
-  oldRender.call(this);const c=this.ctx;c.save();c.translate(-this.camera.x,-this.camera.y);c.lineCap='round';
+  oldRender.call(this);const c=this.ctx;c.save();c.translate(-this.camera.x-this.camera.shakeX,-this.camera.y-this.camera.shakeY);c.lineCap='round';
   for(const f of this.branchEffects){c.strokeStyle=f.color;c.globalAlpha=Math.min(.7,f.life*2);c.lineWidth=f.kind==='return'?3:2;c.beginPath();
    if(f.kind==='return'){c.moveTo(f.x,f.y);c.lineTo(f.tx,f.ty);}
    else if(f.kind==='fissure'){c.moveTo(f.x-40,f.y+10);c.lineTo(f.x-14,f.y-6);c.lineTo(f.x+6,f.y+4);c.lineTo(f.x+40,f.y-12);c.moveTo(f.x-14,f.y-6);c.lineTo(f.x-4,f.y-24);}

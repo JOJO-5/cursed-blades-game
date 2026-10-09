@@ -35,6 +35,15 @@ async page=>{
   check('Actual chest evolution retains blade style',await page.evaluate(()=>Game.player.weapons[0].id==='sword_wind'&&Game.player.weapons[0].branch==='sword_far'));
   await page.evaluate(()=>{Game.state='paused';Game.saveProgress();});await page.reload();await page.waitForFunction(()=>Game.state==='menu');await click(await page.evaluate(()=>Game.getMenuLayout().continue));
   check('Evolved branch and budget survive real reload',await page.evaluate(()=>Game.player.weapons[0].branch==='sword_far'&&Game.buildControl.rerolls===1&&Game.buildControl.banishes===0));
+  const touchContext=await page.context().browser().newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  try{
+   const m=await touchContext.newPage();m.on('pageerror',e=>errors.push(String(e)));await m.goto(url);await m.waitForFunction(()=>typeof Game!=='undefined'&&Game.state==='menu',null,{timeout:65000});
+   await m.evaluate(()=>{Game.startNewGame();Game.state='playing';Game.player.level=3;Game.onLevelUp();});
+   const tap=async r=>{const p=await m.evaluate(r=>{const b=Game.canvas.getBoundingClientRect(),x=r.x+r.w/2,y=r.y+r.h/2;return Game._rotate90?{x:b.x+(1-y/540)*b.width,y:b.y+x/960*b.height}:{x:b.x+x/960*b.width,y:b.y+y/540*b.height};},r);await m.touchscreen.tap(p.x,p.y);};
+   await tap(await m.evaluate(()=>Game.getChoiceToolsLayout()[0]));await m.waitForFunction(()=>Game.buildControl.rerolls===1);check('Emulated native touch rerolls without joystick input',await m.evaluate(()=>!Input.joystick.active));
+   await tap(await m.evaluate(()=>Game.getChoiceToolsLayout()[1]));await m.waitForFunction(()=>Game._banishMode);await tap(await m.evaluate(()=>Game.getChoiceLayout(Game.upgradeChoices.length).cards[0]));await m.waitForFunction(()=>Game.buildControl.banishes===0);check('Emulated native touch banishes a card',true);
+   await tap(await m.evaluate(()=>Game.getChoiceToolsLayout()[2]));await m.waitForFunction(()=>Game.state==='playing');check('Emulated native touch skips a reward',true);
+  }finally{await touchContext.close();}
   check('No browser runtime errors',errors.length===0);return{passed:true,checks,errors,screenshots};
  }catch(e){await shot('failure');return{passed:false,failure:String(e.stack||e),checks,errors,screenshots};}
  finally{await page.setViewportSize({width:1280,height:720});await page.evaluate(()=>{Game.resizeCanvas();Game.state='menu';});}
