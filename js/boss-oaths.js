@@ -1,0 +1,72 @@
+// One boss oath at a time. Ability damage never generates primary-hit chains.
+const BossOaths={
+ village:{name:'骑士冲锋誓印',desc:'发动刃式时，朝移动方向释放冲锋斩与击退。',cost:'受到伤害 +15%',penalty:'hurt',mult:1.15,color:'#e5bb83'},
+ mine:{name:'蛛后结网誓印',desc:'发动刃式时，留下三秒蛛网，伤害并减速敌人。',cost:'移动速度 -8%',penalty:'move',mult:.92,color:'#c4b6d1'},
+ hell:{name:'炎龙吐息誓印',desc:'发动刃式时，朝移动方向喷出一秒持续火焰。',cost:'治疗效果 -20%',penalty:'heal',mult:.8,color:'#eea16f'},
+ frost:{name:'守夜碎冰誓印',desc:'发动刃式时，射出四枚冰片，命中减速。',cost:'武器冷却 +10% · 环刃转速降低',penalty:'cooldown',mult:1.1,color:'#a5d9e9'},
+ marsh:{name:'净潮涌浪誓印',desc:'发动刃式时，扩散潮环；命中最多恢复六点生命。',cost:'武器伤害 -10%',penalty:'damage',mult:.9,color:'#9acdbd'},
+ forest:{name:'古树缚根誓印',desc:'发动刃式时，生成三处根阵；短暂停住普通敌人。',cost:'闪避冷却 +20%',penalty:'dash',mult:1.2,color:'#b6c795'},
+ clock:{name:'断钟交轨誓印',desc:'发动刃式时，沿前方与侧方释放交错钟轨。',cost:'暴击概率降低 5 个百分点',penalty:'crit',mult:1,color:'#d9c28a'},
+ court:{name:'空冠镜刃誓印',desc:'发动刃式时，召出两秒镜刃环绕，独立碰撞。',cost:'角色技能冷却 +20%',penalty:'skill',mult:1.2,color:'#c7b7df'}
+};
+(() => {
+ const old={};for(const key of ['startNewGame','loadLevel','loadAndContinue','saveProgress','onBossDefeated','startVictorySequence','updatePlaying','activateBladeStance','activateHeroSkill','update','render','renderWorld','getBuildEntries'])old[key]=Game[key];
+ const num=(n,max,fallback=0)=>Number.isFinite(n)?clamp(n,0,max):fallback;
+ const kinds=['lane','web','cone','shot','ring','root','mirror'];
+ Object.assign(Game,{
+  bossOath:null,
+  resetBossOath(data){const pending=data?.pending;this.bossOath={owned:BossOaths[data?.owned]?data.owned:'',cooldown:num(data?.cooldown,8),uses:Math.floor(num(data?.uses,100000)),decisions:(Array.isArray(data?.decisions)?data.decisions:[]).filter(d=>BossOaths[d?.theme]&&['accept','replace','decline'].includes(d.choice)&&typeof d.source==='string').slice(-16),pending:pending&&BossOaths[pending.theme]&&typeof pending.source==='string'?{theme:pending.theme,source:pending.source,deferred:!!pending.deferred}:null,fields:(Array.isArray(data?.fields)?data.fields:[]).filter(f=>kinds.includes(f?.kind)&&Number.isFinite(f.x+f.y+f.damage+f.life+f.age)&&f.life>0).slice(0,12).map(f=>({...f,x:num(f.x,10000),y:num(f.y,10000),damage:num(f.damage,10000),life:num(f.life,4),age:num(f.age,4),r:num(f.r,400),angle:Number.isFinite(f.angle)?f.angle:0,width:num(f.width,100,28),arc:num(f.arc,TAU,1.5),speed:num(f.speed,600),tick:num(f.tick,1),hits:Array.isArray(f.hits)?f.hits.filter(Number.isFinite).slice(0,100):[],healed:num(f.healed,6)}))};},
+  getBossOathMultiplier(key){const d=BossOaths[this.bossOath?.owned];return d?.penalty===key?d.mult:1;},
+  bossOathSource(){return `${this.levelData.theme}:${this.campaignRoute.length}:${this.runTrial?.stageIndex||0}:${this.runSeed}`;},
+  startNewGame(...a){this.resetBossOath();return old.startNewGame.apply(this,a);},
+  loadLevel(...a){if(this.bossOath)this.bossOath.fields=[];return old.loadLevel.apply(this,a);},
+  onBossDefeated(){const was=this.bossDefeated,r=old.onBossDefeated.call(this);if(!was&&this.bossDefeated&&BossOaths[this.levelData.theme]&&this.bossOath){const source=this.bossOathSource();if(!this.bossOath.decisions.some(d=>d.source===source))this.bossOath.pending={theme:this.levelData.theme,source,deferred:false};this.saveProgress();}return r;},
+  startVictorySequence(){const pending=this.bossOath?.pending;if(pending&&pending.theme===this.levelData.theme&&pending.source===this.bossOathSource()){pending.deferred=true;this.saveProgress();return;}return old.startVictorySequence.call(this);},
+  chooseBossOath(accept){const s=this.bossOath,p=s?.pending;if(this.state!=='bossOathChoice'||!this.bossDefeated||!p||!p.deferred||p.theme!==this.levelData.theme||p.source!==this.bossOathSource())return false;const choice=accept?(s.owned?'replace':'accept'):'decline';s.decisions.push({theme:p.theme,source:p.source,choice});s.decisions=s.decisions.slice(-16);if(accept){s.owned=p.theme;s.cooldown=0;s.fields=[];}s.pending=null;this.state='playing';this.saveProgress();old.startVictorySequence.call(this);return true;},
+  activateBladeStance(...a){const ok=old.activateBladeStance.apply(this,a);if(ok){this.triggerBossOath();this.saveProgress();}return ok;},
+  triggerBossOath(){const s=this.bossOath,p=this.player,id=s?.owned;if(this.state!=='playing'||!p?.alive||!BossOaths[id]||s.cooldown>0)return false;s.cooldown=8;s.uses++;const base={x:p.x,y:p.y,angle:p.moveAngle||0,life:.4,age:0,damage:22*p.stats.damageMult,r:220,width:38,arc:1.5,speed:0,tick:0,hits:[],healed:0,color:BossOaths[id].color};const add=f=>s.fields.push({...base,...f,hits:[]});
+   if(id==='village')add({kind:'lane',knockback:120});
+   if(id==='mine')add({kind:'web',r:110,life:3,damage:5*p.stats.damageMult});
+   if(id==='hell')add({kind:'cone',r:220,life:1,damage:10*p.stats.damageMult});
+   if(id==='frost')for(const offset of [-.36,-.12,.12,.36])add({kind:'shot',angle:base.angle+offset,r:14,speed:320,life:1.2,damage:18*p.stats.damageMult});
+   if(id==='marsh')add({kind:'ring',r:40,width:28,life:1.2,damage:22*p.stats.damageMult});
+   if(id==='forest')for(const offset of [-.5,0,.5])add({kind:'root',x:p.x+Math.cos(base.angle+offset)*90,y:p.y+Math.sin(base.angle+offset)*90,r:50,life:1.5,damage:18*p.stats.damageMult});
+   if(id==='clock')for(const offset of [0,Math.PI/2])add({kind:'lane',angle:base.angle+offset,r:260,width:32,life:.5,damage:27*p.stats.damageMult});
+   if(id==='court')add({kind:'mirror',r:70,life:2,damage:14*p.stats.damageMult});s.fields=s.fields.slice(-12);return true;
+  },
+  damageBossOath(e,f){const previous=e._oathSecondary;e._oathSecondary=true;try{e.takeDamage(f.damage,false,f.knockback||0,f.x,f.y);}finally{e._oathSecondary=previous;}if(['web','shot'].includes(f.kind))e.bossOathSlow=Math.max(e.bossOathSlow||0,1);if(f.kind==='root'&&!e.isBoss)e.branchStagger=Math.max(e.branchStagger||0,.3);if(f.kind==='ring'&&f.healed<6){const heal=Math.min(2,6-f.healed);this.player.heal(heal);f.healed+=heal;}},
+  updateBossOath(dt){if(this.state!=='playing'||!this.player?.alive||!this.bossOath)return;const s=this.bossOath;s.cooldown=Math.max(0,s.cooldown-dt);for(const e of this.enemies)e.bossOathSlow=Math.max(0,(e.bossOathSlow||0)-dt);
+   for(const f of s.fields){f.life-=dt;f.age+=dt;f.tick=Math.max(0,f.tick-dt);if(f.life<0)continue;let shape=f;
+    if(f.kind==='shot'){shape={...f,kind:'lane',r:f.speed*dt,width:28};f.x+=Math.cos(f.angle)*f.speed*dt;f.y+=Math.sin(f.angle)*f.speed*dt;if(this.isCircleBlocked(f.x,f.y,8)){f.life=0;continue;}}
+    if(f.kind==='ring'){f.r=40+f.age*120;shape={...f,kind:'ring',angle:Math.PI,width:28};}
+    if(f.kind==='mirror'){f.angle+=dt*2.5;f.x=this.player.x;f.y=this.player.y;shape={...f,kind:'circle',x:f.x+Math.cos(f.angle)*f.r,y:f.y+Math.sin(f.angle)*f.r,r:20};}
+    if(['web','root'].includes(f.kind))shape={...f,kind:'circle'};
+    if(f.kind==='root'&&f.age<.5)continue;if(f.tick>0&&['web','cone','mirror'].includes(f.kind))continue;
+    let hit=false;for(const e of this.enemies)if(e.alive&&(!f.hits.includes(e.id)||['web','cone','mirror'].includes(f.kind))&&BossCombat.hit(shape,e)){this.damageBossOath(e,f);if(!f.hits.includes(e.id))f.hits.push(e.id);hit=true;if(f.kind==='shot'){f.life=0;break;}}
+    if(hit&&['web','cone','mirror'].includes(f.kind))f.tick=f.kind==='mirror'?.4:.3;
+   }s.fields=s.fields.filter(f=>f.life>0);const pending=s.pending;if(pending?.deferred&&this.bossDefeated&&pending.theme===this.levelData.theme&&pending.source===this.bossOathSource()){this.state='bossOathChoice';this.saveProgress();}
+  },
+  updatePlaying(dt){return this.withTrialRandom(()=>{old.updatePlaying.call(this,dt);this.updateBossOath(dt);});},
+  activateHeroSkill(...a){const ok=old.activateHeroSkill.apply(this,a);if(ok){this.player.activeSkill.cooldown*=this.getBossOathMultiplier('skill');this.saveProgress();}return ok;},
+  saveProgress(){old.saveProgress.call(this);if(!this.player?.alive||!this.bossOath)return;try{const d=JSON.parse(localStorage.getItem(this.saveKey)||'null');if(d){const ids=new Set(this.bossOath.fields.flatMap(f=>f.hits));d.bossOath={...this.bossOath,targets:this.enemies.filter(e=>e.alive&&(ids.has(e.id)||e.bossOathSlow>0||e.branchStagger>0)).slice(0,40).map(e=>({id:e.id,type:e.type,x:e.x,y:e.y,hp:e.hp,slow:e.bossOathSlow||0,stagger:e.branchStagger||0,isBoss:!!e.isBoss}))};localStorage.setItem(this.saveKey,JSON.stringify(d));}}catch{}},
+  loadAndContinue(){let d;try{d=JSON.parse(localStorage.getItem(this.saveKey)||'null');}catch{}this.resetBossOath();old.loadAndContinue.call(this);this.resetBossOath(d?.bossOath);const ids=new Map(),matched=new Set();for(const t of (Array.isArray(d?.bossOath?.targets)?d.bossOath.targets:[]).slice(0,40)){if(!CONFIG.ENEMIES[t?.type]||!Number.isFinite(t.x+t.y+t.hp+t.id)||t.hp<=0)continue;let e=this.enemies.find(e=>e.alive&&!matched.has(e)&&e.type===t.type&&dist(e.x,e.y,t.x,t.y)<2);if(!e&&!t.isBoss&&!this.isCircleBlocked(t.x,t.y,CONFIG.ENEMIES[t.type].radius)){e=new Enemy(t.type,t.x,t.y);this.applyRunProfile(e);e.hp=Math.min(e.maxHp,t.hp);this.enemies.push(e);}if(e){matched.add(e);ids.set(t.id,e.id);e.bossOathSlow=num(t.slow,1);e.branchStagger=num(t.stagger,.3);}}for(const f of this.bossOath.fields)f.hits=f.hits.map(id=>ids.get(id)).filter(Number.isFinite);const p=this.bossOath.pending;if(p?.deferred&&this.bossDefeated&&p.theme===this.levelData.theme&&p.source===this.bossOathSource())this.state='bossOathChoice';},
+  getBossOathChoiceLayout(){const v=this.getVisibleCanvasRect(),w=Math.min(580,v.w-28),x=v.x+(v.w-w)/2,h=Math.min(180,v.h-250);return {v,accept:{x,y:v.y+120,w,h},decline:{x,y:v.y+134+h,w,h:44}};},
+  update(dt){if(this.state!=='bossOathChoice')return old.update.call(this,dt);const l=this.getBossOathChoiceLayout();if(Input.wasPressed('Digit1')||Input.consumeClick(l.accept.x,l.accept.y,l.accept.w,l.accept.h))this.chooseBossOath(true);else if(Input.wasPressed('Digit2')||Input.wasPressed('Escape')||Input.consumeClick(l.decline.x,l.decline.y,l.decline.w,l.decline.h))this.chooseBossOath(false);},
+  getBuildEntries(){const entries=old.getBuildEntries.call(this),d=BossOaths[this.bossOath?.owned];if(d&&this._buildTab==='relics'&&!this._weaponReplacement)entries.unshift({title:d.name,subtitle:'首领誓印 · '+d.cost,description:d.desc+' 每 8 秒最多一次。代价：'+d.cost+'；接受下一枚会替换。'});return entries;},
+  renderWorld(){old.renderWorld.call(this);const c=this.ctx;c.save();c.translate(-this.camera.x-this.camera.shakeX,-this.camera.y-this.camera.shakeY);for(const f of this.bossOath?.fields||[]){c.save();c.strokeStyle=f.color;c.fillStyle=f.color;c.lineWidth=2;c.globalAlpha=.65;const circle=(x,y,r)=>{c.beginPath();c.arc(x,y,r,0,TAU);c.stroke();};
+    if(f.kind==='shot'){c.translate(f.x,f.y);c.rotate(f.angle);c.beginPath();c.moveTo(15,0);c.lineTo(-9,-5);c.lineTo(-4,0);c.lineTo(-9,5);c.closePath();c.fill();}
+    else if(f.kind==='mirror'){const x=f.x+Math.cos(f.angle)*f.r,y=f.y+Math.sin(f.angle)*f.r;c.translate(x,y);c.rotate(f.angle+Math.PI/2);c.beginPath();c.moveTo(0,-20);c.lineTo(5,12);c.lineTo(-5,12);c.closePath();c.fill();}
+    else if(f.kind==='lane'){c.translate(f.x,f.y);c.rotate(f.angle);c.globalAlpha=.14;c.beginPath();c.moveTo(0,-f.width/2);c.lineTo(f.r,-f.width/2);c.lineTo(f.r+20,0);c.lineTo(f.r,f.width/2);c.lineTo(0,f.width/2);c.closePath();c.fill();c.globalAlpha=.8;c.beginPath();c.moveTo(0,0);c.lineTo(f.r,0);c.stroke();}
+    else if(f.kind==='cone'){c.beginPath();c.moveTo(f.x,f.y);c.arc(f.x,f.y,f.r,f.angle-f.arc/2,f.angle+f.arc/2);c.closePath();c.globalAlpha=.12;c.fill();c.globalAlpha=.7;c.stroke();for(let i=0;i<5;i++){const a=f.angle-f.arc/2+f.arc*i/4;c.beginPath();c.moveTo(f.x+Math.cos(a)*30,f.y+Math.sin(a)*30);c.lineTo(f.x+Math.cos(a)*f.r,f.y+Math.sin(a)*f.r);c.stroke();}}
+    else if(f.kind==='ring'){c.lineWidth=f.width;c.globalAlpha=.2;c.beginPath();c.arc(f.x,f.y,f.r,Math.PI+.45,Math.PI+TAU-.45);c.stroke();c.lineWidth=2;c.globalAlpha=.8;c.stroke();}
+    else if(f.kind==='web'){circle(f.x,f.y,f.r);circle(f.x,f.y,f.r*.55);for(let i=0;i<6;i++){const a=TAU*i/6;c.beginPath();c.moveTo(f.x,f.y);c.lineTo(f.x+Math.cos(a)*f.r,f.y+Math.sin(a)*f.r);c.stroke();}}
+    else if(f.kind==='root'){c.globalAlpha=f.age<.5?.3:.75;circle(f.x,f.y,f.r);for(let i=0;i<5;i++){const a=TAU*i/5;c.beginPath();c.moveTo(f.x+Math.cos(a)*f.r,f.y+Math.sin(a)*f.r);c.quadraticCurveTo(f.x+Math.cos(a+.5)*20,f.y+Math.sin(a+.5)*20,f.x,f.y);c.stroke();}}
+    c.restore();}c.restore();},
+  render(){old.render.call(this);if(this.state!=='bossOathChoice')return;const c=this.ctx,l=this.getBossOathChoiceLayout(),d=BossOaths[this.bossOath.pending.theme];c.save();c.fillStyle='#121b19';c.fillRect(0,0,960,540);c.textAlign='center';c.fillStyle='#e2c68e';c.font='bold 24px Courier New';c.fillText('首领誓印',l.v.x+l.v.w/2,l.v.y+56);c.font='10px Courier New';c.fillStyle='#bdc2ad';c.fillText('环绕命中蓄势 · 满30发动 · 冷却8秒',l.v.x+l.v.w/2,l.v.y+84);const r=l.accept;c.fillStyle='#233129';c.fillRect(r.x,r.y,r.w,r.h);c.strokeStyle=d.color;c.strokeRect(r.x,r.y,r.w,r.h);c.fillStyle=d.color;c.font='bold 14px Courier New';c.fillText('1 · 接受 '+d.name,r.x+r.w/2,r.y+24);c.font='11px Courier New';c.fillStyle='#d2d0b9';this.drawTextBlock(c,d.desc,r.x+r.w/2,r.y+46,r.w-24,17,3);c.fillStyle='#e4ad91';this.drawTextBlock(c,'代价：'+d.cost,r.x+r.w/2,r.y+r.h-46,r.w-24,15,2);c.fillStyle='#bbc7b2';c.font='9px Courier New';c.fillText(this.fitChoiceBadgeText(c,this.bossOath.owned?'替换 '+BossOaths[this.bossOath.owned].name+'，移除旧代价':'此誓印与代价仅在本局有效',r.w-20),r.x+r.w/2,r.y+r.h-10);this.drawButton(l.decline.x,l.decline.y,l.decline.w,l.decline.h,'2 · 放弃新誓印 · 保留当前选择','#b6c4af');c.restore();}
+ });
+ for(const [key,penalty] of [['getDamage','damage'],['getCooldown','cooldown']]){const method=Weapon.prototype[key];Weapon.prototype[key]=function(...a){return method.apply(this,a)*Game.getBossOathMultiplier(penalty);};}
+ const rotate=Weapon.prototype.getRotateSpeed;Weapon.prototype.getRotateSpeed=function(){return rotate.call(this)/Game.getBossOathMultiplier('cooldown');};
+ const crit=Weapon.prototype.getCritChance;Weapon.prototype.getCritChance=function(){return Math.max(0,crit.call(this)-(Game.bossOath?.owned==='clock'?.05:0));};
+ const heal=Player.prototype.heal,take=Player.prototype.takeDamage;Player.prototype.heal=function(amount){return heal.call(this,amount*Game.getBossOathMultiplier('heal'));};Player.prototype.takeDamage=function(amount){return take.call(this,Math.round(amount*Game.getBossOathMultiplier('hurt')*1000)/1000);};
+ const speed=Enemy.prototype.getStatusSpeedMult;Enemy.prototype.getStatusSpeedMult=function(){return speed.call(this)*(this.bossOathSlow>0?.6:1);};
+})();

@@ -82,6 +82,7 @@ async page => {
     await p.waitForFunction(()=>!['menu','loading'].includes(Game.state));
     for(let i=0;i<40;i++) {
       const state=await p.evaluate(()=>Game.state);
+      if(state==='bossOathChoice'){await clickRect(p,await p.evaluate(()=>Game.getBossOathChoiceLayout().decline),touch);await p.waitForTimeout(1100);continue;}
       if(state==='routeChoice'){await clickRect(p,await p.evaluate(()=>Game.getCampaignRouteLayout().cards[0]),touch);await p.waitForTimeout(100);continue;}
       if(state==='levelup'||state==='chestReward') {
         const replacement=await p.evaluate(()=>!!Game._weaponReplacement);
@@ -239,7 +240,7 @@ async page => {
       for(let i=0;i<300;i++) {
         const {state,currentTheme}=await page.evaluate(()=>({state:Game.state,currentTheme:Game.levelData.theme}));
         if(currentTheme!==theme||state==='routeChoice'||state==='victory')break;
-        if(['levelup','chestReward','story'].includes(state))await finishStories(page);
+        if(['levelup','chestReward','story','bossOathChoice'].includes(state))await finishStories(page);
         await page.waitForTimeout(100);
       }
       await finishStories(page);

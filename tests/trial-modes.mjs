@@ -26,8 +26,9 @@ run('Game.state="menu"');assert.equal(run('Game.beginDailyChallenge(code)'),true
 const seed=run('Game.runSeed'),hero=run('Game.player.characterId'),values=run('[Game.trialRandom(),Game.trialRandom(),Game.trialRandom()]');
 run('Game.saveProgress();const savedRng=Game.trialRandomState;const expectedNext=Game.trialRandom();Game.loadAndContinue()');assert.equal(run('Game.trialRandomState'),run('savedRng'));assert.equal(run('Game.trialRandom()'),run('expectedNext'));
 run('Game.state="menu";Game.beginDailyChallenge(code)');assert.equal(run('Game.runSeed'),seed);assert.equal(run('Game.player.characterId'),hero);assert.deepEqual(run('[Game.trialRandom(),Game.trialRandom(),Game.trialRandom()]'),values);
-assert.equal(run('Game.beginDailyChallenge(code.replace("0.22.0-preview.1","0.21.0-preview.1"))'),false,'Challenge code binds game rules version');
+assert.equal(run('Game.beginDailyChallenge(code.replace(TrialRulesVersion,"0.21.0-preview.1"))'),false,'Challenge code binds game rules version');
 assert.equal(run('Game.beginDailyChallenge("CB|0.22.0-preview.1|20260230|123|warden")'),false,'Impossible date is rejected');
+assert.equal(run('Game.makeDailyChallengeCode("20260230")'),null,'Invalid dates cannot generate a current-version code');
 run('Game.state="menu";Game.beginTrial("guard");Game.state="playing";Game.enemies=[];Game.pickups=[];Game.bossSpawned=true;Game.bossDefeated=true;Game.runTrial.blocks=5;Game.bossDefeatedGraceTimer=.001;Game.spawnChest(Game.player.x,Game.player.y,1);Game.updatePlaying(.02)');
 assert.equal(run('Game.state'),'chestReward','Nearby boss reward remains selectable before ending');assert.equal(run('Game.runTrial.recorded'),false,'Finish cannot be overwritten by reward pickup');
 run('Game.selectChestReward(0);Game.updatePlaying(.02)');assert.equal(run('Game.state'),'victory','Finish proceeds after real chest reward selection');

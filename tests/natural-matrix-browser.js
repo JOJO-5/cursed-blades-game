@@ -73,6 +73,7 @@ async page => {
         if(villageOnly&&s.summary?.levels.some(r=>r.theme==='village'&&r.completed)&&s.theme==='mine'){outcome={...s,villageCompleted:true};break;}
         if(s.state==='story'){await release();if(s.storyReady)await p.keyboard.press('Space');await p.waitForTimeout(80);continue;}
         if(s.state==='eventChoice'){await release();await p.keyboard.press('Digit2');await p.waitForTimeout(80);continue;}
+        if(s.state==='bossOathChoice'){await release();await p.keyboard.press('Digit2');await p.waitForTimeout(80);continue;}
         if(s.state==='routeChoice'){await release();const index=await p.evaluate(route=>Game.getCampaignRouteOptions().indexOf(route[Game.campaignRoute.length-1]),route);await p.keyboard.press('Digit'+(Math.max(0,index)+1));await p.waitForTimeout(80);continue;}
         if(['levelup','chestReward'].includes(s.state)) {
           await release();choices.push({theme:s.theme,time:s.time,id:s.choiceId,offered:s.offered});

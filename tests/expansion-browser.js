@@ -44,6 +44,7 @@ async page => {
       // A retrieved chest may introduce a mimic before the actual ending story.
       for(let i=0;i<375;i++){
         const s=await p.evaluate(()=>Game.state);if(s==='victory')break;
+        if(s==='bossOathChoice')await p.keyboard.press('Digit2');
         if(s==='story')await story(p);
         if(['levelup','chestReward'].includes(s)){
           const key=await p.evaluate(()=>Game._weaponReplacement?'Escape':'Digit'+(Math.max(0,(Game.state==='levelup'?Game.upgradeChoices:Game.chestRewardChoices).findIndex(c=>!c.weaponId&&c.type!=='evolution'))+1));

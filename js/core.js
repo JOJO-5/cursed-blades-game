@@ -129,6 +129,11 @@ const Input = {
           this._justPressed.KeyQ = true;
           continue;
         }
+        const blade = Game.getBladeStanceButtons?.().find(r => tx >= r.x && tx <= r.x + r.w && ty >= r.y && ty <= r.y + r.h);
+        if (blade) {
+          this._justPressed[blade.key] = true;
+          continue;
+        }
         if (Game.getCurrentObjective()?.action) {
           const action = Game.getEncounterActionButton();
           if (tx >= action.x && tx <= action.x + action.w && ty >= action.y && ty <= action.y + action.h) {

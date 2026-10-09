@@ -6,7 +6,7 @@ const TrialModes={
  bossrush:{name:'八誓连战',limit:0,stages:['village','mine','frost','forest','hell','marsh','clock','court'],desc:'连续迎战八张地图的首领，关间恢复生命；不生成普通敌潮。'},
  daily:{name:'每日誓路',limit:0,desc:'固定版本、角色、种子与契约的四关旅程；只记录本地成绩。'}
 };
-const TrialRulesVersion=(document.currentScript?.src?.match(/\?v=(\d+\.\d+\.\d+-preview\.\d+)/)?.[1])||'0.22.0-preview.1';
+const TrialRulesVersion=(document.currentScript?.src?.match(/\?v=(\d+\.\d+\.\d+-preview\.\d+)/)?.[1])||'0.23.0-preview.1';
 (() => {
  const old={};for(const k of ['loadMeta','startNewGame','loadLevel','loadAndContinue','saveProgress','updatePlaying','update','getAvailableWeaponChoices','startVictorySequence','completeExploration','spawnEnemy','spawnElite','resetSave','getChallengeLayout','updateMenu','renderMenu','canShowRotateButton','renderHUD','renderEnding','updateLevelEncounters'])old[k]=Game[k];
  const finite=(v,max,fallback=0)=>Number.isFinite(v)?clamp(v,0,max):fallback;

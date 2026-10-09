@@ -197,14 +197,14 @@ class Player {
     // dash (keyboard or touch button)
     if ((Input.wasPressed('Space') || Input.dashButton.pressed) && this.dashCooldown <= 0) {
       this.dashTimer = CONFIG.PLAYER.dashDuration;
-      this.dashCooldown = CONFIG.PLAYER.dashCooldown * this.stats.dashCooldownMult;
+      this.dashCooldown = CONFIG.PLAYER.dashCooldown * this.stats.dashCooldownMult * (Game.getBossOathMultiplier?.('dash') || 1);
       this.dashDir = this.isMoving ? { x: mx, y: my } :
         { x: Math.cos(this.moveAngle), y: Math.sin(this.moveAngle) };
       this.invuln = Math.max(this.invuln, CONFIG.PLAYER.dashDuration + 0.05);
       Audio2.play('sine', 400, 0.1, 0.06);
     }
 
-    let speed = CONFIG.PLAYER.speed * this.stats.moveSpeedMult;
+    let speed = CONFIG.PLAYER.speed * this.stats.moveSpeedMult * (Game.getBossOathMultiplier?.('move') || 1);
     speed *= Game.environmentSpeedMult || 1;
     if (this.dashTimer > 0) {
       speed = CONFIG.PLAYER.dashSpeed;
