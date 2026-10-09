@@ -1,6 +1,6 @@
 # 版本推进与验收
 
-当前产品版本为 package.json 的 v0.24.0-preview.1。CHANGELOG 中早期 v0.9.x 批次记录保留；下面记录后续产品交付。
+当前开发版本为 package.json 的 v0.25.0-preview.1，发布核验见 V250_ACCEPTANCE.md。CHANGELOG 中早期 v0.9.x 批次记录保留；下面记录后续产品交付。
 
 | 版本 | 交付目标 | 验收门槛 | 状态 |
 |---|---|---|---|
