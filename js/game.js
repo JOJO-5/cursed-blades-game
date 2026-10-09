@@ -429,7 +429,7 @@ const Game = {
     this.updateLevelEncounters(dt);
 
     // pause toggle
-    if (Input.wasPressed('Escape') || Input.wasPressed('KeyP')) {
+    if (this.state === 'playing' && (Input.wasPressed('Escape') || Input.wasPressed('KeyP'))) {
       this.state = 'paused';
       Audio2.click();
     }
@@ -2938,6 +2938,10 @@ const Game = {
       kills: this.player.kills,
       weapons: this.player.weapons.map(w => ({ id: w.id, level: w.level, branch:w.branch })),
       buildControl:this.buildControl,
+      oathRun:this.serializeOathRun?.(),
+      exploration:this.serializeExploration?.(),
+      journeyStores:this.journeyStores,
+      journeySession:this.serializeJourneySession?.(),
       branchGuard:this.player.branchGuard||0,branchGuardTime:this.player.branchGuardTime||0,
       rewardSession:['levelup','chestReward'].includes(this.state)&&this.serializeChoice?{source:this.state,choices:(this.state==='levelup'?this.upgradeChoices:this.chestRewardChoices).map(c=>this.serializeChoice(c)),pending:this.pendingLevelUps||0}:null,
       weaponCapacity: this.player.weaponCapacity,

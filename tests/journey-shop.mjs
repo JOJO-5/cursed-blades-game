@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {runtime} from './helpers/runtime.mjs';
+const {run,storage}=runtime(['scene','boss-combat','random-events','hero-skills','challenges','new-biomes','build-choices','weapon-branches','oath-relics','exploration','journey-shop']);
+assert.equal(run('typeof Game.openJourneyShop'),'function','Journey coin shop exists');
+run(`Game.state='routeChoice';Game.campaignMode=true;Game.bossDefeated=true;Game.runCoins=50;Game.openJourneyShop('camp');`);
+assert.equal(run('Game.state'),'journeyShop');assert.equal(run('Game.journeyStore.offers.length'),3);
+const offers=run('JSON.stringify(Game.journeyStore.offers)');run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.state'),'journeyShop');assert.equal(run('JSON.stringify(Game.journeyStore.offers)'),offers,'Refresh preserves stock and prices');
+run(`const forge=Game.journeyStore.offers.findIndex(o=>o.kind==='forge');Game.buyJourneyOffer(forge);`);assert.equal(run('Game.player.weapons[0].level'),2);const coins=run('Game.runCoins');assert.equal(run('Game.buyJourneyOffer(forge)'),false);assert.equal(run('Game.runCoins'),coins,'Double purchase cannot double charge');
+run('Game.saveProgress();Game.loadAndContinue()');assert.ok(run('Game.journeyStore.offers.find(o=>o.kind==="forge").sold'));assert.equal(run('Game.player.weapons[0].level'),2);
+assert.equal(run('Game.rerollJourneyShop()'),true);assert.equal(run('Game.rerollJourneyShop()'),false,'Only one paid reroll per stop');run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.journeyStore.rerolls'),0);
+run('Game.leaveJourneyShop()');assert.equal(run('Game.state'),'routeChoice');assert.equal(run('Game.chooseCampaignRoute("mine")'),true,'Camp can be skipped or left before route progression');
+run(`for(let seed=1;seed<50;seed++){Game.runSeed=seed;Game.loadLevel('mine');if(Game.randomEvents[0].kind==='merchant')break;}Game.runCoins=50;Game.oathRun.burden=1;const merchant=Game.randomEvents[0];merchant.status='ready';Game.player.x=merchant.x;Game.player.y=merchant.y;Game.state='playing';Game.openRandomEvent(merchant);`);
+assert.equal(run('Game.state'),'journeyShop');run(`const cleanse=Game.journeyStore.offers.findIndex(o=>o.kind==='cleanse');Game.buyJourneyOffer(cleanse);`);assert.equal(run('Game.oathRun.burden'),0,'Shop removes a real run penalty');
+run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.state'),'journeyShop','Actual seeded merchant resumes');run('Game.leaveJourneyShop()');assert.equal(run('Game.randomEvents.find(s=>s.id===merchant.id).status'),'complete');assert.equal(run('Game.state'),'playing');
+run(`Game.runProfile='iron';Game.campaignRoute=['village','mine','hell'];Game.loadLevel('hell');Game.bossDefeated=true;Game.state='routeChoice';Game.openJourneyShop('camp');`);assert.equal(run('Game.journeyStore.offers.some(o=>o.kind==="heal")'),false,'Iron oath never sells prohibited healing');
+run(`Game.runCoins=0;const stock=JSON.stringify(Game.journeyStore.offers);Game.buyJourneyOffer(0);Game.rerollJourneyShop();`);assert.equal(run('JSON.stringify(Game.journeyStore.offers)'),run('stock'));assert.equal(run('Game.runCoins'),0);
+run('Game.bossDefeatedGraceTimer=0;Game.saveProgress()');const old=JSON.parse(storage.get(run('Game.saveKey')));delete old.journeyStores;delete old.journeySession;delete old.exploration;delete old.oathRun;storage.set(run('Game.saveKey'),JSON.stringify(old));run('Game.loadAndContinue()');assert.equal(run('Game.oathRun.owned.length'),0,'Old saves default safely');assert.equal(run('Game.state'),'routeChoice');
+console.log('Journey shops: stock, one-time prices, reload, reroll, route continuation, cleansing and iron compatibility passed.');

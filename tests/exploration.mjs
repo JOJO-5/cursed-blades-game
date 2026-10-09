@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {runtime} from './helpers/runtime.mjs';
+const {run,ctx}=runtime(['scene','boss-combat','random-events','hero-skills','challenges','new-biomes','build-choices','weapon-branches','oath-relics','exploration']);
+assert.equal(run('typeof Game.startExplorationSite'),'function','Optional map goals can be started');
+for(const theme of ['village','mine','frost','forest','hell','marsh','clock','court'])for(const seed of [1,77,909]){
+ ctx.theme=theme;ctx.seed=seed;run(`Game.runSeed=seed;Game.loadLevel(theme);`);
+ assert.ok(run('Game.exploration.sites.length>0'),theme+' has an objective');
+ assert.ok(run('Game.exploration.sites.every(s=>Game.explorationReachable.some(p=>p.x===s.x&&p.y===s.y))'),'Objective sites are actually reachable');
+ assert.ok(run('Game.exploration.sites.every(s=>!Game.isCircleBlocked(s.x,s.y,22))'));
+ const positions=run('JSON.stringify(Game.exploration.sites.map(s=>[s.x,s.y]))');run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('JSON.stringify(Game.exploration.sites.map(s=>[s.x,s.y]))'),positions);
+}
+run(`Game.loadLevel('village');Game.state='playing';const anchor=Game.exploration.sites[0];anchor.status='ready';Game.player.x=anchor.x;Game.player.y=anchor.y;Game.startExplorationSite(anchor);Game.updateExploration(3);Game.player.x+=140;Game.updateExploration(1);`);
+assert.ok(run('anchor.progress<3'),'Leaving the point loses channel progress');
+run(`Game.player.x=anchor.x;Game.updateExploration(7);`);assert.equal(run('anchor.status'),'complete');
+assert.equal(run('Game.getAnchorWeakening()'),.15);const count=run('Game.pickups.length');run('Game.updateExploration(7)');assert.equal(run('Game.pickups.length'),count,'Anchor reward only appears once');
+run(`const boss=new Enemy('boss',800,800);const shapes=BossCombat.make(boss,Game.player,'knightLunge');`);assert.ok(run('shapes[0].damage<boss.damage*.85'),'Anchor weakening changes actual boss attacks');
+run(`Game.loadLevel('mine');Game.state='playing';const fire=Game.exploration.sites[0];fire.status='ready';Game.player.x=fire.x;Game.player.y=fire.y;Game.startExplorationSite(fire);Game.player.invuln=0;Game.player.takeDamage(10);`);
+assert.ok(run('fire.guard<20'),'Carried flame ward absorbs a real hit');const guard=run('fire.guard');
+run(`Game.dropOathFire();Game.startExplorationSite(fire);Game.saveProgress();Game.loadAndContinue();`);assert.equal(run('Game.exploration.sites[0].guard'),guard,'Drop, pickup and refresh cannot recharge the ward');
+run(`const fire2=Game.exploration.sites[0];Game.player.x=fire2.destination.x;Game.player.y=fire2.destination.y;Game.updateExploration(.1);`);assert.equal(run('fire2.status'),'complete');assert.ok(run('Game.pickups.some(p=>p.objectiveId===fire2.id&&dist(p.x,p.y,fire2.destination.x,fire2.destination.y)<1)'),'Delivery reward appears at the destination');
+run(`Game.loadLevel('hell');Game.state='playing';const vault=Game.exploration.sites[0];vault.status='ready';Game.player.x=vault.x;Game.player.y=vault.y;Game.startExplorationSite(vault);Game.chooseVaultRisk(true);Game.saveProgress();Game.loadAndContinue();`);
+assert.equal(run('Game.exploration.sites[0].status'),'active');assert.ok(run('Game.enemies.some(e=>e.explorationId)'),'Vault guards survive refresh');
+run(`Game.enemies=Game.enemies.filter(e=>!e.explorationId);Game.updateExploration(.1);`);assert.equal(run('Game.state'),'oathReward');assert.equal(run('Game.pickups.some(p=>p.objectiveId?.startsWith("explore")&&p.type==="chest")'),false,'Locked vault relic is not magnet loot');
+run('Game.saveProgress();Game.loadAndContinue()');assert.equal(run('Game.state'),'oathReward','Pending relic choice restores');
+assert.equal(run('Game.selectOathReward(0)'),true);const coins=run('Game.runCoins');assert.equal(run('Game.selectOathReward(0)'),false);assert.equal(run('Game.runCoins'),coins,'Reward cannot pay twice');
+run(`Game.loadLevel('hell');Game.state='playing';const expired=Game.exploration.sites[0];expired.status='ready';Game.player.x=expired.x;Game.player.y=expired.y;Game.startExplorationSite(expired);Game.chooseVaultRisk(true);Game.levelTime=expired.deadline+1;Game.updateExploration(.1);`);assert.equal(run('expired.status'),'expired');assert.equal(run('Game.state'),'playing','Optional failure does not end the run');
+run(`Game.loadLevel('village');Game.bossSpawned=true;Game.updateExploration(.1);`);assert.ok(run('Game.exploration.sites.every(s=>s.status==="expired")'));
+run(`Game.loadLevel('hell');Game.state='playing';const ordinary=Game.exploration.sites[0];ordinary.status='ready';Game.player.x=ordinary.x;Game.player.y=ordinary.y;Game.startExplorationSite(ordinary);Game.chooseVaultRisk(false);`);assert.equal(run('ordinary.status'),'complete');assert.ok(run('Game.pickups.some(p=>p.objectiveId===ordinary.id&&p.value===0)'),'Declining the wave preserves an ordinary reward');assert.equal(run('Game.enemies.some(e=>e.explorationId)'),false);
+run(`Game.loadLevel('hell');Game.state='playing';const finishing=Game.exploration.sites[0];finishing.status='ready';Game.player.x=finishing.x;Game.player.y=finishing.y;Game.startExplorationSite(finishing);Game.chooseVaultRisk(true);Game.enemies=[];Game.pickups=[];Game.spawnTimer=999;Input._justPressed.Escape=true;Game.updatePlaying(.01);Input.clearFrame();`);assert.equal(run('Game.state'),'oathReward','Pause on the completion frame must not hide the pending relic reward');
+console.log('Three exploration templates across eight reachable maps, real ward/boss effect, guards, rewards and failures passed.');

@@ -16,6 +16,7 @@
       return old.startNewGame.apply(this,args);
     },
     getCampaignRouteOptions(){const tiers=this.campaignVersion===2?CONFIG.CAMPAIGN_TIERS:null;if(tiers){const i=tiers.findIndex(t=>t.includes(this.levelData?.theme));return i>=0?tiers[i+1]||[]:[];}return this.levelData?.theme==='village'?['mine','frost']:['mine','frost'].includes(this.levelData?.theme)?['hell','marsh']:[];},
+    getCampaignRouteDetails(id){return routes[id]||CONFIG.OATH_ROUTES?.[id];},
     finishCampaignStage(){
       if(this.getCampaignRouteOptions().length){this.state='routeChoice';this.saveProgress();}
       else {this.campaignFinished=true;this.state='victory';this.updateMeta();Audio2.playMusic('victory');this.saveProgress();}

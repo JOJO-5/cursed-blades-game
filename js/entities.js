@@ -121,6 +121,7 @@ class Player {
     amount = Math.max(1, Math.floor(amount * (1 - reduction)) - this.stats.armor);
     const absorbed=Math.min(this.branchGuard||0,amount);
     this.branchGuard=Math.max(0,(this.branchGuard||0)-absorbed);amount-=absorbed;
+    amount=Game.absorbExplorationHit?.(amount)??amount;
     this.hp -= amount;
     this.invuln = 0.8;
     this.hitFlash = 0.2;
