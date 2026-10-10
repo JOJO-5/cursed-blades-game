@@ -1,6 +1,6 @@
 // An independent timed expedition. Fragments require real combat and extraction.
 (() => {
- const old={};for(const k of ['beginTrial','getTrialHubEntries','startNewGame','loadLevel','loadAndContinue','saveProgress','loadMeta','resetSave','updatePlaying','updateLevelEncounters','getCurrentObjective','getEncounterActionLabel','update','render','renderEncounterSites','renderEnding'])old[k]=Game[k];
+ const old={};for(const k of ['beginTrial','getTrialHubEntries','startNewGame','loadLevel','loadAndContinue','saveProgress','loadMeta','resetSave','updatePlaying','updateLevelEncounters','getCurrentObjective','getEncounterActionLabel','update','render','renderEncounterSites','renderEnding','spawnContractHunter'])old[k]=Game[k];
  const bounded=(n,max,fallback=0)=>Number.isFinite(n)?clamp(n,0,max):fallback;
  Object.assign(Game,{
   extraction:null,
@@ -20,9 +20,11 @@
   canExtract(){const m=this.extraction;return !!m&&!m.recorded&&m.elapsed>=480&&m.elapsed<720&&m.shards>0&&dist(this.player.x,this.player.y,m.exit.x,m.exit.y)<=72;},
   openExtractionChoice(){if(this.state!=='playing'||!this.player?.alive||!this.canExtract())return false;this.extraction.choice=true;this.state='extractionChoice';this.saveProgress();return true;},
   chooseExtraction(leave){const m=this.extraction;if(this.state!=='extractionChoice'||!m?.choice||!this.player?.alive||!this.canExtract())return false;if(!leave&&m.continues>=2)return false;m.choice=false;this.state='playing';if(leave){m.channeling=true;m.channel=0;this.addMessage('撤离引导四秒 · 保持在信标内','#c4d5ae');}else{m.continues++;m.hunterTimer=Math.min(m.hunterTimer,15);this.addMessage('继续夺宝 · 追猎加速，十二分钟封锁','#ddb08c');}this.saveProgress();return true;},
+  countExtractionHunters(){return this.enemies.filter(e=>e.alive&&(e.extractionHunter||e.contractHunter||e.consequenceHunter||e.oathHunter)).length;},
+  spawnContractHunter(){if(this.extraction&&this.countExtractionHunters()>=2)return false;return old.spawnContractHunter.call(this);},
   updateExtraction(dt){const m=this.extraction;if(!m||m.recorded)return;if(!this.player?.alive){this.recordExtraction(false);return;}if(this.state!=='playing')return;m.elapsed=Math.min(720,m.elapsed+dt);if(m.elapsed>=720){this.failExtraction('禁地已封锁 · 本局碎片遗失');return;}
    for(const s of m.sites){if(s.status==='locked'&&m.elapsed>=s.opens)this.spawnExtractionGuards(s);if(s.status==='guarded'&&!this.enemies.some(e=>e.alive&&e.extractionGuardId===s.id))s.status='ready';}
-   if(m.shards||m.continues){m.hunterTimer=Math.max(0,m.hunterTimer-dt);if(m.hunterTimer<=10&&!m.warned){m.warned=true;this.addMessage('碎片引来追猎 · 十秒内到达','#ddb08c');}if(m.hunterTimer===0&&m.huntersSpawned<8){const before=new Set(this.enemies);if(this.enemies.filter(e=>e.alive&&e.extractionHunter).length<2&&this.spawnConsequenceHunter()){const e=this.enemies.find(e=>!before.has(e));e.consequenceHunter=false;e.extractionHunter=true;m.huntersSpawned++;m.hunterTimer=Math.max(20,45-m.continues*10);m.warned=false;}else m.hunterTimer=5;}}
+   if(m.shards||m.continues){m.hunterTimer=Math.max(0,m.hunterTimer-dt);if(m.hunterTimer<=10&&!m.warned){m.warned=true;this.addMessage('碎片引来追猎 · 十秒内到达','#ddb08c');}if(m.hunterTimer===0&&m.huntersSpawned<8){const before=new Set(this.enemies);if(this.countExtractionHunters()<2&&this.spawnConsequenceHunter()){const e=this.enemies.find(e=>!before.has(e));e.consequenceHunter=false;e.extractionHunter=true;m.huntersSpawned++;m.hunterTimer=Math.max(20,45-m.continues*10);m.warned=false;}else m.hunterTimer=5;}}
    if(m.channeling){if(!this.canExtract()){m.channeling=false;m.channel=0;this.addMessage('已离开信标 · 撤离中断','#cdb28e');this.saveProgress();}else{m.channel+=dt;if(m.channel>=4){m.channeling=false;m.channel=4;this.state='victory';this.recordExtraction(true);Audio2.playMusic('victory');this.saveProgress();}}}
   },
   failExtraction(reason){this.extraction.failure=reason;this.player.alive=false;this.state='gameover';this.recordExtraction(false);Audio2.playMusic('gameover');},
