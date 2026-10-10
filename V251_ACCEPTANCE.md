@@ -19,7 +19,9 @@
 
 ## 发布状态
 
-待本提交的全量 CI、自然开局与 GitHub Pages 公开页面核验完成后补充。
+运行提交 `2f21fadfaf73158bbe8fe165515a875f7355c0ff`，CI [38027448004](https://github.com/JOJO-5/cursed-blades-game/actions/runs/38027448004) 全量规则测试、1136 项浏览器回归、三角色自然开局及 Pages 部署通过。公开页面 327 项武器专项通过且无 JavaScript 错误；34 个资源版本绑定、四份修改源码与 30 张新图片逐字节匹配已发布提交。
+
+[体验 v0.25.0-preview.2](https://jojo-5.github.io/cursed-blades-game/?v=0.25.0-preview.2)
 
 ## 验证范围
 
