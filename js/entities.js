@@ -2399,7 +2399,7 @@ class EnemyProjectile {
     const player = Game.player;
 
     // Shield block: check if any shield weapon orbit position intercepts the projectile
-    const shieldWeapons = player.weapons.filter(w => w.id === 'shield');
+    const shieldWeapons = player.weapons.filter(w => w.def.type === 'orbit' && w.def.blockReduction > 0);
     for (const sw of shieldWeapons) {
       const range = sw.getRange();
       const count = 1 + player.stats.weaponCountBonus;

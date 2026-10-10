@@ -1178,3 +1178,41 @@ const CONFIG = {
     ],
   },
 };
+
+// v0.25 preview 2: complete equipment art (combat values remain above).
+CONFIG.WEAPON_ART = {
+  "crystal_weapon": "weapons/crystal_weapon_v251",
+  "spellbook_burning": "weapons/spellbook_burning_v251",
+  "wand_arcane": "weapons/wand_arcane_v251",
+  "ballista": "weapons/ballista_v251",
+  "fire_cannon": "weapons/fire_cannon_v251",
+  "poison_sprayer": "weapons/poison_sprayer_v251",
+  "spear_triple_energy": "weapons/spear_triple_energy_v251",
+  "blade_dual": "weapons/blade_dual_v251",
+  "torch_classic": "weapons/torch_classic_v251",
+  "flamethrower_skull": "weapons/flamethrower_skull_v251",
+  "poison_cannon": "weapons/poison_cannon_v251",
+  "shield_round_buckler": "weapons/shield_round_buckler_v251",
+  "sword": "weapons/sword_v251",
+  "shield": "weapons/shield_v251",
+  "bow": "weapons/bow_v251",
+  "fireball": "weapons/fireball_v251",
+  "hammer": "weapons/hammer_v251",
+  "scythe": "weapons/scythe_v251",
+  "war_hammer_double": "weapons/war_hammer_double_v251",
+  "flail": "weapons/flail_v251",
+  "mace_fire": "weapons/mace_fire_v251",
+  "axe": "weapons/axe_v251",
+  "void_blade": "weapons/void_blade_v251",
+  "sword_wind": "weapons/sword_wind_v251",
+  "hammer_meteor": "weapons/hammer_meteor_v251",
+  "knife": "weapons/knife_v251",
+  "soul_hunter": "weapons/soul_hunter_v251",
+  "torch_skull_fire": "weapons/torch_skull_fire_v251",
+  "crossbow_compact": "weapons/crossbow_compact_v251",
+  "ring_fire": "weapons/ring_fire_v251"
+};
+for (const [id,icon] of Object.entries(CONFIG.WEAPON_ART)) { CONFIG.WEAPONS[id].icon=icon; CONFIG.WEAPONS[id].hudIcon=icon; }
+for (const choice of CONFIG.UPGRADES) if (choice.weaponId) choice.icon=CONFIG.WEAPONS[choice.weaponId].hudIcon||CONFIG.WEAPONS[choice.weaponId].icon;
+for (const choice of CONFIG.WEAPON_UNLOCKS) choice.icon=CONFIG.WEAPONS[choice.weaponId].hudIcon||CONFIG.WEAPONS[choice.weaponId].icon;
+for (const recipe of CONFIG.WEAPON_EVOLUTIONS) recipe.icon=CONFIG.WEAPONS[recipe.resultWeapon].hudIcon||CONFIG.WEAPONS[recipe.resultWeapon].icon;

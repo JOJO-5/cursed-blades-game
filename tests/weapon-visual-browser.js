@@ -20,6 +20,7 @@ async page => {
    if(!['orbit','aura','summon'].includes(d.type))add(id+': flight never draws an equipment or ring icon',!reads.some(k=>k.startsWith('weapons/')),{reads});
   }
   const c=make();for(const id of ['hammer','war_hammer_double','hammer_meteor']){c.clearRect(0,0,384,384);c.save();c.translate(192,192);const handled=Game.drawRepresentativeWeapon(c,id,40);c.restore();const head=c.getImageData(190,190,4,4).data,handle=c.getImageData(165,190,8,4).data;add(id+': solid head at contact center and visible handle',handled&&head.some((v,i)=>i%4===3&&v>200)&&handle.some((v,i)=>i%4===3&&v>200));}
+  for(const id of ['flail','mace_fire']){const t=make();t.translate(192,192);Game.drawRepresentativeWeapon(t,id,40);const pixels=t.getImageData(0,0,384,384).data;let outside=0,handle=0;for(let y=0;y<384;y++)for(let x=0;x<384;x++)if(pixels[(y*384+x)*4+3]>=24){if(Math.abs(y-192)>15||x>207||x<158)outside++;if(x>=161&&x<=171&&Math.abs(y-192)<3)handle++;}add(id+': spikes stay near contact head and complete handle remains visible',outside===0&&handle>20,{outside,handle});}
   Game.drawCroppedAsset=crop;return checks;
  });checks.push(...result);await page.evaluate(()=>Game.state='menu');
  return {passed:checks.every(c=>c.passed)&&!errors.length,checks,screenshots,errors};

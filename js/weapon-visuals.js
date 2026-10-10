@@ -13,6 +13,16 @@
   const heavy=new Set(['hammer','war_hammer_double','hammer_meteor','flail','mace_fire','axe','scythe','sword_wind','void_blade']);
   const metal=new Set(['sword','hammer','war_hammer_double','shield','shield_round_buckler','scythe','axe','flail','ring_steel']);
   Game.drawRepresentativeWeapon=function(ctx,id,size){
+    if(id==='knife'||id==='soul_hunter'){
+      ctx.save();ctx.scale(size/32,size/32);ctx.strokeStyle='#17211f';ctx.lineWidth=2;
+      if(id==='knife'){
+        ctx.fillStyle='#adc1c6';ctx.beginPath();ctx.moveTo(-2,-16);ctx.lineTo(6,-7);ctx.lineTo(3,4);ctx.lineTo(-3,4);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle='#eff4dc';ctx.fillRect(0,-8,2,11);ctx.fillStyle='#bb965a';ctx.fillRect(-6,3,12,3);ctx.fillStyle='#77513a';ctx.fillRect(-2,6,4,9);
+      }else{
+        for(const [x,y] of [[-7,4],[7,-4]]){ctx.fillStyle='#35564d';ctx.beginPath();ctx.arc(x,y,7,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#bfeaa0';ctx.fillRect(x-4,y-4,7,7);ctx.fillStyle='#284038';ctx.fillRect(x-2,y-1,2,2);ctx.fillRect(x+1,y-1,2,2);ctx.fillStyle='#8ccb75';ctx.fillRect(x-2,y+4,3,5);}
+      }
+      ctx.restore();return true;
+    }
     if(!heavy.has(id))return originalRepresentative.call(this,ctx,id,size);
     ctx.save();ctx.scale(size/40,size/40);ctx.lineWidth=2;ctx.lineJoin='miter';ctx.strokeStyle='#17211f';
     const rect=(x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h)};
@@ -26,8 +36,12 @@
       if(double){rect(-9,-13,16,5,'#a3b6b9');rect(-9,8,16,5,'#a3b6b9')}
       if(meteor){ctx.fillStyle='#ffde97';ctx.fillRect(-3,-5,3,10);ctx.fillRect(0,-1,5,3)}
     }else if(id==='flail'||id==='mace_fire'){
-      ctx.strokeStyle=id==='flail'?'#b1a18a':'#895b3d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-31,0);ctx.lineTo(-10,0);ctx.stroke();
-      for(let i=0;i<8;i++){const a=i*TAU/8;polygon([[Math.cos(a)*8,Math.sin(a)*8],[Math.cos(a+.12)*15,Math.sin(a+.12)*15],[Math.cos(a+.3)*8,Math.sin(a+.3)*8]],'#bac6bc')}
+      rect(-32,-3,12,6,'#895b3d');
+      ctx.strokeStyle=id==='flail'?'#b1a18a':'#895b3d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-20,0);ctx.lineTo(-8,0);ctx.stroke();
+      if(id==='flail'){ctx.strokeStyle='#e1d4b8';ctx.lineWidth=1;for(let x=-19;x<-8;x+=4)ctx.strokeRect(x,-2,4,4)}
+      // Acute stroked triangles previously produced long miter rays over the handle.
+      ctx.strokeStyle='#38423e';ctx.lineWidth=1;ctx.lineJoin='bevel';
+      for(let i=0;i<8;i++){const a=i*TAU/8;polygon([[Math.cos(a-.25)*8,Math.sin(a-.25)*8],[Math.cos(a)*13,Math.sin(a)*13],[Math.cos(a+.25)*8,Math.sin(a+.25)*8]],'#bac6bc')}
       rect(-7,-7,14,14,id==='mace_fire'?'#aa5737':'#67706b');ctx.fillStyle=id==='mace_fire'?'#ffda7a':'#d5d9c2';ctx.fillRect(-4,-4,4,4);
     }else if(id==='axe'){
       rect(-32,-3,37,6,'#805b3a');polygon([[-7,-4],[-5,-16],[5,-19],[14,-15],[17,-5],[12,0],[17,5],[14,15],[5,19],[-5,16],[-7,4]],'#7d9499');
@@ -44,6 +58,7 @@
   };
   const choice=Game.drawChoiceIcon;
   Game.drawChoiceIcon=function(ctx,key,x,y,w,h){
+    if(key?.endsWith('_v251'))return this.drawCroppedAsset(ctx,key,x,y,w,h,{maxScale:3,imageSmoothingEnabled:false});
     const id=[...heavy].find(id=>(CONFIG.WEAPONS[id].hudIcon||CONFIG.WEAPONS[id].icon)===key);
     if(!id)return choice.call(this,ctx,key,x,y,w,h);
     ctx.save();ctx.translate(x+Math.min(w,h)*.14,y);ctx.rotate(-Math.PI/4);this.drawRepresentativeWeapon(ctx,id,Math.min(w,h)*.7);ctx.restore();

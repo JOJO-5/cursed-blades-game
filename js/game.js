@@ -1523,9 +1523,24 @@ const Game = {
     if (Object.prototype.hasOwnProperty.call(this._choiceIconCropCache, iconKey)) {
       return this._choiceIconCropCache[iconKey];
     }
-    const crop = this.findDominantOpaqueCrop(img);
+    // Packaged standalone sprites may have separate flames, strings or crystals.
+    // Only legacy composite art needs the largest-component heuristic.
+    const crop = iconKey.endsWith('_v251') ? this.findCompleteOpaqueCrop(img) : this.findDominantOpaqueCrop(img);
     this._choiceIconCropCache[iconKey] = crop;
     return crop;
+  },
+
+  findCompleteOpaqueCrop(img) {
+    const w=img.width||0,h=img.height||0;if(!w||!h||w*h>20000)return null;
+    try {
+      const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+      const pixels=ctx.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=-1,y1=-1;
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(pixels[(y*w+x)*4+3]>=24){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+      if(x1<0)return null;
+      x0=Math.max(0,x0-2);y0=Math.max(0,y0-2);x1=Math.min(w-1,x1+2);y1=Math.min(h-1,y1+2);
+      return {x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
+    } catch {return null;}
   },
 
   findDominantOpaqueCrop(img) {

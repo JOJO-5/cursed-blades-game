@@ -1498,5 +1498,125 @@
   "tiles/ground_court_v180": {
     "w": 256,
     "h": 256
+  },
+  "weapons/crystal_weapon_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/spellbook_burning_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/wand_arcane_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/ballista_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/fire_cannon_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/poison_sprayer_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/spear_triple_energy_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/blade_dual_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/torch_classic_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/flamethrower_skull_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/poison_cannon_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/shield_round_buckler_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/sword_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/shield_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/bow_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/fireball_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/hammer_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/scythe_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/war_hammer_double_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/flail_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/mace_fire_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/axe_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/void_blade_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/sword_wind_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/hammer_meteor_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/knife_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/soul_hunter_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/torch_skull_fire_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/crossbow_compact_v251": {
+    "w": 64,
+    "h": 64
+  },
+  "weapons/ring_fire_v251": {
+    "w": 64,
+    "h": 64
   }
 }

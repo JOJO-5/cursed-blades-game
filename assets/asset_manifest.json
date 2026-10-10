@@ -3,7 +3,7 @@
     "version": "1.0",
     "generated": "2026-07-27T14:08:54.000Z",
     "description": "Expanded asset manifest with id, name, category, path, dimensions, anchor, and animation info",
-    "totalAssets": 375,
+    "totalAssets": 405,
     "categories": {
       "props": 72,
       "ui": 41,
@@ -14,7 +14,7 @@
       "tiles": 31,
       "effects": 15,
       "items": 5,
-      "weapons": 54
+      "weapons": 84
     },
     "namingConvention": {
       "pattern": "{category}/{entity}_{state}_{variant}_{frame}.png",
@@ -5037,6 +5037,426 @@
         "y": 0.5
       },
       "animation": null
+    },
+    "weapons/crystal_weapon_v251": {
+      "id": "weapons/crystal_weapon_v251",
+      "name": "crystal_weapon",
+      "category": "weapons",
+      "path": "assets/weapons/crystal_weapon_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/spellbook_burning_v251": {
+      "id": "weapons/spellbook_burning_v251",
+      "name": "spellbook_burning",
+      "category": "weapons",
+      "path": "assets/weapons/spellbook_burning_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/wand_arcane_v251": {
+      "id": "weapons/wand_arcane_v251",
+      "name": "wand_arcane",
+      "category": "weapons",
+      "path": "assets/weapons/wand_arcane_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/ballista_v251": {
+      "id": "weapons/ballista_v251",
+      "name": "ballista",
+      "category": "weapons",
+      "path": "assets/weapons/ballista_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/fire_cannon_v251": {
+      "id": "weapons/fire_cannon_v251",
+      "name": "fire_cannon",
+      "category": "weapons",
+      "path": "assets/weapons/fire_cannon_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/poison_sprayer_v251": {
+      "id": "weapons/poison_sprayer_v251",
+      "name": "poison_sprayer",
+      "category": "weapons",
+      "path": "assets/weapons/poison_sprayer_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/spear_triple_energy_v251": {
+      "id": "weapons/spear_triple_energy_v251",
+      "name": "spear_triple_energy",
+      "category": "weapons",
+      "path": "assets/weapons/spear_triple_energy_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/blade_dual_v251": {
+      "id": "weapons/blade_dual_v251",
+      "name": "blade_dual",
+      "category": "weapons",
+      "path": "assets/weapons/blade_dual_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/torch_classic_v251": {
+      "id": "weapons/torch_classic_v251",
+      "name": "torch_classic",
+      "category": "weapons",
+      "path": "assets/weapons/torch_classic_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/flamethrower_skull_v251": {
+      "id": "weapons/flamethrower_skull_v251",
+      "name": "flamethrower_skull",
+      "category": "weapons",
+      "path": "assets/weapons/flamethrower_skull_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/poison_cannon_v251": {
+      "id": "weapons/poison_cannon_v251",
+      "name": "poison_cannon",
+      "category": "weapons",
+      "path": "assets/weapons/poison_cannon_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/shield_round_buckler_v251": {
+      "id": "weapons/shield_round_buckler_v251",
+      "name": "shield_round_buckler",
+      "category": "weapons",
+      "path": "assets/weapons/shield_round_buckler_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/sword_v251": {
+      "id": "weapons/sword_v251",
+      "name": "sword",
+      "category": "weapons",
+      "path": "assets/weapons/sword_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/shield_v251": {
+      "id": "weapons/shield_v251",
+      "name": "shield",
+      "category": "weapons",
+      "path": "assets/weapons/shield_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/bow_v251": {
+      "id": "weapons/bow_v251",
+      "name": "bow",
+      "category": "weapons",
+      "path": "assets/weapons/bow_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/fireball_v251": {
+      "id": "weapons/fireball_v251",
+      "name": "fireball",
+      "category": "weapons",
+      "path": "assets/weapons/fireball_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/hammer_v251": {
+      "id": "weapons/hammer_v251",
+      "name": "hammer",
+      "category": "weapons",
+      "path": "assets/weapons/hammer_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/scythe_v251": {
+      "id": "weapons/scythe_v251",
+      "name": "scythe",
+      "category": "weapons",
+      "path": "assets/weapons/scythe_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/war_hammer_double_v251": {
+      "id": "weapons/war_hammer_double_v251",
+      "name": "war_hammer_double",
+      "category": "weapons",
+      "path": "assets/weapons/war_hammer_double_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/flail_v251": {
+      "id": "weapons/flail_v251",
+      "name": "flail",
+      "category": "weapons",
+      "path": "assets/weapons/flail_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/mace_fire_v251": {
+      "id": "weapons/mace_fire_v251",
+      "name": "mace_fire",
+      "category": "weapons",
+      "path": "assets/weapons/mace_fire_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/axe_v251": {
+      "id": "weapons/axe_v251",
+      "name": "axe",
+      "category": "weapons",
+      "path": "assets/weapons/axe_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/void_blade_v251": {
+      "id": "weapons/void_blade_v251",
+      "name": "void_blade",
+      "category": "weapons",
+      "path": "assets/weapons/void_blade_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/sword_wind_v251": {
+      "id": "weapons/sword_wind_v251",
+      "name": "sword_wind",
+      "category": "weapons",
+      "path": "assets/weapons/sword_wind_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/hammer_meteor_v251": {
+      "id": "weapons/hammer_meteor_v251",
+      "name": "hammer_meteor",
+      "category": "weapons",
+      "path": "assets/weapons/hammer_meteor_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/knife_v251": {
+      "id": "weapons/knife_v251",
+      "name": "knife",
+      "category": "weapons",
+      "path": "assets/weapons/knife_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/soul_hunter_v251": {
+      "id": "weapons/soul_hunter_v251",
+      "name": "soul_hunter",
+      "category": "weapons",
+      "path": "assets/weapons/soul_hunter_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/torch_skull_fire_v251": {
+      "id": "weapons/torch_skull_fire_v251",
+      "name": "torch_skull_fire",
+      "category": "weapons",
+      "path": "assets/weapons/torch_skull_fire_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/crossbow_compact_v251": {
+      "id": "weapons/crossbow_compact_v251",
+      "name": "crossbow_compact",
+      "category": "weapons",
+      "path": "assets/weapons/crossbow_compact_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
+    },
+    "weapons/ring_fire_v251": {
+      "id": "weapons/ring_fire_v251",
+      "name": "ring_fire",
+      "category": "weapons",
+      "path": "assets/weapons/ring_fire_v251.png",
+      "w": 64,
+      "h": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "animation": null,
+      "source": "Complete standalone sprite; sources and prompts in assets/source_sheets/V251_WEAPON_ART.md"
     }
   }
 }

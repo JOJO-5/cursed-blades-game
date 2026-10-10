@@ -88,7 +88,10 @@ assert.ok(config.WEAPONS.shadow_imp.icon === 'weapons/shadow_imp' &&
     holy_cross: 'weapons/holy_cross',
     poison_aura: 'weapons/poison_aura',
   };
-  for (const [weaponId, icon] of Object.entries(expectedHudIcons)) {
+  for (const [weaponId, legacyIcon] of Object.entries(expectedHudIcons)) {
+    const icon = config.WEAPON_ART?.[weaponId] || legacyIcon;
+    assert.ok(manifest[icon] && existsSync(path.join(root, 'assets', icon + '.png')),
+      `weapon ${weaponId} must have a loadable dedicated equipment image`);
     assert.equal(config.WEAPONS[weaponId].hudIcon, icon,
       `weapon ${weaponId} should define a dedicated HUD/card icon separate from combat art`);
     const unlock = config.WEAPON_UNLOCKS.find(u => u.weaponId === weaponId);
